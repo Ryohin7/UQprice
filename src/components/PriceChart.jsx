@@ -20,6 +20,8 @@ export default function PriceChart({ historyData }) {
   const minPrice = Math.min(...historyData.map((d) => d.price));
   // 找出最高價格
   const maxPrice = Math.max(...historyData.map((d) => d.price));
+  // 判斷是否應顯示最低價：僅有1筆或全部價格相同則不顯示
+  const showLowest = historyData.length > 1 && minPrice !== maxPrice;
 
   // 格式化日期，只顯示月/日
   const formattedData = historyData.map(d => {
@@ -70,20 +72,22 @@ export default function PriceChart({ historyData }) {
             />
             <Tooltip content={<CustomTooltip />} />
             
-            {/* 歷史最低價參考線 */}
-            <ReferenceLine 
-              y={minPrice} 
-              stroke="var(--uq-red)" 
-              strokeDasharray="4 4"
-              label={{ 
-                value: `歷史史低: ${formatPrice(minPrice)}`, 
-                fill: 'var(--uq-red)', 
-                position: 'top',
-                fontSize: 10,
-                fontWeight: 'bold',
-                backgroundColor: 'rgba(255,255,255,0.8)'
-              }} 
-            />
+            {/* 歷史最低價參考線 - 僅在有意義時顯示 */}
+            {showLowest && (
+              <ReferenceLine 
+                y={minPrice} 
+                stroke="var(--uq-red)" 
+                strokeDasharray="4 4"
+                label={{ 
+                  value: `歷史史低: ${formatPrice(minPrice)}`, 
+                  fill: 'var(--uq-red)', 
+                  position: 'top',
+                  fontSize: 10,
+                  fontWeight: 'bold',
+                  backgroundColor: 'rgba(255,255,255,0.8)'
+                }} 
+              />
+            )}
 
             <Line
               type="monotone"
@@ -101,10 +105,12 @@ export default function PriceChart({ historyData }) {
           <span style={{ ...styles.legendColor, backgroundColor: '#222222' }}></span>
           商品價格折線
         </span>
-        <span style={styles.legendItem}>
-          <span style={{ ...styles.legendColor, border: '1px dashed var(--uq-red)' }}></span>
-          歷史低價參考線
-        </span>
+        {showLowest && (
+          <span style={styles.legendItem}>
+            <span style={{ ...styles.legendColor, border: '1px dashed var(--uq-red)' }}></span>
+            歷史低價參考線
+          </span>
+        )}
       </div>
     </div>
   );

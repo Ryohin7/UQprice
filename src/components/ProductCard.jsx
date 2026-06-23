@@ -8,6 +8,11 @@ export function formatPrice(price) {
 
 const isHistoricalLowest = (product) => {
   if (!product.historyPrices || product.historyPrices.length === 0) return false;
+  // 僅有1筆價格紀錄，不顯示歷史最低價
+  if (product.historyPrices.length <= 1) return false;
+  // 所有價格都一樣，不顯示歷史最低價
+  const allSame = product.historyPrices.every(hp => hp.price === product.historyPrices[0].price);
+  if (allSame) return false;
   const currentPrice = product.minPrice;
   const today = new Date().toISOString().split('T')[0];
   const otherPrices = product.historyPrices

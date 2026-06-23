@@ -1,9 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { Download } from 'lucide-react';
+import { Download, Heart, Search, X, Menu, ChevronDown } from 'lucide-react';
 
-export default function Header() {
+export default function Header({
+  searchTerm,
+  setSearchTerm,
+  selectedCategory,
+  setSelectedCategory,
+  selectedSex,
+  setSelectedSex,
+  favorites
+}) {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showInstallBtn, setShowInstallBtn] = useState(false);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const [menAccordionOpen, setMenAccordionOpen] = useState(false);
+  const [womenAccordionOpen, setWomenAccordionOpen] = useState(false);
 
   useEffect(() => {
     window.addEventListener('beforeinstallprompt', (e) => {
@@ -30,28 +41,272 @@ export default function Header() {
     }
   };
 
+  const handleLogoClick = () => {
+    setSelectedSex('ALL');
+    setSelectedCategory('ALL');
+    setSearchTerm('');
+  };
+
+  const handleCategorySelect = (sex, categoryCode) => {
+    setSelectedSex(sex);
+    setSelectedCategory(categoryCode);
+    setSearchTerm('');
+  };
+
+  const subCategories = [
+    { code: 'ALL', name: '全部商品' },
+    { code: 'new_arrival', name: '新品上市' },
+    { code: 'limited_price', name: '限定價格' },
+    { code: 'sale_price', name: '特價商品' },
+    { code: 'tops', name: '上衣類' },
+    { code: 'bottoms', name: '下裝類' },
+    { code: 'outerwear', name: '外套類' }
+  ];
+
   return (
-    <header style={styles.header}>
-      <div style={styles.logoContainer}>
-        {/* UNIQLO 紅白極簡雙模Logo視覺 */}
-        <div style={styles.logoRed}>
-          <span style={styles.logoText}>UNI</span>
-          <span style={styles.logoText}>QLO</span>
+    <>
+      <header style={styles.header}>
+        {/* 極簡純文字 Logo */}
+        <div className="desktop-logo" style={styles.logoContainer} onClick={handleLogoClick}>
+          <span style={styles.logoTextTitle}>快速查價</span>
         </div>
-        <div style={styles.logoWhite}>
-          <span style={styles.logoTextDark}>比價</span>
-          <span style={styles.logoTextDark}>首選</span>
-        </div>
-      </div>
-      <div style={styles.navActions}>
-        {showInstallBtn && (
-          <button onClick={handleInstallClick} style={styles.installBtn} className="btn btn-primary">
-            <Download size={16} style={{ marginRight: 6 }} />
-            安裝桌面 App
+
+        {/* 桌面端導航選單 */}
+        <ul className="nav-menu" style={styles.desktopNav}>
+          <li className="nav-item">
+            男裝 MENS
+            <div className="dropdown-card">
+              {subCategories.map(sub => (
+                <button
+                  key={`men-${sub.code}`}
+                  className="dropdown-item"
+                  onClick={() => handleCategorySelect('men', sub.code)}
+                  style={{
+                    color: selectedSex === 'men' && selectedCategory === sub.code ? 'var(--uq-red)' : 'var(--text-secondary)',
+                    fontWeight: selectedSex === 'men' && selectedCategory === sub.code ? 'bold' : 'normal',
+                    border: 'none',
+                    background: 'none',
+                    cursor: 'pointer',
+                    width: '100%',
+                    textAlign: 'left'
+                  }}
+                >
+                  {sub.code === 'ALL' ? '全部男裝' : sub.name}
+                </button>
+              ))}
+            </div>
+          </li>
+          <li className="nav-item">
+            女裝 WOMENS
+            <div className="dropdown-card">
+              {subCategories.map(sub => (
+                <button
+                  key={`women-${sub.code}`}
+                  className="dropdown-item"
+                  onClick={() => handleCategorySelect('women', sub.code)}
+                  style={{
+                    color: selectedSex === 'women' && selectedCategory === sub.code ? 'var(--uq-red)' : 'var(--text-secondary)',
+                    fontWeight: selectedSex === 'women' && selectedCategory === sub.code ? 'bold' : 'normal',
+                    border: 'none',
+                    background: 'none',
+                    cursor: 'pointer',
+                    width: '100%',
+                    textAlign: 'left'
+                  }}
+                >
+                  {sub.code === 'ALL' ? '全部女裝' : sub.name}
+                </button>
+              ))}
+            </div>
+          </li>
+        </ul>
+
+        {/* 搜尋欄 & 操作按鈕區 */}
+        <div style={styles.navActions} className="nav-actions-container">
+          {/* 自適應全寬搜尋欄 (手機版與桌面版共用此 DOM，經 CSS 響應式配置) */}
+          <div className="search-bar-wrapper" style={styles.searchContainerDesktop}>
+            <Search size={18} style={styles.searchIcon} />
+            <input
+              type="text"
+              placeholder="搜尋商品名稱或編號..."
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setSelectedCategory('ALL');
+                setSelectedSex('ALL');
+              }}
+              style={styles.searchInput}
+            />
+            {searchTerm && (
+              <button onClick={() => setSearchTerm('')} style={styles.clearBtn}>
+                <X size={16} />
+              </button>
+            )}
+          </div>
+
+          {/* 我的追蹤 - 僅桌面版顯示 */}
+          <button
+            onClick={() => handleCategorySelect('ALL', 'favorites')}
+            style={{
+              ...styles.favBtn,
+              color: selectedCategory === 'favorites' ? 'var(--uq-red)' : 'var(--text-primary)',
+              backgroundColor: selectedCategory === 'favorites' ? 'rgba(231,31,25,0.04)' : 'transparent',
+            }}
+            className="desktop-fav-btn"
+          >
+            <Heart size={20} fill={selectedCategory === 'favorites' ? 'var(--uq-red)' : 'none'} />
+            <span style={styles.favText}>我的追蹤</span>
+            {favorites.length > 0 && (
+              <span style={styles.favBadge}>{favorites.length}</span>
+            )}
           </button>
-        )}
-      </div>
-    </header>
+
+          {/* 下載 App 按鈕 - 僅桌面版顯示 */}
+          {showInstallBtn && (
+            <button onClick={handleInstallClick} style={styles.installBtn} className="desktop-install-btn">
+              <Download size={14} style={{ marginRight: 4 }} />
+              <span>App</span>
+            </button>
+          )}
+
+          {/* 漢堡菜單圖示 - 行動端必備 */}
+          <button
+            className="mobile-menu-btn"
+            style={styles.mobileMenuToggle}
+            onClick={() => setMobileDrawerOpen(true)}
+          >
+            <Menu size={22} />
+          </button>
+        </div>
+      </header>
+
+      {/* 行動端 Drawer 側滑菜單 */}
+      {mobileDrawerOpen && (
+        <>
+          <div className="drawer-overlay" onClick={() => setMobileDrawerOpen(false)} />
+          <div className={`mobile-drawer ${mobileDrawerOpen ? 'open' : ''}`}>
+            <div className="drawer-header">
+              <span className="drawer-title">選單與商品分類</span>
+              <button className="drawer-close" onClick={() => setMobileDrawerOpen(false)}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="drawer-menu">
+              {/* 男裝分類 */}
+              <div className="accordion-section">
+                <div
+                  className="accordion-title"
+                  onClick={() => setMenAccordionOpen(!menAccordionOpen)}
+                >
+                  <span>男裝 MENS</span>
+                  <ChevronDown
+                    size={16}
+                    style={{
+                      transform: menAccordionOpen ? 'rotate(180deg)' : 'rotate(0)',
+                      transition: 'transform 0.2s'
+                    }}
+                  />
+                </div>
+                {menAccordionOpen && (
+                  <div className="accordion-content">
+                    {subCategories.map(sub => (
+                      <div
+                        key={`mob-men-${sub.code}`}
+                        className="accordion-item-link"
+                        onClick={() => {
+                          handleCategorySelect('men', sub.code);
+                          setMobileDrawerOpen(false);
+                        }}
+                        style={{
+                          color: selectedSex === 'men' && selectedCategory === sub.code ? 'var(--uq-red)' : 'var(--text-secondary)',
+                          fontWeight: selectedSex === 'men' && selectedCategory === sub.code ? 'bold' : 'normal'
+                        }}
+                      >
+                        {sub.code === 'ALL' ? '全部男裝' : sub.name}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* 女裝分類 */}
+              <div className="accordion-section">
+                <div
+                  className="accordion-title"
+                  onClick={() => setWomenAccordionOpen(!womenAccordionOpen)}
+                >
+                  <span>女裝 WOMENS</span>
+                  <ChevronDown
+                    size={16}
+                    style={{
+                      transform: womenAccordionOpen ? 'rotate(180deg)' : 'rotate(0)',
+                      transition: 'transform 0.2s'
+                    }}
+                  />
+                </div>
+                {womenAccordionOpen && (
+                  <div className="accordion-content">
+                    {subCategories.map(sub => (
+                      <div
+                        key={`mob-women-${sub.code}`}
+                        className="accordion-item-link"
+                        onClick={() => {
+                          handleCategorySelect('women', sub.code);
+                          setMobileDrawerOpen(false);
+                        }}
+                        style={{
+                          color: selectedSex === 'women' && selectedCategory === sub.code ? 'var(--uq-red)' : 'var(--text-secondary)',
+                          fontWeight: selectedSex === 'women' && selectedCategory === sub.code ? 'bold' : 'normal'
+                        }}
+                      >
+                        {sub.code === 'ALL' ? '全部女裝' : sub.name}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* 我的追蹤 (手機端整合) */}
+              <div
+                className="accordion-title"
+                onClick={() => {
+                  handleCategorySelect('ALL', 'favorites');
+                  setMobileDrawerOpen(false);
+                }}
+                style={{
+                  color: selectedCategory === 'favorites' ? 'var(--uq-red)' : 'var(--text-primary)',
+                  fontWeight: selectedCategory === 'favorites' ? 'bold' : 'normal',
+                  borderBottom: '1px solid var(--bg-light)'
+                }}
+              >
+                <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Heart size={16} fill={selectedCategory === 'favorites' ? 'var(--uq-red)' : 'none'} />
+                  我的追蹤 ({favorites.length})
+                </span>
+              </div>
+
+              {/* 安裝桌面 App (手機端整合) */}
+              {showInstallBtn && (
+                <div
+                  className="accordion-title"
+                  onClick={() => {
+                    handleInstallClick();
+                    setMobileDrawerOpen(false);
+                  }}
+                  style={{ borderBottom: 'none' }}
+                >
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--uq-red)' }}>
+                    <Download size={16} />
+                    安裝桌面 App
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+    </>
   );
 }
 
@@ -60,7 +315,7 @@ const styles = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: '16px 24px',
+    padding: '12px 24px',
     borderBottom: '1px solid var(--border-color)',
     backgroundColor: 'var(--bg-white)',
     position: 'sticky',
@@ -73,50 +328,124 @@ const styles = {
     gap: '4px',
     cursor: 'pointer',
   },
-  logoRed: {
-    backgroundColor: 'var(--uq-red)',
-    color: '#ffffff',
-    padding: '6px 8px',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    lineHeight: 1,
-    fontWeight: 'bold',
-    fontFamily: '"Helvetica Neue", Arial, sans-serif',
-    borderRadius: '2px',
-  },
-  logoWhite: {
-    border: '1px solid var(--uq-red)',
-    backgroundColor: '#ffffff',
-    color: 'var(--uq-red)',
-    padding: '5px 7px',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    lineHeight: 1,
-    fontWeight: 'bold',
-    fontFamily: '"Noto Sans TC", sans-serif',
-    borderRadius: '2px',
-  },
-  logoText: {
-    fontSize: '12px',
+  logoTextTitle: {
+    fontSize: '18px',
+    fontWeight: '800',
     letterSpacing: '1px',
+    color: 'var(--text-primary)',
+    fontFamily: 'var(--font-sans)',
   },
-  logoTextDark: {
-    fontSize: '12px',
-    letterSpacing: '1px',
-    color: 'var(--uq-primary)',
+  desktopNav: {
+    display: 'flex',
+    flex: 1,
+    alignItems: 'center',
   },
   navActions: {
     display: 'flex',
     alignItems: 'center',
     gap: '12px',
   },
+  searchContainerDesktop: {
+    position: 'relative',
+    display: 'flex',
+    alignItems: 'center',
+  },
+  searchIcon: {
+    position: 'absolute',
+    left: '12px',
+    top: '50%',
+    transform: 'translateY(-50%)',
+    color: 'var(--text-light)',
+    pointerEvents: 'none',
+    display: 'flex',
+    alignItems: 'center',
+  },
+  searchInput: {
+    width: '100%',
+    padding: '8px 32px 8px 32px',
+    fontSize: '13px',
+    border: '1px solid var(--border-color)',
+    borderRadius: '16px',
+    backgroundColor: 'var(--bg-light)',
+    outline: 'none',
+    transition: 'var(--transition-fast)',
+  },
+  clearBtn: {
+    position: 'absolute',
+    right: '10px',
+    top: '50%',
+    transform: 'translateY(-50%)',
+    background: 'none',
+    border: 'none',
+    color: 'var(--text-light)',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+  },
+  favBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    fontSize: '14px',
+    fontWeight: '700',
+    padding: '8px 12px',
+    borderRadius: '20px',
+    border: 'none',
+    cursor: 'pointer',
+    transition: 'var(--transition-fast)',
+  },
+  favText: {
+    display: 'inline',
+  },
+  favBadge: {
+    backgroundColor: 'var(--uq-red)',
+    color: '#ffffff',
+    fontSize: '10px',
+    fontWeight: 'bold',
+    borderRadius: '10px',
+    padding: '2px 6px',
+    lineHeight: 1,
+  },
   installBtn: {
     display: 'flex',
     alignItems: 'center',
-    fontSize: '13px',
-    padding: '8px 14px',
-    borderRadius: '20px', // 精緻膠囊按鈕
+    fontSize: '12px',
+    fontWeight: '700',
+    padding: '6px 10px',
+    borderRadius: '16px',
+    backgroundColor: 'var(--text-primary)',
+    color: '#ffffff',
+    border: 'none',
+    cursor: 'pointer',
+  },
+  mobileMenuToggle: {
+    display: 'none',
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    color: 'var(--text-primary)',
   }
 };
+
+// 注入 RWD inline-styles 支持（React inline style 不支持 @media，所以我們在 CSS 或組件頂部做 RWD 狀態）
+const injectRwdCss = () => {
+  if (typeof document === 'undefined') return;
+  const id = 'header-rwd-styles';
+  if (document.getElementById(id)) return;
+  const style = document.createElement('style');
+  style.id = id;
+  style.innerHTML = `
+    @media (max-width: 992px) {
+      ul.nav-menu {
+        display: none !important;
+      }
+      .fav-text-span {
+        display: none !important;
+      }
+    }
+  `;
+  document.head.appendChild(style);
+};
+if (typeof window !== 'undefined') {
+  injectRwdCss();
+}

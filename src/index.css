@@ -149,6 +149,7 @@ body {
 .detail-left {
   flex: 1.2;
   max-width: 500px;
+  width: 100%;
 }
 
 .detail-right {
@@ -163,4 +164,284 @@ body {
     max-width: 100%;
     align-self: center;
   }
+}
+
+/* 漢堡選單 RWD 控制 */
+.mobile-hamburger {
+  display: none;
+  position: relative;
+}
+
+@media (max-width: 768px) {
+  .desktop-tabs {
+    display: none !important;
+  }
+  .mobile-hamburger {
+    display: block;
+  }
+}
+
+/* 橫向滾動容器 */
+.horizontal-scroll-container {
+  display: flex;
+  overflow-x: auto;
+  gap: 20px;
+  padding: 10px 4px 20px 4px;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+.horizontal-scroll-container::-webkit-scrollbar {
+  height: 6px;
+}
+.horizontal-scroll-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+.horizontal-scroll-container::-webkit-scrollbar-thumb {
+  background: #cccccc;
+  border-radius: 3px;
+}
+.horizontal-scroll-item {
+  flex: 0 0 220px;
+  scroll-snap-align: start;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.horizontal-scroll-item:hover {
+  transform: translateY(-4px);
+}
+@media (max-width: 768px) {
+  .horizontal-scroll-item {
+    flex: 0 0 160px;
+  }
+}
+
+/* 首頁精選區塊標題 */
+.section-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+  margin-top: 24px;
+  display: flex;
+  align-items: center;
+  border-left: 4px solid var(--uq-red);
+  padding-left: 12px;
+}
+
+/* 導航下拉選單樣式 */
+.nav-menu {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  list-style: none;
+  margin-left: 32px;
+}
+.nav-item {
+  position: relative;
+  padding: 16px 0;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--text-primary);
+  transition: color 0.2s;
+}
+.nav-item:hover {
+  color: var(--uq-red);
+}
+.nav-item::after {
+  content: '';
+  position: absolute;
+  bottom: 8px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background-color: var(--uq-red);
+  transition: width 0.2s ease;
+}
+.nav-item:hover::after {
+  width: 100%;
+}
+
+.dropdown-card {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background-color: var(--bg-white);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-md);
+  padding: 12px;
+  min-width: 200px;
+  display: none;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 150;
+  border-radius: 4px;
+  animation: fadeInSlide 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.nav-item:hover .dropdown-card {
+  display: flex;
+}
+
+.dropdown-item {
+  padding: 8px 12px;
+  font-size: 14px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: var(--transition-fast);
+  border-radius: 2px;
+  display: block;
+  font-weight: normal;
+  text-align: left;
+}
+.dropdown-item:hover {
+  background-color: var(--bg-light);
+  color: var(--uq-red);
+  font-weight: 500;
+}
+
+@keyframes fadeInSlide {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 行動端 Drawer */
+.drawer-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.4);
+  z-index: 990;
+  animation: fadeIn 0.25s ease-out;
+  backdrop-filter: blur(2px);
+}
+.mobile-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 280px;
+  height: 100%;
+  background-color: var(--bg-white);
+  box-shadow: -4px 0 24px rgba(0,0,0,0.15);
+  z-index: 1000;
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  transform: translateX(100%);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.mobile-drawer.open {
+  transform: translateX(0);
+}
+.drawer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 16px;
+}
+.drawer-title {
+  font-weight: 700;
+  font-size: 16px;
+}
+.drawer-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-light);
+  display: flex;
+  align-items: center;
+}
+.drawer-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+  flex: 1;
+}
+.accordion-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 8px;
+  font-weight: 700;
+  font-size: 15px;
+  border-bottom: 1px solid var(--bg-light);
+  cursor: pointer;
+  user-select: none;
+}
+.accordion-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px 8px 12px 16px;
+  background-color: var(--bg-light);
+  border-radius: 4px;
+  margin-top: 4px;
+}
+.accordion-item-link {
+  padding: 8px 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color 0.2s;
+  text-align: left;
+}
+.accordion-item-link:hover {
+  color: var(--uq-red);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* 手機版 Header 自適應優化：只留搜尋欄與漢堡選單 */
+@media (max-width: 768px) {
+  .desktop-logo,
+  .desktop-fav-btn,
+  .desktop-install-btn {
+    display: none !important;
+  }
+  
+  .nav-actions-container {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  .search-bar-wrapper {
+    flex: 1;
+    display: block !important;
+    width: auto !important;
+  }
+  
+  .mobile-menu-btn {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-primary);
+  }
+}
+
+/* 桌面端搜尋框瘦身與 Focus 平滑展寬動畫 */
+.search-bar-wrapper {
+  width: 130px;
+  transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.search-bar-wrapper:focus-within {
+  width: 200px;
 }

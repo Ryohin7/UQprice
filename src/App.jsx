@@ -4,12 +4,17 @@ import ProductCard, { formatPrice } from './components/ProductCard';
 import SkeletonCard from './components/SkeletonCard';
 import PriceChart from './components/PriceChart';
 import productsData from './data/products.json';
-import { Search, SlidersHorizontal, ArrowUpDown, X, Heart, ExternalLink, TrendingDown } from 'lucide-react';
+import { Search, SlidersHorizontal, ArrowUpDown, X, Heart, ExternalLink, TrendingDown, Menu, User } from 'lucide-react';
 import { db } from './firebase';
 import { collection, getDocs } from 'firebase/firestore';
 
 const isHistoricalLowest = (product) => {
   if (!product || !product.historyPrices || product.historyPrices.length === 0) return false;
+  // 僅有1筆價格紀錄，不顯示歷史最低價
+  if (product.historyPrices.length <= 1) return false;
+  // 所有價格都一樣，不顯示歷史最低價
+  const allSame = product.historyPrices.every(hp => hp.price === product.historyPrices[0].price);
+  if (allSame) return false;
   const currentPrice = product.minPrice;
   const today = new Date().toISOString().split('T')[0];
   const otherPrices = product.historyPrices
@@ -21,19 +26,95 @@ const isHistoricalLowest = (product) => {
   return product.originPrice && currentPrice < product.originPrice;
 };
 
+const isMenProduct = (p) => {
+  if (!p.sex) return false;
+  const s = p.sex.toLowerCase();
+  return s.includes('男') || s.includes('men') || s.includes('unisex') || s.includes('適穿');
+};
+
+const isWomenProduct = (p) => {
+  if (!p.sex) return false;
+  const s = p.sex.toLowerCase();
+  return s.includes('女') || s.includes('women') || s.includes('unisex') || s.includes('適穿');
+};
+
+const ALL_STANDARD_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL'];
+
+const getProductSizesWithAvailability = (productSizes) => {
+  if (!productSizes || productSizes.length === 0) return [];
+  const upperSizes = productSizes.map(s => s.toUpperCase());
+  const indices = upperSizes
+    .map(s => ALL_STANDARD_SIZES.indexOf(s))
+    .filter(idx => idx !== -1);
+
+  if (indices.length === 0) {
+    return productSizes.map(s => ({ size: s, available: true }));
+  }
+
+  const minIdx = Math.min(...indices);
+  const maxIdx = Math.max(...indices);
+
+  const rangeSizes = ALL_STANDARD_SIZES.slice(minIdx, maxIdx + 1);
+  return rangeSizes.map(s => ({
+    size: s,
+    available: upperSizes.includes(s)
+  }));
+};
+
+const addMockViews = (items) => {
+  return items.map(item => {
+    const codeNum = parseInt(item.code) || 0;
+    const mockViews = (codeNum % 899) + 100;
+    return {
+      ...item,
+      views: item.views || mockViews
+    };
+  });
+};
+
+const formatSizeDisplay = (size) => {
+  if (!size) return '';
+  const s = size.toUpperCase();
+  if (s === 'WSC023' || s === 'MSC023') return '23~25cm';
+  if (s === 'MSC025') return '25~27cm';
+  if (s === 'MSC027') return '27~29cm';
+  if (s === 'SIZ999') return 'ONE SIZE';
+  
+  if (s.startsWith('CMD')) {
+    const numPart = s.substring(3);
+    const num = parseInt(numPart);
+    if (!isNaN(num)) {
+      return `${num}cm`;
+    }
+  }
+  
+  if (s.startsWith('INS')) {
+    const numPart = s.substring(3);
+    const num = parseInt(numPart);
+    if (!isNaN(num)) {
+      return `${num}inch`;
+    }
+  }
+  
+  return size;
+};
+
 export default function App() {
-  const [products, setProducts] = useState(productsData);
+  const [products, setProducts] = useState(() => addMockViews(productsData));
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('ALL');
   const [sortBy, setSortBy] = useState('default'); // 'default', 'priceAsc', 'priceDesc', 'discountDesc'
   const [selectedSize, setSelectedSize] = useState('ALL');
+  const [selectedSex, setSelectedSex] = useState('ALL'); // 'ALL', 'men', 'women'
 
   // 詳情頁商品 Modal
   const [activeProduct, setActiveProduct] = useState(null);
   const [selectedModalColor, setSelectedModalColor] = useState(null);
   // 加載更多商品控制
   const [visibleCount, setVisibleCount] = useState(24);
+  // 手機版漢堡選單
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   // 我的最愛 / 追蹤清單
   const [favorites, setFavorites] = useState(() => {
     const saved = localStorage.getItem('uq_favorites');
@@ -52,7 +133,7 @@ export default function App() {
           });
           if (items.length > 0) {
             console.log(`Successfully loaded ${items.length} products from Firestore.`);
-            setProducts(items);
+            setProducts(addMockViews(items));
           }
         }
       } catch (error) {
@@ -81,15 +162,15 @@ export default function App() {
   // 類別清單
   const categories = [
     { code: 'ALL', name: '全部商品' },
-    { code: 'men', name: '男裝 👔' },
-    { code: 'women', name: '女裝 👗' },
-    { code: 'new_arrival', name: '新品上市 🆕' },
+    { code: 'men', name: '男裝' },
+    { code: 'women', name: '女裝' },
+    { code: 'new_arrival', name: '新品上市' },
     { code: 'tops', name: '上衣類' },
     { code: 'bottoms', name: '下裝類' },
     { code: 'outerwear', name: '外套類' },
-    { code: 'limited_price', name: '限定價格 ⏳' },
-    { code: 'sale_price', name: '特價商品 🔴' },
-    { code: 'favorites', name: '我的追蹤 ⭐' }
+    { code: 'limited_price', name: '限定價格' },
+    { code: 'sale_price', name: '特價商品' },
+    { code: 'favorites', name: '我的追蹤' }
   ];
 
   // 所有的尺寸
@@ -112,19 +193,19 @@ export default function App() {
     // 2. 類別篩選
     if (selectedCategory !== 'ALL') {
       if (selectedCategory === 'men') {
-        result = result.filter(p => p.sex === '男裝' || p.sex === 'MEN' || p.sex === 'men');
+        result = result.filter(p => isMenProduct(p));
       } else if (selectedCategory === 'women') {
-        result = result.filter(p => p.sex === '女裝' || p.sex === 'WOMEN' || p.sex === 'women');
+        result = result.filter(p => isWomenProduct(p));
       } else if (selectedCategory === 'new_arrival') {
         result = result.filter(p => p.isNewArrival === true);
       } else if (selectedCategory === 'favorites') {
         result = result.filter(p => favorites.includes(p.id));
       } else if (selectedCategory === 'limited_price') {
-        result = result.filter(p => 
+        result = result.filter(p =>
           p.salesPromotionLabel && p.salesPromotionLabel.some(l => l.labelText && l.labelText.includes('限定價格'))
         );
       } else if (selectedCategory === 'sale_price') {
-        result = result.filter(p => 
+        result = result.filter(p =>
           p.salesPromotionLabel && p.salesPromotionLabel.some(l => l.labelText && l.labelText.includes('特價商品'))
         );
       } else if (selectedCategory === 'tops') {
@@ -133,6 +214,15 @@ export default function App() {
         result = result.filter(p => p.name.includes('褲'));
       } else if (selectedCategory === 'outerwear') {
         result = result.filter(p => p.name.includes('外套') || p.name.includes('大衣') || p.name.includes('連帽'));
+      }
+    }
+
+    // 2.5. 對象/性別篩選 (可與特價、限定價格等疊加)
+    if (selectedSex !== 'ALL') {
+      if (selectedSex === 'men') {
+        result = result.filter(p => isMenProduct(p));
+      } else if (selectedSex === 'women') {
+        result = result.filter(p => isWomenProduct(p));
       }
     }
 
@@ -156,19 +246,36 @@ export default function App() {
     }
 
     return result;
-  }, [products, searchTerm, selectedCategory, selectedSize, sortBy, favorites]);
+  }, [products, searchTerm, selectedCategory, selectedSize, sortBy, selectedSex, favorites]);
+
+  // 首頁精選三大區塊資料篩選
+  const topViewsProducts = useMemo(() => {
+    return [...products].sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 10);
+  }, [products]);
+
+  const menNewArrivals = useMemo(() => {
+    return products.filter(p => isMenProduct(p) && p.isNewArrival).slice(0, 10);
+  }, [products]);
+
+  const womenNewArrivals = useMemo(() => {
+    return products.filter(p => isWomenProduct(p) && p.isNewArrival).slice(0, 10);
+  }, [products]);
 
   // 當搜尋條件改變時重置顯示數量
   useEffect(() => {
     setVisibleCount(24);
-  }, [searchTerm, selectedCategory, selectedSize, sortBy]);
+  }, [searchTerm, selectedCategory, selectedSize, sortBy, selectedSex]);
 
   const loadMore = () => {
     setVisibleCount(prev => prev + 24);
   };
 
   const handleProductClick = (product) => {
-    setActiveProduct(product);
+    // 點擊時 views + 1
+    setProducts(prevProducts =>
+      prevProducts.map(p => p.id === product.id ? { ...p, views: (p.views || 0) + 1 } : p)
+    );
+    setActiveProduct({ ...product, views: (product.views || 0) + 1 });
     setSelectedModalColor(product.colors && product.colors.length > 0 ? product.colors[0] : null);
   };
 
@@ -177,130 +284,155 @@ export default function App() {
     setSelectedModalColor(null);
   };
 
+  const isFeaturedHome = selectedCategory === 'ALL' && selectedSex === 'ALL' && searchTerm.trim() === '';
+
   return (
     <div style={styles.app}>
-      <Header />
+      <Header
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        selectedCategory={selectedCategory}
+        setSelectedCategory={setSelectedCategory}
+        selectedSex={selectedSex}
+        setSelectedSex={setSelectedSex}
+        favorites={favorites}
+      />
 
       {/* 主體內容 */}
       <main style={styles.main}>
-        {/* 搜尋與過濾面板 */}
-        <section style={styles.searchPanel}>
-          <div style={styles.searchRow}>
-            <div style={styles.searchContainer}>
-              <Search size={20} style={styles.searchIcon} />
-              <input
-                type="text"
-                placeholder="請輸入名稱或貨號"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="input-field"
-                style={{ paddingLeft: '44px' }}
-              />
-              {searchTerm && (
-                <button onClick={() => setSearchTerm('')} style={styles.clearBtn}>
-                  <X size={18} />
-                </button>
-              )}
-            </div>
+        {loading ? (
+          // 骨架屏載入狀態
+          <div className="product-grid">
+            {Array.from({ length: 12 }).map((_, i) => (
+              <SkeletonCard key={i} />
+            ))}
           </div>
-
-          {/* 篩選按鈕列 */}
-          <div style={styles.filterRow}>
-            {/* 類別切換 */}
-            <div style={styles.tabContainer}>
-              {categories.map(cat => (
-                <button
-                  key={cat.code}
-                  onClick={() => setSelectedCategory(cat.code)}
-                  style={{
-                    ...styles.tab,
-                    borderBottom: selectedCategory === cat.code ? '2px solid var(--uq-red)' : '2px solid transparent',
-                    color: selectedCategory === cat.code ? 'var(--uq-red)' : 'var(--text-secondary)',
-                    fontWeight: selectedCategory === cat.code ? 'bold' : 'normal'
-                  }}
-                >
-                  {cat.name}
-                </button>
-              ))}
-            </div>
-
-            {/* 進階過濾器 */}
-            <div style={styles.filtersRight}>
-              {/* 排序 */}
-              <div style={styles.selectWrapper}>
-                <ArrowUpDown size={14} style={styles.selectIcon} />
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  style={styles.select}
-                >
-                  <option value="default">預設排序</option>
-                  <option value="priceAsc">價格低至高</option>
-                  <option value="priceDesc">價格高至低</option>
-                  <option value="discountDesc">折扣幅度最高</option>
-                </select>
-              </div>
-
-              {/* 尺寸 */}
-              <div style={styles.selectWrapper}>
-                <SlidersHorizontal size={14} style={styles.selectIcon} />
-                <select
-                  value={selectedSize}
-                  onChange={(e) => setSelectedSize(e.target.value)}
-                  style={styles.select}
-                >
-                  <option value="ALL">全部尺寸</option>
-                  {sizes.slice(1).map(s => (
-                    <option key={s} value={s}>{s}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* 商品展示區 */}
-        <section style={styles.resultsSection}>
-          <div style={styles.resultsCount}>
-            共找到 <span style={{ color: 'var(--uq-red)', fontWeight: 'bold' }}>{filteredProducts.length}</span> 件商品
-          </div>
-
-          {loading ? (
-            // 骨架屏載入狀態
-            <div className="product-grid">
-              {Array.from({ length: 12 }).map((_, i) => (
-                <SkeletonCard key={i} />
-              ))}
-            </div>
-          ) : filteredProducts.length === 0 ? (
-            <div style={styles.noResult}>
-              <TrendingDown size={48} style={{ color: 'var(--text-light)', marginBottom: 12 }} />
-              <p>沒有找到符合條件的商品，請嘗試其他關鍵字。</p>
-            </div>
-          ) : (
-            // 實際商品列表
-            <>
-              <div className="product-grid">
-                {filteredProducts.slice(0, visibleCount).map(product => (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                    onClick={handleProductClick}
-                  />
+        ) : isFeaturedHome ? (
+          // 精選首頁模式：三大精選區塊橫向滾動
+          <div style={styles.featuredHome}>
+            {/* 區塊 1：熱門瀏覽 TOP 10 */}
+            <div style={{ marginBottom: 32 }}>
+              <h3 className="section-title">熱門瀏覽 TOP 10</h3>
+              <div className="horizontal-scroll-container">
+                {topViewsProducts.map(product => (
+                  <div key={`top-${product.id}`} className="horizontal-scroll-item">
+                    <ProductCard product={product} onClick={handleProductClick} />
+                  </div>
                 ))}
               </div>
+            </div>
 
-              {/* 載入更多 */}
-              {visibleCount < filteredProducts.length && (
-                <div style={styles.loadMoreContainer}>
-                  <button onClick={loadMore} className="btn" style={styles.loadMoreBtn}>
-                    查看更多商品 ({filteredProducts.length - visibleCount} 件)
-                  </button>
+            {/* 區塊 2：男裝新品上市 TOP 10 */}
+            <div style={{ marginBottom: 32 }}>
+              <h3 className="section-title">男裝最新商品</h3>
+              {menNewArrivals.length === 0 ? (
+                <div style={styles.emptyFeatured}>暫無新品上市資料</div>
+              ) : (
+                <div className="horizontal-scroll-container">
+                  {menNewArrivals.map(product => (
+                    <div key={`men-new-${product.id}`} className="horizontal-scroll-item">
+                      <ProductCard product={product} onClick={handleProductClick} />
+                    </div>
+                  ))}
                 </div>
               )}
-            </>
-          )}
-        </section>
+            </div>
+
+            {/* 區塊 3：女裝新品上市 TOP 10 */}
+            <div>
+              <h3 className="section-title">女裝最新商品</h3>
+              {womenNewArrivals.length === 0 ? (
+                <div style={styles.emptyFeatured}>暫無新品上市資料</div>
+              ) : (
+                <div className="horizontal-scroll-container">
+                  {womenNewArrivals.map(product => (
+                    <div key={`women-new-${product.id}`} className="horizontal-scroll-item">
+                      <ProductCard product={product} onClick={handleProductClick} />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          // 商品列表模式
+          <section style={styles.resultsSection}>
+            {/* 列表頂部篩選資訊與排序/尺寸組合列 */}
+            <div style={styles.resultsHeaderRow}>
+              <div style={styles.resultsCount}>
+                {selectedCategory === 'favorites' ? '我的追蹤清單' : (
+                  <>
+                    篩選結果 ({selectedSex === 'men' ? '男裝' : selectedSex === 'women' ? '女裝' : '全部'})
+                    {selectedCategory !== 'ALL' && ` - ${categories.find(c => c.code === selectedCategory)?.name}`}
+                    {searchTerm && ` - 搜尋: "${searchTerm}"`}
+                  </>
+                )}
+                ：共找到 <span style={{ color: 'var(--uq-red)', fontWeight: 'bold' }}>{filteredProducts.length}</span> 件商品
+              </div>
+
+              {/* 排序與尺寸進階篩選 */}
+              <div style={styles.listFilters}>
+                {/* 排序 */}
+                <div style={styles.selectWrapper}>
+                  <ArrowUpDown size={14} style={styles.selectIcon} />
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    style={styles.select}
+                  >
+                    <option value="default">預設排序</option>
+                    <option value="priceAsc">價格低至高</option>
+                    <option value="priceDesc">價格高至低</option>
+                    <option value="discountDesc">折扣幅度最高</option>
+                  </select>
+                </div>
+
+                {/* 尺寸 */}
+                <div style={styles.selectWrapper}>
+                  <SlidersHorizontal size={14} style={styles.selectIcon} />
+                  <select
+                    value={selectedSize}
+                    onChange={(e) => setSelectedSize(e.target.value)}
+                    style={styles.select}
+                  >
+                    <option value="ALL">全部尺寸</option>
+                    {sizes.slice(1).map(s => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {filteredProducts.length === 0 ? (
+              <div style={styles.noResult}>
+                <TrendingDown size={48} style={{ color: 'var(--text-light)', marginBottom: 12 }} />
+                <p>沒有找到符合條件的商品，請嘗試其他關鍵字。</p>
+              </div>
+            ) : (
+              <>
+                <div className="product-grid">
+                  {filteredProducts.slice(0, visibleCount).map(product => (
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      onClick={handleProductClick}
+                    />
+                  ))}
+                </div>
+
+                {/* 載入更多 */}
+                {visibleCount < filteredProducts.length && (
+                  <div style={styles.loadMoreContainer}>
+                    <button onClick={loadMore} className="btn" style={styles.loadMoreBtn}>
+                      查看更多商品 ({filteredProducts.length - visibleCount} 件)
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+          </section>
+        )}
       </main>
 
       {/* 商品詳情 Modal */}
@@ -332,7 +464,7 @@ export default function App() {
               <div className="detail-right">
                 <span style={styles.detailGender}>{activeProduct.sex || '男女適穿'}</span>
                 <h2 style={styles.detailName}>{activeProduct.name}</h2>
-                
+
                 {/* 促銷標籤貼標 */}
                 {(() => {
                   const promoLabels = [
@@ -343,8 +475,8 @@ export default function App() {
                   return (
                     <div style={{ display: 'flex', gap: '6px', margin: '8px 0', flexWrap: 'wrap' }}>
                       {promoLabels.map((label, idx) => (
-                        <span 
-                          key={idx} 
+                        <span
+                          key={idx}
                           style={{
                             backgroundColor: label === '歷史最低價' ? '#8b0000' : 'var(--uq-red)',
                             color: '#ffffff',
@@ -365,6 +497,9 @@ export default function App() {
                 <div style={styles.detailCodeRow}>
                   <span>商品編號: <code>{activeProduct.code}</code></span>
                   <span>官網貨號: <code>{activeProduct.productCode}</code></span>
+                  <span style={{ marginLeft: 'auto', color: 'var(--uq-red)', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span>👁️</span> {activeProduct.views || 0} 次瀏覽
+                  </span>
                 </div>
 
                 <hr style={styles.divider} />
@@ -395,16 +530,24 @@ export default function App() {
                 {/* 尺寸與顏色 */}
                 <div style={styles.metaBox}>
                   <div style={styles.metaRow}>
-                    <strong style={styles.metaLabel}>可用尺寸：</strong>
+                    <strong style={styles.metaLabel}>尺寸：</strong>
                     <div style={styles.tagGroup}>
-                      {activeProduct.sizes.map(s => (
-                        <span key={s} style={styles.sizeTag}>{s}</span>
+                      {getProductSizesWithAvailability(activeProduct.sizes).map(({ size, available }) => (
+                        <span
+                          key={size}
+                          style={{
+                            ...styles.sizeTag,
+                            ...(available ? {} : styles.sizeTagUnavailable)
+                          }}
+                        >
+                          {formatSizeDisplay(size)}
+                        </span>
                       ))}
                     </div>
                   </div>
 
                   <div style={styles.metaRow}>
-                    <strong style={styles.metaLabel}>可用顏色：</strong>
+                    <strong style={styles.metaLabel}>顏色：</strong>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', flex: 1 }}>
                       {activeProduct.colors.map(c => {
                         const isSelected = selectedModalColor && selectedModalColor.code === c.code;
@@ -490,62 +633,30 @@ const styles = {
     padding: '24px',
     backgroundColor: '#fafafa',
   },
-  searchPanel: {
-    backgroundColor: 'var(--bg-white)',
-    border: '1px solid var(--border-color)',
-    borderRadius: '4px',
-    padding: '20px 24px',
-    boxShadow: 'var(--shadow-sm)',
-    marginBottom: '24px',
+  featuredHome: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '16px',
+    gap: '32px',
+    padding: '8px 0',
   },
-  searchRow: {
-    width: '100%',
-  },
-  searchContainer: {
-    position: 'relative',
-    display: 'flex',
-    alignItems: 'center',
-    width: '100%',
-  },
-  searchIcon: {
-    position: 'absolute',
-    left: '16px',
+  emptyFeatured: {
+    padding: '32px',
     color: 'var(--text-light)',
-    pointerEvents: 'none',
+    fontSize: '14px',
+    textAlign: 'center',
+    backgroundColor: 'var(--bg-white)',
+    border: '1px dashed var(--border-color)',
+    borderRadius: '4px',
   },
-  clearBtn: {
-    position: 'absolute',
-    right: '16px',
-    background: 'none',
-    border: 'none',
-    color: 'var(--text-light)',
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-  },
-  filterRow: {
+  resultsHeaderRow: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
     flexWrap: 'wrap',
-    gap: '16px',
+    gap: '12px',
+    marginBottom: '20px',
   },
-  tabContainer: {
-    display: 'flex',
-    gap: '16px',
-  },
-  tab: {
-    background: 'none',
-    border: 'none',
-    padding: '8px 4px',
-    fontSize: '14px',
-    cursor: 'pointer',
-    transition: 'var(--transition-fast)',
-  },
-  filtersRight: {
+  listFilters: {
     display: 'flex',
     gap: '12px',
   },
@@ -578,7 +689,6 @@ const styles = {
   resultsCount: {
     fontSize: '14px',
     color: 'var(--text-secondary)',
-    marginBottom: '12px',
   },
   noResult: {
     padding: '80px 0',
@@ -735,6 +845,14 @@ const styles = {
     border: '1px solid var(--border-color)',
     borderRadius: '2px',
     fontWeight: '500',
+  },
+  sizeTagUnavailable: {
+    color: 'var(--text-light)',
+    backgroundColor: '#f6f6f6',
+    borderColor: '#e8e8e8',
+    textDecoration: 'line-through',
+    opacity: 0.5,
+    cursor: 'not-allowed',
   },
   colorGroup: {
     display: 'flex',
