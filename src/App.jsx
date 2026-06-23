@@ -81,9 +81,12 @@ export default function App() {
   // 類別清單
   const categories = [
     { code: 'ALL', name: '全部商品' },
-    { code: 'tops', name: '上衣類 (T恤/襯衫)' },
-    { code: 'bottoms', name: '下裝類 (長褲/短褲)' },
-    { code: 'outerwear', name: '外套類 (夾克/風衣)' },
+    { code: 'men', name: '男裝 👔' },
+    { code: 'women', name: '女裝 👗' },
+    { code: 'new_arrival', name: '新品上市 🆕' },
+    { code: 'tops', name: '上衣類' },
+    { code: 'bottoms', name: '下裝類' },
+    { code: 'outerwear', name: '外套類' },
     { code: 'limited_price', name: '限定價格 ⏳' },
     { code: 'sale_price', name: '特價商品 🔴' },
     { code: 'favorites', name: '我的追蹤 ⭐' }
@@ -108,7 +111,13 @@ export default function App() {
 
     // 2. 類別篩選
     if (selectedCategory !== 'ALL') {
-      if (selectedCategory === 'favorites') {
+      if (selectedCategory === 'men') {
+        result = result.filter(p => p.sex === '男裝' || p.sex === 'MEN' || p.sex === 'men');
+      } else if (selectedCategory === 'women') {
+        result = result.filter(p => p.sex === '女裝' || p.sex === 'WOMEN' || p.sex === 'women');
+      } else if (selectedCategory === 'new_arrival') {
+        result = result.filter(p => p.isNewArrival === true);
+      } else if (selectedCategory === 'favorites') {
         result = result.filter(p => favorites.includes(p.id));
       } else if (selectedCategory === 'limited_price') {
         result = result.filter(p => 
@@ -253,7 +262,7 @@ export default function App() {
         {/* 商品展示區 */}
         <section style={styles.resultsSection}>
           <div style={styles.resultsCount}>
-            共找到 <span style={{ color: 'var(--uq-red)', fontWeight: 'bold' }}>{filteredProducts.length}</span> 件男裝/男女適穿商品
+            共找到 <span style={{ color: 'var(--uq-red)', fontWeight: 'bold' }}>{filteredProducts.length}</span> 件商品
           </div>
 
           {loading ? (

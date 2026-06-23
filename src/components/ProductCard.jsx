@@ -36,25 +36,14 @@ export default function ProductCard({ product, onClick }) {
 
   return (
     <div style={styles.card} onClick={() => onClick(product)}>
-      {/* 標籤群 */}
-      <div style={styles.badgeContainer}>
-        {isSale && (
+      {/* 降價標籤 (壓在圖片上) */}
+      {isSale && (
+        <div style={styles.saleBadgeOverlay}>
           <span style={styles.saleBadge}>
             降 {formatPrice(discountAmount)}元
           </span>
-        )}
-        {promoLabels.map((label, idx) => (
-          <span 
-            key={idx} 
-            style={{
-              ...styles.promoBadge,
-              backgroundColor: label === '歷史最低價' ? '#8b0000' : 'var(--uq-red)'
-            }}
-          >
-            {label}
-          </span>
-        ))}
-      </div>
+        </div>
+      )}
 
       {/* 商品圖片區 */}
       <div style={styles.imageContainer}>
@@ -73,6 +62,23 @@ export default function ProductCard({ product, onClick }) {
       <div style={styles.infoContainer}>
         <span style={styles.gender}>{product.sex || '男女適穿'}</span>
         <h3 style={styles.name}>{product.shortName}</h3>
+
+        {/* 促銷標籤 (品名下方) */}
+        {promoLabels.length > 0 && (
+          <div style={styles.promoLabelRow}>
+            {promoLabels.map((label, idx) => (
+              <span 
+                key={idx} 
+                style={{
+                  ...styles.promoBadge,
+                  backgroundColor: label === '歷史最低價' ? '#8b0000' : 'var(--uq-red)'
+                }}
+              >
+                {label}
+              </span>
+            ))}
+          </div>
+        )}
         
         {/* 價格區 */}
         <div style={styles.priceContainer}>
@@ -132,13 +138,10 @@ const styles = {
     boxShadow: 'var(--shadow-sm)',
     height: '100%',
   },
-  badgeContainer: {
+  saleBadgeOverlay: {
     position: 'absolute',
     top: '10px',
     left: '10px',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '4px',
     zIndex: 10,
   },
   saleBadge: {
@@ -149,17 +152,19 @@ const styles = {
     fontWeight: 'bold',
     borderRadius: '2px',
     boxShadow: '0 2px 4px rgba(0,0,0,0.15)',
-    alignSelf: 'flex-start',
+  },
+  promoLabelRow: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '4px',
+    marginBottom: '6px',
   },
   promoBadge: {
-    backgroundColor: 'var(--uq-red)',
     color: '#ffffff',
-    padding: '4px 8px',
+    padding: '3px 6px',
     fontSize: '10px',
     fontWeight: 'bold',
     borderRadius: '2px',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.15)',
-    alignSelf: 'flex-start',
   },
   imageContainer: {
     width: '100%',
