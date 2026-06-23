@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "web-crawler": {
+      "source": "starchild-ai-agent/official-skills",
+      "sourceType": "github",
+      "skillPath": "web-crawler/SKILL.md",
+      "computedHash": "b604b6807eb4adc0b96a75387cdac5769b5623789a8dd437ff6f2252e3b5e7fc"
+    }
+  }
+}
