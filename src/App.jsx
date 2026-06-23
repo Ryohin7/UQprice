@@ -5,6 +5,8 @@ import SkeletonCard from './components/SkeletonCard';
 import PriceChart from './components/PriceChart';
 import productsData from './data/products.json';
 import { Search, SlidersHorizontal, ArrowUpDown, X, Heart, ExternalLink, TrendingDown } from 'lucide-react';
+import { db } from './firebase';
+import { collection, getDocs } from 'firebase/firestore';
 
 const isHistoricalLowest = (product) => {
   if (!product || !product.historyPrices || product.historyPrices.length === 0) return false;
@@ -20,6 +22,7 @@ const isHistoricalLowest = (product) => {
 };
 
 export default function App() {
+  const [products, setProducts] = useState(productsData);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('ALL');
@@ -37,12 +40,28 @@ export default function App() {
     return saved ? JSON.parse(saved) : [];
   });
 
-  // 模擬載入骨架屏 (800ms)
+  // 從 Firestore 載入最新商品
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 800);
-    return () => clearTimeout(timer);
+    async function loadFromFirestore() {
+      try {
+        if (db) {
+          const querySnapshot = await getDocs(collection(db, "products"));
+          const items = [];
+          querySnapshot.forEach((doc) => {
+            items.push(doc.data());
+          });
+          if (items.length > 0) {
+            console.log(`Successfully loaded ${items.length} products from Firestore.`);
+            setProducts(items);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load products from Firestore, using offline cache:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadFromFirestore();
   }, []);
 
   // 我的最愛儲存
@@ -75,7 +94,7 @@ export default function App() {
 
   // 0ms 高效記憶體搜尋與篩選
   const filteredProducts = useMemo(() => {
-    let result = [...productsData];
+    let result = [...products];
 
     // 1. 搜尋詞篩選 (品名、貨號)
     if (searchTerm.trim() !== '') {
@@ -128,7 +147,7 @@ export default function App() {
     }
 
     return result;
-  }, [searchTerm, selectedCategory, selectedSize, sortBy, favorites]);
+  }, [products, searchTerm, selectedCategory, selectedSize, sortBy, favorites]);
 
   // 當搜尋條件改變時重置顯示數量
   useEffect(() => {
