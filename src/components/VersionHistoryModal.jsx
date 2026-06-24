@@ -38,8 +38,7 @@ export default function VersionHistoryModal({ versions, onClose }) {
         {/* 標頭 */}
         <div style={styles.header}>
           <div>
-            <h2 style={styles.title}>版本更新歷史</h2>
-            <p style={styles.subtitle}>追蹤 UNIQLO 比價網的成長與迭代歷程</p>
+            <h2 style={styles.title}>版本更新日誌</h2>
           </div>
           <button style={styles.closeBtn} onClick={onClose}>
             <X size={20} />
@@ -58,12 +57,12 @@ export default function VersionHistoryModal({ versions, onClose }) {
                   <div key={v.version} style={styles.timelineItem}>
                     {/* 左側時間軸線與點 */}
                     <div style={styles.timelineLeft}>
-                      <div 
+                      <div
                         style={{
                           ...styles.timelineDot,
                           backgroundColor: badge.color,
                           boxShadow: `0 0 0 4px ${badge.bgColor}`
-                        }} 
+                        }}
                       />
                       {idx !== sortedVersions.length - 1 && <div style={styles.timelineLine} />}
                     </div>
@@ -72,7 +71,7 @@ export default function VersionHistoryModal({ versions, onClose }) {
                     <div style={styles.timelineRight}>
                       <div style={styles.versionHeader}>
                         <span style={styles.versionNumber}>v{v.version}</span>
-                        <span 
+                        <span
                           style={{
                             ...styles.typeBadge,
                             color: badge.color,

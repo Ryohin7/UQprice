@@ -40,22 +40,18 @@ self.addEventListener('fetch', (e) => {
   }
   
   e.respondWith(
-    caches.match(e.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
+    fetch(e.request).then(response => {
+      // 網路請求成功，將最新資源更新到快取中
+      if (response && response.status === 200 && response.type === 'basic') {
+        const responseToCache = response.clone();
+        caches.open(CACHE_NAME).then(cache => {
+          cache.put(e.request, responseToCache);
+        });
       }
-      return fetch(e.request).then(response => {
-        // 如果是本地資源，動態快取它
-        if (response && response.status === 200 && response.type === 'basic') {
-          const responseToCache = response.clone();
-          caches.open(CACHE_NAME).then(cache => {
-            cache.put(e.request, responseToCache);
-          });
-        }
-        return response;
-      }).catch(() => {
-        // 離線且無快取時的 fallback
-      });
+      return response;
+    }).catch(() => {
+      // 網路失敗或離線時，回退使用快取
+      return caches.match(e.request);
     })
   );
 });

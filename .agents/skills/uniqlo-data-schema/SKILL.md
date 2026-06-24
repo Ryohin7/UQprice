@@ -20,7 +20,7 @@ description: UNIQLO 商品資料庫的欄位定義與分類階層邏輯規範，
 | **`omsProductCode`**| String | 訂單管理系統商品代碼 | `item.omsProductCode` |
 | **`name`** | String | 商品完整名稱 | `item.name || item.productName` |
 | **`shortName`** | String | 商品簡短名稱 | `item.shortName || item.productName` |
-| **`size`** | Array | 商品提供的尺寸列表 (已將代碼轉譯為可讀文字) | 對應 API 的 `size` 欄位並透過 `sizeMap` 轉譯 (如 `["S", "M", "L"]`) |
+| **`size`** | Array | 商品提供的尺寸列表 (已將代碼轉譯為可讀文字) | 對應 API 的 `size` 欄位並透過 `sizeMap` 轉譯 (如 `["S", "M", "L"]`)，若為 `CMC110` / `CMA80` 等代碼則提取後方數字轉譯為 `110cm` / `80cm` |
 | **`sizes`** | Array | **[相容欄位]** 與 `size` 相同，維持舊前端運作 | 同上 |
 | **`styleText`** | Array | 商品的所有顏色名稱列表 | `item.styleText` (如 `["00 WHITE", "09 BLACK"]`) |
 | **`chipPic`** | Array | 所有顏色對應的色票圖絕對路徑網址陣列 | 將 `item.chipPic` 相對路徑拼接 `https://www.uniqlo.com/tw` |

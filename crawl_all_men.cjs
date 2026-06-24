@@ -1,4 +1,5 @@
 const fs = require('fs');
+const crypto = require('crypto');
 
 // ========== 設定 ==========
 const CONFIG = {
@@ -44,23 +45,26 @@ const sizeMap = {
 
 function mapSizes(sizeList) {
   if (!sizeList || !Array.isArray(sizeList)) return [];
-  return sizeList.map(s => sizeMap[s] || s);
+  return sizeList.map(s => {
+    const match = s.match(/^CM[A-Za-z]+(\d+)$/);
+    if (match) {
+      return `${match[1]}cm`;
+    }
+    return sizeMap[s] || s;
+  });
 }
 
 // ========== 工具函式 ==========
 
-// 隨機延遲
 function randomDelay(min, max) {
   const ms = Math.floor(Math.random() * (max - min + 1)) + min;
   return new Promise(r => setTimeout(r, ms));
 }
 
-// 隨機 User-Agent
 function randomUA() {
   return USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
 }
 
-// 帶重試的 fetch
 async function safeFetch(url, options, retries = 3) {
   for (let i = 0; i < retries; i++) {
     try {
@@ -85,9 +89,14 @@ async function safeFetch(url, options, retries = 3) {
   return null;
 }
 
+// 產生商品 Hash 供比對使用
+function getProductHash(p) {
+  const data = `${p.name}-${p.minPrice}-${p.originPrice}-${p.mainPic}-${JSON.stringify(p.size)}-${JSON.stringify(p.colors || [])}-${JSON.stringify(p.salesPromotionLabel || [])}-${p.isNew}-${p.isConcessionalRate}-${p.isTimeDoptimal}`;
+  return crypto.createHash('md5').update(data).digest('hex');
+}
+
 // ========== 爬取邏輯 ==========
 
-// 通用爬取函式
 async function crawlCategory(categoryCode, label) {
   const products = [];
   let totalPages = 1;
@@ -98,51 +107,45 @@ async function crawlCategory(categoryCode, label) {
   for (let page = 1; page <= totalPages; page++) {
     console.log(`    Page ${page}/${totalPages}...`);
 
-    try {
-      const res = await safeFetch('https://d.uniqlo.com/tw/p/search/products/by-category', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'User-Agent': randomUA(),
-          'Accept': 'application/json, text/plain, */*',
-          'Accept-Language': 'zh-TW,zh;q=0.9,en-US;q=0.8,en;q=0.7',
-          'Origin': 'https://www.uniqlo.com',
-          'Referer': 'https://www.uniqlo.com/tw/zh_TW/',
-        },
-        body: JSON.stringify({
-          categoryCode,
-          pageInfo: { page, pageSize: CONFIG.pageSize }
-        })
-      });
+    const url = `https://d.uniqlo.com/tw/hmall-sc-service/search/byCategoryId/v2?categoryId=${categoryCode}&price=&color=&size=&unisex=&babyAge=&multiProduct=&flashes=&season=&fit=&material=&identity=&stock=&pageNo=${page}&pageSize=${CONFIG.pageSize}&sort=orderOfCategoryNames&code=&query=&description=&stockFilter=`;
 
-      if (!res || !res.ok) {
-        console.error(`    ❌ Page ${page} failed, status: ${res?.status}`);
+    try {
+      const startTime = Date.now();
+      const res = await safeFetch(url, {
+        headers: {
+          'User-Agent': randomUA(),
+          'Accept': 'application/json',
+          'Referer': 'https://www.uniqlo.com/'
+        }
+      });
+      const elapsed = Date.now() - startTime;
+      console.log(`    ✔ HTTP ${res.status} (${elapsed}ms)`);
+
+      if (!res || res.status !== 200) {
+        console.error(`    ❌ Failed to crawl page ${page}`);
         continue;
       }
 
-      const data = await res.json();
-      const respData = data.resp && data.resp[0];
-      if (!respData) continue;
-
-      if (page === 1 && respData.productSum) {
-        totalPages = Math.ceil(respData.productSum / CONFIG.pageSize);
-        console.log(`    📊 共 ${respData.productSum} 件商品, ${totalPages} 頁`);
+      const json = await res.json();
+      if (!json.success || !json.resp || json.resp.length === 0) {
+        console.log(`    No more data or success is false`);
+        break;
       }
 
-      const list = respData.productList;
-      if (!list || list.length === 0) continue;
+      const rawItems = json.resp[0] || [];
+      const pagination = json.resp[1] || {};
+      totalPages = pagination.totalPages || 1;
 
-      console.log(`    ✅ 取得 ${list.length} 件`);
-      products.push(...list);
+      console.log(`    Found ${rawItems.length} items (Total pages: ${totalPages})`);
+      products.push(...rawItems);
+
       requestCount++;
-
-      // 反封鎖：隨機延遲
-      await randomDelay(CONFIG.minDelay, CONFIG.maxDelay);
-
-      // 每幾頁額外休息
-      if (requestCount % CONFIG.batchSize === 0 && page < totalPages) {
-        console.log(`    💤 批次休息 ${CONFIG.batchPause / 1000}s...`);
-        await new Promise(r => setTimeout(r, CONFIG.batchPause));
+      if (page < totalPages) {
+        await randomDelay(CONFIG.minDelay, CONFIG.maxDelay);
+        if (requestCount % CONFIG.batchSize === 0) {
+          console.log(`    💤 批次休息 ${CONFIG.batchPause / 1000}s...`);
+          await new Promise(r => setTimeout(r, CONFIG.batchPause));
+        }
       }
     } catch (e) {
       console.error(`    ❌ Error page ${page}:`, e.message);
@@ -167,8 +170,8 @@ function parseProduct(item, today) {
     colors.push({
       code,
       name: styleText[index] || '',
-      chipUrl: chipPic[index] ? `https://www.uniqlo.com/tw${chipPic[index]}` : '',
-      largePicUrl: colorPic[index] ? `https://www.uniqlo.com/tw${colorPic[index]}` : ''
+      chipUrl: chipPic[index] || '',
+      largePicUrl: colorPic[index] || ''
     });
   });
 
@@ -210,13 +213,13 @@ function parseProduct(item, today) {
     });
   }
 
-  // 狀態欄位字串轉譯
-  const isNew = (item.isNew === 'Y' || (item.identity && item.identity.includes('new_product'))) ? 'Y' : 'N';
-  const isConcessionalRate = (item.isConcessionalRate === 'Y' || (item.identity && item.identity.includes('concessional_rate'))) ? 'Y' : 'N';
-  const isTimeDoptimal = (item.isTimeDoptimal === 'Y' || (item.identity && item.identity.includes('time_doptimal'))) ? 'Y' : 'N';
+  // 狀態欄位布林值轉譯
+  const isNew = !!(item.isNew === 'Y' || (item.identity && item.identity.includes('new_product')));
+  const isConcessionalRate = !!(item.isConcessionalRate === 'Y' || (item.identity && item.identity.includes('concessional_rate')));
+  const isTimeDoptimal = !!(item.isTimeDoptimal === 'Y' || (item.identity && item.identity.includes('time_doptimal')));
 
-  // 轉換色票絕對路徑
-  const absChipPic = (item.chipPic || []).map(p => p ? `https://www.uniqlo.com/tw${p}` : '');
+  // 轉換色票為相對路徑
+  const relChipPic = (item.chipPic || []).map(p => p || '');
 
   return {
     id: item.productCode || item.code,
@@ -227,20 +230,19 @@ function parseProduct(item, today) {
     name: item.name || item.productName,       // 商品名
     shortName: item.shortName || item.productName,
     size: sizes,                               // 尺寸 (已轉譯尺寸名稱)
-    sizes,                                     // 保留舊 sizes 欄位以相容前端
     styleText: item.styleText || [],          // 顏色名稱陣列
-    chipPic: absChipPic,                       // 色票圖網址陣列
+    chipPic: relChipPic,                       // 色票圖網址陣列
     minPrice: item.minPrice,
     maxPrice: item.maxPrice,
     originPrice: item.originPrice,             // 原價
-    mainPic: item.mainPic ? `https://www.uniqlo.com/tw${item.mainPic}` : '',
+    mainPic: item.mainPic || '',
     sex: item.sex || item.gender,              // 商品性別
     colors,                                    // 保留舊 colors 欄位以相容前端
     salesPromotionLabel,                       // 保留舊促銷標籤以相容前端
     historyPrices,
-    isNew,                                     // Y 新品 N 舊品
-    isConcessionalRate,                        // Y 特價商品
-    isTimeDoptimal,                            // Y 期間限定特價
+    isNew,                                     // 布林值新品
+    isConcessionalRate,                        // 布林值特價商品
+    isTimeDoptimal,                            // 布林值期間限定特價
     timeLimitedBegin: item.timeLimitedBegin || null,
     timeLimitedEnd: item.timeLimitedEnd || null,
     planOnDate: item.planOnDate || null,
@@ -261,32 +263,27 @@ async function crawl() {
   const productMap = new Map();
 
   console.log('╔══════════════════════════════════════╗');
-  console.log('║   UNIQLO 商品爬蟲 v2.0              ║');
-  console.log('║   男裝 + 女裝 + 新品標記            ║');
+  console.log('║   UNIQLO 商品爬蟲 v3.0              ║');
+  console.log('║   增量更新 & 寫入分流優化            ║');
   console.log(`║   ${today}                        ║`);
   console.log('╚══════════════════════════════════════╝\n');
 
-  // ===== Step 1: 爬取全部商品 (男裝 + 女裝) =====
-  console.log('===== Step 1: 爬取全部商品 =====');
+  // 1. 爬取全量分類商品
   for (const cat of CONFIG.categories) {
     const rawList = await crawlCategory(cat.code, cat.label);
+    let count = 0;
     for (const item of rawList) {
       const p = parseProduct(item, today);
-      if (!productMap.has(p.id)) {
-        p.isNewArrival = false;
-        p.active = true;
-        productMap.set(p.id, p);
-      }
+      p.active = true;
+      p.status = 'active';
+      productMap.set(p.id, p);
+      count++;
     }
-    // 分類之間額外休息
-    console.log(`  ⏳ 分類間休息 ${CONFIG.batchPause / 1000}s...\n`);
-    await new Promise(r => setTimeout(r, CONFIG.batchPause));
+    console.log(`  ✔ [${cat.label}] 載入 ${count} 件商品`);
+    await randomDelay(CONFIG.minDelay, CONFIG.maxDelay);
   }
 
-  console.log(`📊 全部商品（去重後）：${productMap.size} 件\n`);
-
-  // ===== Step 2: 爬取新品，標記 isNewArrival =====
-  console.log('===== Step 2: 爬取新品列表 =====');
+  // 2. 爬取新品標記
   let totalNewCount = 0;
   for (const cat of CONFIG.newArrivals) {
     const rawList = await crawlCategory(cat.code, cat.label);
@@ -297,18 +294,16 @@ async function crawl() {
         productMap.get(pId).isNewArrival = true;
         newCount++;
       } else {
-        // 新品不在全部商品裡，也加進去
         const p = parseProduct(item, today);
         p.isNewArrival = true;
         p.active = true;
+        p.status = 'active';
         productMap.set(pId, p);
         newCount++;
       }
     }
     totalNewCount += newCount;
     console.log(`  🆕 [${cat.label}] 標記 ${newCount} 件為新品`);
-
-    // 分類之間額外休息
     await new Promise(r => setTimeout(r, CONFIG.batchPause));
   }
 
@@ -317,10 +312,9 @@ async function crawl() {
 
   const allProducts = Array.from(productMap.values());
 
-  // 儲存本地 JSON
+  // 儲存本地 JSON (供備份)
   fs.writeFileSync(CONFIG.outputPath, JSON.stringify(allProducts, null, 2));
-  fs.writeFileSync(CONFIG.localJsonPath, JSON.stringify(allProducts, null, 2));
-  console.log('💾 JSON 已儲存');
+  console.log('💾 本地 JSON 已儲存備份');
 
   // ===== Step 3: 同步到 Firestore =====
   await syncToFirestore(allProducts);
@@ -332,7 +326,7 @@ async function crawl() {
 // ========== Firestore 同步 ==========
 
 async function syncToFirestore(products) {
-  console.log('\n===== Step 3: 同步至 Firestore =====');
+  console.log('\n===== Step 3: 增量同步至 Firestore =====');
   try {
     // 載入環境變數
     if (fs.existsSync(CONFIG.envPath)) {
@@ -346,7 +340,7 @@ async function syncToFirestore(products) {
     }
 
     const { initializeApp } = await import('firebase/app');
-    const { getFirestore, doc, setDoc, getDoc } = await import('firebase/firestore');
+    const { getFirestore, doc, setDoc, getDoc, getDocs, collection, writeBatch } = await import('firebase/firestore');
 
     const firebaseConfig = {
       apiKey: process.env.VITE_FIREBASE_API_KEY,
@@ -361,17 +355,93 @@ async function syncToFirestore(products) {
     const db = getFirestore(app);
 
     const today = new Date().toISOString().split('T')[0];
-    let count = 0;
+    
+    // A. 抓取資料庫中目前所有 active 商品 ID 集合，做下架比對
+    console.log('  🔍 讀取資料庫現有商品列表...');
+    const dbActiveIds = new Set();
+    const dbHashMap = new Map(); // id -> hash
+    
+    const productsSnapshot = await getDocs(collection(db, 'products'));
+    productsSnapshot.forEach(docSnap => {
+      const data = docSnap.data();
+      if (data.status === 'active' || data.active === true) {
+        dbActiveIds.add(docSnap.id);
+      }
+      if (data.hash) {
+        dbHashMap.set(docSnap.id, data.hash);
+      }
+    });
+    console.log(`  🔍 目前線上 active 商品數: ${dbActiveIds.size}`);
+
+    let createdCount = 0;
+    let updatedCount = 0;
+    let unchangedCount = 0;
+    let expiredCount = 0;
+
+    // B. 分批寫入 (Batch Size 500)
+    let batch = writeBatch(db);
+    let batchOpCount = 0;
+    
+    const commitBatchIfNeeded = async (force = false) => {
+      if (batchOpCount >= 400 || (force && batchOpCount > 0)) {
+        console.log(`  📤 正在提交寫入批次 (${batchOpCount} 項變更)...`);
+        await batch.commit();
+        batch = writeBatch(db);
+        batchOpCount = 0;
+      }
+    };
+
+    // 儲存期間限定商品的快速索引清單
+    const campaignProducts = [];
 
     for (const p of products) {
       const docRef = doc(db, 'products', p.id);
-      let historyPrices = p.historyPrices;
+      const priceDocRef = doc(db, 'product_prices', p.id);
+      
+      const newHash = getProductHash(p);
+      const oldHash = dbHashMap.get(p.id);
 
-      // 合併歷史價格
+      // 檢查是否為期間限定特價商品
+      const isCampaign = p.isTimeDoptimal === true || 
+        (p.salesPromotionLabel && p.salesPromotionLabel.some(l => l.labelText && l.labelText.includes('限定價格')));
+      
+      if (isCampaign) {
+        campaignProducts.push({
+          id: p.id,
+          ProductId: p.ProductId,
+          productCode: p.productCode,
+          code: p.code,
+          name: p.name,
+          shortName: p.shortName,
+          minPrice: p.minPrice,
+          maxPrice: p.maxPrice,
+          originPrice: p.originPrice,
+          mainPic: p.mainPic,
+          sex: p.sex,
+          size: p.size,
+          salesPromotionLabel: p.salesPromotionLabel,
+          isTimeDoptimal: p.isTimeDoptimal,
+          timeLimitedBegin: p.timeLimitedBegin,
+          timeLimitedEnd: p.timeLimitedEnd
+        });
+      }
+
+      // 從 active 集合中標記為已處理
+      dbActiveIds.delete(p.id);
+
+      // C. 檢查商品 Hash 是否改變
+      if (oldHash && oldHash === newHash) {
+        // Hash 相同，略過更新主商品，不產生寫入成本
+        unchangedCount++;
+        continue;
+      }
+
+      // Hash 不同，合併歷史價格並寫入
+      let historyPrices = p.historyPrices || [{ date: today, price: p.minPrice }];
       try {
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          const existing = docSnap.data();
+        const priceDocSnap = await getDoc(priceDocRef);
+        if (priceDocSnap.exists()) {
+          const existing = priceDocSnap.data();
           if (existing.historyPrices && Array.isArray(existing.historyPrices)) {
             historyPrices = existing.historyPrices;
             const todayRecord = historyPrices.find(h => h.date === today);
@@ -384,17 +454,104 @@ async function syncToFirestore(products) {
         }
       } catch (e) { /* ignore */ }
 
-      p.historyPrices = historyPrices;
-      await setDoc(docRef, p);
-      count++;
-      if (count % 100 === 0 || count === products.length) {
-        console.log(`  📤 已同步 ${count}/${products.length}`);
+      // 計算是否為歷史最低價
+      let isLowest = false;
+      if (historyPrices && historyPrices.length > 1) {
+        const allSame = historyPrices.every(hp => hp.price === historyPrices[0].price);
+        if (!allSame) {
+          const otherPrices = historyPrices.filter(hp => hp.date !== today).map(hp => hp.price);
+          if (otherPrices.length > 0) {
+            isLowest = p.minPrice < Math.min(...otherPrices);
+          }
+        }
+      }
+      
+      // 更新屬性
+      p.isHistoricalLowest = isLowest;
+      p.hash = newHash;
+      p.updatedAt = Date.now();
+
+      // 1. 同步寫入歷史價格集合
+      batch.set(priceDocRef, { id: p.id, historyPrices });
+      batchOpCount++;
+
+      // 2. 移除商品 doc 中的 historyPrices，避免主商品臃腫
+      delete p.historyPrices;
+
+      // 3. 過濾掉所有 null 與 undefined 值，避免儲存無效鍵名佔用空間
+      Object.keys(p).forEach(key => {
+        if (p[key] === null || p[key] === undefined) {
+          delete p[key];
+        }
+      });
+
+      // 4. 同步寫入主商品集合
+      batch.set(docRef, p);
+      batchOpCount++;
+
+      if (oldHash) {
+        updatedCount++;
+      } else {
+        createdCount++;
+      }
+
+      await commitBatchIfNeeded();
+    }
+
+    // D. 處理下架商品 (在資料庫中為 active 但本次沒爬到的商品)
+    if (dbActiveIds.size > 0) {
+      console.log(`  🍂 偵測到 ${dbActiveIds.size} 件商品下架，正在將狀態更新為 expired...`);
+      for (const expiredId of dbActiveIds) {
+        const expiredRef = doc(db, 'products', expiredId);
+        batch.update(expiredRef, { 
+          active: false, 
+          status: 'expired',
+          updatedAt: Date.now() 
+        });
+        batchOpCount++;
+        expiredCount++;
+        await commitBatchIfNeeded();
       }
     }
 
-    console.log(`\n✅ Firestore 同步完成，共 ${count} 件`);
+    // E. 建立/更新期間限定商品的獨立快速索引
+    console.log(`  ⭐ 建立期間限定商品索引 (${campaignProducts.length} 件)...`);
+    const campaignRef = doc(db, 'campaign_products', 'current');
+    batch.set(campaignRef, {
+      updatedAt: Date.now(),
+      products: campaignProducts
+    });
+    batchOpCount++;
+
+    // F. 寫入同步日誌
+    const dateStr = today.replace(/-/g, '');
+    const logRef = doc(db, 'system', `sync_logs_${dateStr}`);
+    batch.set(logRef, {
+      date: today,
+      total: products.length,
+      created: createdCount,
+      updated: updatedCount,
+      unchanged: unchangedCount,
+      expired: expiredCount,
+      status: 'success',
+      duration: ((Date.now() - startTime) / 1000),
+      timestamp: Date.now()
+    });
+    batchOpCount++;
+
+    // 提交剩餘的所有變更
+    await commitBatchIfNeeded(true);
+
+    console.log('╔══════════════════════════════════════╗');
+    console.log('║   Firestore 同步報告                  ║');
+    console.log(`║   - 新增: ${createdCount} 件`);
+    console.log(`║   - 更新: ${updatedCount} 件`);
+    console.log(`║   - 未變: ${unchangedCount} 件 (已略過寫入)`);
+    console.log(`║   - 下架: ${expiredCount} 件`);
+    console.log('╚══════════════════════════════════════╝\n');
+
   } catch (e) {
-    console.error('❌ Firestore 同步失敗:', e.message);
+    console.error('❌ Firestore 增量同步失敗:', e);
   }
 }
 

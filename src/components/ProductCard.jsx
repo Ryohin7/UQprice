@@ -7,21 +7,7 @@ export function formatPrice(price) {
 }
 
 const isHistoricalLowest = (product) => {
-  if (!product.historyPrices || product.historyPrices.length === 0) return false;
-  // 僅有1筆價格紀錄，不顯示歷史最低價
-  if (product.historyPrices.length <= 1) return false;
-  // 所有價格都一樣，不顯示歷史最低價
-  const allSame = product.historyPrices.every(hp => hp.price === product.historyPrices[0].price);
-  if (allSame) return false;
-  const currentPrice = product.minPrice;
-  const today = new Date().toISOString().split('T')[0];
-  const otherPrices = product.historyPrices
-    .filter(hp => hp.date !== today)
-    .map(hp => hp.price);
-  if (otherPrices.length > 0) {
-    return currentPrice < Math.min(...otherPrices);
-  }
-  return product.originPrice && currentPrice < product.originPrice;
+  return product.isHistoricalLowest === true;
 };
 
 export default function ProductCard({ product, onClick }) {
@@ -53,7 +39,7 @@ export default function ProductCard({ product, onClick }) {
       {/* 商品圖片區 */}
       <div style={styles.imageContainer}>
         <img 
-          src={displayPic} 
+          src={displayPic ? (displayPic.startsWith('http') ? displayPic : `https://www.uniqlo.com/tw${displayPic}`) : ''} 
           alt={product.name} 
           style={styles.image} 
           loading="lazy"
@@ -111,7 +97,7 @@ export default function ProductCard({ product, onClick }) {
                   onClick={() => setSelectedColor(c)}
                   style={{
                     ...styles.colorCircle,
-                    backgroundImage: c.chipUrl ? `url(${c.chipUrl})` : 'none',
+                    backgroundImage: c.chipUrl ? `url(${c.chipUrl.startsWith('http') ? c.chipUrl : `https://www.uniqlo.com/tw${c.chipUrl}`})` : 'none',
                     backgroundColor: '#eeeeee',
                     border: isSelected ? '2px solid #e71f19' : '1px solid #dddddd',
                     transform: isSelected ? 'scale(1.15)' : 'scale(1)'

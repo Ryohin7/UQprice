@@ -72,7 +72,7 @@ export default function Header({
       <header style={styles.header}>
         {/* 極簡純文字 Logo */}
         <div className="desktop-logo" style={styles.logoContainer} onClick={handleLogoClick}>
-          <span style={styles.logoTextTitle}>快速查價</span>
+          <span style={styles.logoTextTitle}>UG快速查價</span>
         </div>
 
         {/* 桌面端導航選單 */}
@@ -219,24 +219,21 @@ export default function Header({
             </button>
           )}
 
-          {/* 後台管理 / 返回首頁按鈕 - 僅桌面版顯示 */}
-          {setCurrentView && (
+          {/* 返回首頁按鈕 - 僅在後台視圖顯示 */}
+          {currentView === 'admin' && (
             <button
               onClick={() => {
-                setCurrentView(currentView === 'home' ? 'admin' : 'home');
-                setSearchTerm('');
-                setSelectedCategory('ALL');
-                setSelectedSex('ALL');
+                window.location.href = '/';
               }}
               style={{
                 ...styles.adminBtn,
-                color: currentView === 'admin' ? 'var(--uq-red)' : 'var(--text-primary)',
-                backgroundColor: currentView === 'admin' ? 'rgba(231,31,25,0.04)' : 'transparent',
+                color: 'var(--text-primary)',
+                backgroundColor: 'transparent',
               }}
               className="desktop-admin-btn"
             >
               <User size={18} />
-              <span style={styles.favText} className="fav-text-span">{currentView === 'home' ? '後台管理' : '返回首頁'}</span>
+              <span style={styles.favText} className="fav-text-span">返回首頁</span>
             </button>
           )}
 
@@ -249,227 +246,225 @@ export default function Header({
             <Menu size={22} />
           </button>
         </div>
-      </header>
+      </header >
 
       {/* 行動端 Drawer 側滑菜單 */}
-      {mobileDrawerOpen && (
-        <>
-          <div className="drawer-overlay" onClick={() => setMobileDrawerOpen(false)} />
-          <div className={`mobile-drawer ${mobileDrawerOpen ? 'open' : ''}`}>
-            <div className="drawer-header">
-              <span className="drawer-title">選單與商品分類</span>
-              <button className="drawer-close" onClick={() => setMobileDrawerOpen(false)}>
-                <X size={20} />
-              </button>
-            </div>
+      {
+        mobileDrawerOpen && (
+          <>
+            <div className="drawer-overlay" onClick={() => setMobileDrawerOpen(false)} />
+            <div className={`mobile-drawer ${mobileDrawerOpen ? 'open' : ''}`}>
+              <div className="drawer-header">
+                <span className="drawer-title">選單與商品分類</span>
+                <button className="drawer-close" onClick={() => setMobileDrawerOpen(false)}>
+                  <X size={20} />
+                </button>
+              </div>
 
-            <div className="drawer-menu">
-              {/* 男裝分類 */}
-              <div className="accordion-section">
-                <div
-                  className="accordion-title"
-                  onClick={() => setMenAccordionOpen(!menAccordionOpen)}
-                >
-                  <span>男裝 MENS</span>
-                  <ChevronDown
-                    size={16}
-                    style={{
-                      transform: menAccordionOpen ? 'rotate(180deg)' : 'rotate(0)',
-                      transition: 'transform 0.2s'
-                    }}
-                  />
-                </div>
-                {menAccordionOpen && (
-                  <div className="accordion-content">
-                    {subCategories.map(sub => (
-                      <div
-                        key={`mob-men-${sub.code}`}
-                        className="accordion-item-link"
-                        onClick={() => {
-                          handleCategorySelect('men', sub.code);
-                          setMobileDrawerOpen(false);
-                        }}
-                        style={{
-                          color: selectedSex === 'men' && selectedCategory === sub.code ? 'var(--uq-red)' : 'var(--text-secondary)',
-                          fontWeight: selectedSex === 'men' && selectedCategory === sub.code ? 'bold' : 'normal'
-                        }}
-                      >
-                        {sub.code === 'ALL' ? '全部男裝' : sub.name}
-                      </div>
-                    ))}
+              <div className="drawer-menu">
+                {/* 男裝分類 */}
+                <div className="accordion-section">
+                  <div
+                    className="accordion-title"
+                    onClick={() => setMenAccordionOpen(!menAccordionOpen)}
+                  >
+                    <span>男裝 MENS</span>
+                    <ChevronDown
+                      size={16}
+                      style={{
+                        transform: menAccordionOpen ? 'rotate(180deg)' : 'rotate(0)',
+                        transition: 'transform 0.2s'
+                      }}
+                    />
                   </div>
-                )}
-              </div>
-
-              {/* 女裝分類 */}
-              <div className="accordion-section">
-                <div
-                  className="accordion-title"
-                  onClick={() => setWomenAccordionOpen(!womenAccordionOpen)}
-                >
-                  <span>女裝 WOMENS</span>
-                  <ChevronDown
-                    size={16}
-                    style={{
-                      transform: womenAccordionOpen ? 'rotate(180deg)' : 'rotate(0)',
-                      transition: 'transform 0.2s'
-                    }}
-                  />
+                  {menAccordionOpen && (
+                    <div className="accordion-content">
+                      {subCategories.map(sub => (
+                        <div
+                          key={`mob-men-${sub.code}`}
+                          className="accordion-item-link"
+                          onClick={() => {
+                            handleCategorySelect('men', sub.code);
+                            setMobileDrawerOpen(false);
+                          }}
+                          style={{
+                            color: selectedSex === 'men' && selectedCategory === sub.code ? 'var(--uq-red)' : 'var(--text-secondary)',
+                            fontWeight: selectedSex === 'men' && selectedCategory === sub.code ? 'bold' : 'normal'
+                          }}
+                        >
+                          {sub.code === 'ALL' ? '全部男裝' : sub.name}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                {womenAccordionOpen && (
-                  <div className="accordion-content">
-                    {subCategories.map(sub => (
-                      <div
-                        key={`mob-women-${sub.code}`}
-                        className="accordion-item-link"
-                        onClick={() => {
-                          handleCategorySelect('women', sub.code);
-                          setMobileDrawerOpen(false);
-                        }}
-                        style={{
-                          color: selectedSex === 'women' && selectedCategory === sub.code ? 'var(--uq-red)' : 'var(--text-secondary)',
-                          fontWeight: selectedSex === 'women' && selectedCategory === sub.code ? 'bold' : 'normal'
-                        }}
-                      >
-                        {sub.code === 'ALL' ? '全部女裝' : sub.name}
-                      </div>
-                    ))}
+
+                {/* 女裝分類 */}
+                <div className="accordion-section">
+                  <div
+                    className="accordion-title"
+                    onClick={() => setWomenAccordionOpen(!womenAccordionOpen)}
+                  >
+                    <span>女裝 WOMENS</span>
+                    <ChevronDown
+                      size={16}
+                      style={{
+                        transform: womenAccordionOpen ? 'rotate(180deg)' : 'rotate(0)',
+                        transition: 'transform 0.2s'
+                      }}
+                    />
                   </div>
-                )}
-              </div>
- 
-              {/* 童裝分類 */}
-              <div className="accordion-section">
-                <div
-                  className="accordion-title"
-                  onClick={() => setKidsAccordionOpen(!kidsAccordionOpen)}
-                >
-                  <span>童裝 KIDS</span>
-                  <ChevronDown
-                     size={16}
-                     style={{
-                       transform: kidsAccordionOpen ? 'rotate(180deg)' : 'rotate(0)',
-                       transition: 'transform 0.2s'
-                     }}
-                  />
+                  {womenAccordionOpen && (
+                    <div className="accordion-content">
+                      {subCategories.map(sub => (
+                        <div
+                          key={`mob-women-${sub.code}`}
+                          className="accordion-item-link"
+                          onClick={() => {
+                            handleCategorySelect('women', sub.code);
+                            setMobileDrawerOpen(false);
+                          }}
+                          style={{
+                            color: selectedSex === 'women' && selectedCategory === sub.code ? 'var(--uq-red)' : 'var(--text-secondary)',
+                            fontWeight: selectedSex === 'women' && selectedCategory === sub.code ? 'bold' : 'normal'
+                          }}
+                        >
+                          {sub.code === 'ALL' ? '全部女裝' : sub.name}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                {kidsAccordionOpen && (
-                  <div className="accordion-content">
-                    {subCategories.map(sub => (
-                      <div
-                        key={`mob-kids-${sub.code}`}
-                        className="accordion-item-link"
-                        onClick={() => {
-                          handleCategorySelect('kids', sub.code);
-                          setMobileDrawerOpen(false);
-                        }}
-                        style={{
-                          color: selectedSex === 'kids' && selectedCategory === sub.code ? 'var(--uq-red)' : 'var(--text-secondary)',
-                          fontWeight: selectedSex === 'kids' && selectedCategory === sub.code ? 'bold' : 'normal'
-                        }}
-                      >
-                        {sub.code === 'ALL' ? '全部童裝' : sub.name}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
 
-              {/* 嬰幼兒分類 */}
-              <div className="accordion-section">
-                <div
-                  className="accordion-title"
-                  onClick={() => setBabyAccordionOpen(!babyAccordionOpen)}
-                >
-                  <span>嬰幼兒 BABY</span>
-                  <ChevronDown
-                     size={16}
-                     style={{
-                       transform: babyAccordionOpen ? 'rotate(180deg)' : 'rotate(0)',
-                       transition: 'transform 0.2s'
-                     }}
-                  />
+                {/* 童裝分類 */}
+                <div className="accordion-section">
+                  <div
+                    className="accordion-title"
+                    onClick={() => setKidsAccordionOpen(!kidsAccordionOpen)}
+                  >
+                    <span>童裝 KIDS</span>
+                    <ChevronDown
+                      size={16}
+                      style={{
+                        transform: kidsAccordionOpen ? 'rotate(180deg)' : 'rotate(0)',
+                        transition: 'transform 0.2s'
+                      }}
+                    />
+                  </div>
+                  {kidsAccordionOpen && (
+                    <div className="accordion-content">
+                      {subCategories.map(sub => (
+                        <div
+                          key={`mob-kids-${sub.code}`}
+                          className="accordion-item-link"
+                          onClick={() => {
+                            handleCategorySelect('kids', sub.code);
+                            setMobileDrawerOpen(false);
+                          }}
+                          style={{
+                            color: selectedSex === 'kids' && selectedCategory === sub.code ? 'var(--uq-red)' : 'var(--text-secondary)',
+                            fontWeight: selectedSex === 'kids' && selectedCategory === sub.code ? 'bold' : 'normal'
+                          }}
+                        >
+                          {sub.code === 'ALL' ? '全部童裝' : sub.name}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                {babyAccordionOpen && (
-                  <div className="accordion-content">
-                    {subCategories.map(sub => (
-                      <div
-                        key={`mob-baby-${sub.code}`}
-                        className="accordion-item-link"
-                        onClick={() => {
-                          handleCategorySelect('baby', sub.code);
-                          setMobileDrawerOpen(false);
-                        }}
-                        style={{
-                          color: selectedSex === 'baby' && selectedCategory === sub.code ? 'var(--uq-red)' : 'var(--text-secondary)',
-                          fontWeight: selectedSex === 'baby' && selectedCategory === sub.code ? 'bold' : 'normal'
-                        }}
-                      >
-                        {sub.code === 'ALL' ? '全部嬰幼兒' : sub.name}
-                      </div>
-                    ))}
+
+                {/* 嬰幼兒分類 */}
+                <div className="accordion-section">
+                  <div
+                    className="accordion-title"
+                    onClick={() => setBabyAccordionOpen(!babyAccordionOpen)}
+                  >
+                    <span>嬰幼兒 BABY</span>
+                    <ChevronDown
+                      size={16}
+                      style={{
+                        transform: babyAccordionOpen ? 'rotate(180deg)' : 'rotate(0)',
+                        transition: 'transform 0.2s'
+                      }}
+                    />
                   </div>
-                )}
-              </div>
+                  {babyAccordionOpen && (
+                    <div className="accordion-content">
+                      {subCategories.map(sub => (
+                        <div
+                          key={`mob-baby-${sub.code}`}
+                          className="accordion-item-link"
+                          onClick={() => {
+                            handleCategorySelect('baby', sub.code);
+                            setMobileDrawerOpen(false);
+                          }}
+                          style={{
+                            color: selectedSex === 'baby' && selectedCategory === sub.code ? 'var(--uq-red)' : 'var(--text-secondary)',
+                            fontWeight: selectedSex === 'baby' && selectedCategory === sub.code ? 'bold' : 'normal'
+                          }}
+                        >
+                          {sub.code === 'ALL' ? '全部嬰幼兒' : sub.name}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
 
-              {/* 我的追蹤 (手機端整合) */}
-              <div
-                className="accordion-title"
-                onClick={() => {
-                  handleCategorySelect('ALL', 'favorites');
-                  setMobileDrawerOpen(false);
-                }}
-                style={{
-                  color: selectedCategory === 'favorites' ? 'var(--uq-red)' : 'var(--text-primary)',
-                  fontWeight: selectedCategory === 'favorites' ? 'bold' : 'normal',
-                  borderBottom: '1px solid var(--bg-light)'
-                }}
-              >
-                <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Heart size={16} fill={selectedCategory === 'favorites' ? 'var(--uq-red)' : 'none'} />
-                  我的追蹤 ({favorites.length})
-                </span>
-              </div>
-
-              {/* 安裝桌面 App (手機端整合) */}
-              {showInstallBtn && (
+                {/* 我的追蹤 (手機端整合) */}
                 <div
                   className="accordion-title"
                   onClick={() => {
-                    handleInstallClick();
+                    handleCategorySelect('ALL', 'favorites');
                     setMobileDrawerOpen(false);
                   }}
+                  style={{
+                    color: selectedCategory === 'favorites' ? 'var(--uq-red)' : 'var(--text-primary)',
+                    fontWeight: selectedCategory === 'favorites' ? 'bold' : 'normal',
+                    borderBottom: '1px solid var(--bg-light)'
+                  }}
                 >
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--uq-red)' }}>
-                    <Download size={16} />
-                    安裝桌面 App
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Heart size={16} fill={selectedCategory === 'favorites' ? 'var(--uq-red)' : 'none'} />
+                    我的追蹤 ({favorites.length})
                   </span>
                 </div>
-              )}
 
-              {/* 後台管理 / 返回首頁 (手機端整合) */}
-              {setCurrentView && (
-                <div
-                  className="accordion-title"
-                  onClick={() => {
-                    setCurrentView(currentView === 'home' ? 'admin' : 'home');
-                    setMobileDrawerOpen(false);
-                    setSearchTerm('');
-                    setSelectedCategory('ALL');
-                    setSelectedSex('ALL');
-                  }}
-                  style={{ borderBottom: 'none' }}
-                >
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px', color: currentView === 'admin' ? 'var(--uq-red)' : 'var(--text-primary)' }}>
-                    <User size={16} />
-                    {currentView === 'home' ? '進入後台管理' : '返回首頁'}
-                  </span>
-                </div>
-              )}
+                {/* 安裝桌面 App (手機端整合) */}
+                {showInstallBtn && (
+                  <div
+                    className="accordion-title"
+                    onClick={() => {
+                      handleInstallClick();
+                      setMobileDrawerOpen(false);
+                    }}
+                  >
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--uq-red)' }}>
+                      <Download size={16} />
+                      安裝桌面 App
+                    </span>
+                  </div>
+                )}
+
+                {/* 返回首頁 (手機端整合，僅在後台視圖顯示) */}
+                {currentView === 'admin' && (
+                  <div
+                    className="accordion-title"
+                    onClick={() => {
+                      window.location.href = '/';
+                    }}
+                    style={{ borderBottom: 'none' }}
+                  >
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-primary)' }}>
+                      <User size={16} />
+                      返回首頁
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        </>
-      )}
+          </>
+        )
+      }
     </>
   );
 }

@@ -3,29 +3,180 @@ import Header from './components/Header';
 import ProductCard, { formatPrice } from './components/ProductCard';
 import SkeletonCard from './components/SkeletonCard';
 import PriceChart from './components/PriceChart';
-import productsData from './data/products.json';
-import { Search, SlidersHorizontal, ArrowUpDown, X, Heart, ExternalLink, TrendingDown, Menu, User } from 'lucide-react';
+
+import { Search, SlidersHorizontal, ArrowUpDown, X, Heart, ExternalLink, TrendingDown, Menu, User, Lock } from 'lucide-react';
 import { db } from './firebase';
-import { collection, getDocs, doc, setDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, setDoc, deleteDoc, onSnapshot, getDoc } from 'firebase/firestore';
 import AdminPanel from './components/AdminPanel';
 import VersionHistoryModal from './components/VersionHistoryModal';
 
-const isHistoricalLowest = (product) => {
-  if (!product || !product.historyPrices || product.historyPrices.length === 0) return false;
-  // 僅有1筆價格紀錄，不顯示歷史最低價
-  if (product.historyPrices.length <= 1) return false;
-  // 所有價格都一樣，不顯示歷史最低價
-  const allSame = product.historyPrices.every(hp => hp.price === product.historyPrices[0].price);
-  if (allSame) return false;
-  const currentPrice = product.minPrice;
-  const today = new Date().toISOString().split('T')[0];
-  const otherPrices = product.historyPrices
-    .filter(hp => hp.date !== today)
-    .map(hp => hp.price);
-  if (otherPrices.length > 0) {
-    return currentPrice < Math.min(...otherPrices);
+function AdminLoginForm({ onLogin }) {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (username === 'admin' && password === 'admin123') {
+      onLogin();
+    } else {
+      setError('帳號或密碼錯誤！');
+    }
+  };
+
+  return (
+    <div style={loginStyles.container}>
+      <form onSubmit={handleSubmit} style={loginStyles.card}>
+        <div style={loginStyles.iconWrapper}>
+          <Lock size={32} style={{ color: 'var(--uq-red)' }} />
+        </div>
+        <h2 style={loginStyles.title}>管理員登入</h2>
+        <p style={loginStyles.subtitle}>請輸入管理員帳密以進行系統版本發布</p>
+        
+        {error && <div style={loginStyles.error}>{error}</div>}
+        
+        <div style={loginStyles.formGroup}>
+          <label style={loginStyles.label}>管理員帳號</label>
+          <input
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            style={loginStyles.input}
+            placeholder="請輸入帳號"
+            required
+          />
+        </div>
+
+        <div style={loginStyles.formGroup}>
+          <label style={loginStyles.label}>管理員密碼</label>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            style={loginStyles.input}
+            placeholder="請輸入密碼"
+            required
+          />
+        </div>
+
+        <button type="submit" style={loginStyles.button}>
+          登入系統
+        </button>
+
+        <button 
+          type="button" 
+          onClick={() => window.location.href = '/'}
+          style={loginStyles.backButton}
+        >
+          返回首頁
+        </button>
+      </form>
+    </div>
+  );
+}
+
+const loginStyles = {
+  container: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: '60vh',
+    padding: '24px',
+  },
+  card: {
+    backgroundColor: 'var(--bg-white)',
+    padding: '40px 32px',
+    borderRadius: '16px',
+    boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)',
+    border: '1px solid var(--border-color)',
+    width: '100%',
+    maxWidth: '400px',
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  iconWrapper: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '64px',
+    height: '64px',
+    borderRadius: '50%',
+    backgroundColor: 'rgba(231,31,25,0.06)',
+    margin: '0 auto 20px auto',
+  },
+  title: {
+    margin: '0 0 8px 0',
+    fontSize: '20px',
+    fontWeight: '800',
+    color: 'var(--text-primary)',
+    textAlign: 'center',
+  },
+  subtitle: {
+    margin: '0 0 24px 0',
+    fontSize: '13px',
+    color: 'var(--text-secondary)',
+    textAlign: 'center',
+    lineHeight: '1.5',
+  },
+  error: {
+    padding: '12px',
+    backgroundColor: 'rgba(231,31,25,0.06)',
+    color: 'var(--uq-red)',
+    borderRadius: '8px',
+    fontSize: '13px',
+    fontWeight: '700',
+    marginBottom: '20px',
+    textAlign: 'center',
+    border: '1px solid rgba(231,31,25,0.15)',
+  },
+  formGroup: {
+    marginBottom: '20px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '6px',
+  },
+  label: {
+    fontSize: '13px',
+    fontWeight: '700',
+    color: 'var(--text-primary)',
+  },
+  input: {
+    padding: '10px 14px',
+    borderRadius: '8px',
+    border: '1px solid var(--border-color)',
+    fontSize: '14px',
+    outline: 'none',
+    transition: 'border-color 0.2s',
+  },
+  button: {
+    backgroundColor: 'var(--uq-red)',
+    color: 'var(--bg-white)',
+    border: 'none',
+    borderRadius: '8px',
+    padding: '12px',
+    fontSize: '15px',
+    fontWeight: '700',
+    cursor: 'pointer',
+    marginTop: '10px',
+    transition: 'opacity 0.2s',
+  },
+  backButton: {
+    backgroundColor: 'transparent',
+    color: 'var(--text-secondary)',
+    border: '1px solid var(--border-color)',
+    borderRadius: '8px',
+    padding: '12px',
+    fontSize: '14px',
+    fontWeight: '600',
+    cursor: 'pointer',
+    marginTop: '12px',
+    transition: 'background-color 0.2s',
   }
-  return product.originPrice && currentPrice < product.originPrice;
+};
+
+const isHistoricalLowest = (product) => {
+  if (!product) return false;
+  return product.isHistoricalLowest === true;
 };
 
 const isMenProduct = (p) => {
@@ -115,7 +266,7 @@ const formatSizeDisplay = (size) => {
 };
 
 export default function App() {
-  const [products, setProducts] = useState(() => addMockViews(productsData));
+  const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('ALL');
@@ -124,13 +275,20 @@ export default function App() {
   const [selectedSex, setSelectedSex] = useState('ALL'); // 'ALL', 'men', 'women'
 
   // 後台路由與版本管理狀態
-  const [currentView, setCurrentView] = useState('home'); // 'home' | 'admin'
+  const [currentView, setCurrentView] = useState(() => {
+    return window.location.pathname === '/admin' ? 'admin' : 'home';
+  });
+  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(() => {
+    return sessionStorage.getItem('isAdminLoggedIn') === 'true';
+  });
   const [versions, setVersions] = useState([]);
   const [showVersionModal, setShowVersionModal] = useState(false);
 
   // 詳情頁商品 Modal
   const [activeProduct, setActiveProduct] = useState(null);
   const [selectedModalColor, setSelectedModalColor] = useState(null);
+  const [activeProductHistory, setActiveProductHistory] = useState(null);
+  const [loadingHistory, setLoadingHistory] = useState(false);
   // 加載更多商品控制
   const [visibleCount, setVisibleCount] = useState(24);
   // 手機版漢堡選單
@@ -141,74 +299,72 @@ export default function App() {
     return saved ? JSON.parse(saved) : [];
   });
 
-  // 從 Firestore 載入最新商品
+  // 從 Firestore 監聽最新商品 (即時更新)
   useEffect(() => {
-    async function loadFromFirestore() {
-      try {
-        if (db) {
-          const querySnapshot = await getDocs(collection(db, "products"));
-          const items = [];
-          querySnapshot.forEach((doc) => {
-            items.push(doc.data());
-          });
-          if (items.length > 0) {
-            console.log(`Successfully loaded ${items.length} products from Firestore.`);
-            setProducts(addMockViews(items));
-          }
-        }
-      } catch (error) {
-        console.error("Failed to load products from Firestore, using offline cache:", error);
-      } finally {
-        setLoading(false);
-      }
+    if (!db) {
+      setLoading(false);
+      return;
     }
-    loadFromFirestore();
+    const unsubscribe = onSnapshot(collection(db, "products"), (querySnapshot) => {
+      const items = [];
+      querySnapshot.forEach((doc) => {
+        items.push(doc.data());
+      });
+      if (items.length > 0) {
+        console.log(`Successfully loaded ${items.length} products from Firestore (realtime).`);
+        setProducts(addMockViews(items));
+      }
+      setLoading(false);
+    }, (error) => {
+      console.error("Failed to load products from Firestore realtime, using offline cache:", error);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
-  // 從 Firestore 載入版本資訊
+  // 從 Firestore 監聽版本資訊 (即時更新)
   useEffect(() => {
-    async function loadVersions() {
-      if (!db) return;
-      try {
-        const querySnapshot = await getDocs(collection(db, "versions"));
-        const list = [];
-        querySnapshot.forEach((doc) => {
-          list.push(doc.data());
-        });
+    if (!db) return;
+    const unsubscribe = onSnapshot(collection(db, "versions"), async (querySnapshot) => {
+      const list = [];
+      querySnapshot.forEach((doc) => {
+        list.push(doc.data());
+      });
 
-        // 預設 Seed Data (防空機制)
-        const defaultSeed = {
-          version: '1.0.0',
-          releaseDate: '2026-06-24',
-          type: 'major',
-          description: [
-            'UNIQLO 台灣官網商品查價網正式上線',
-            '支持商品歷史價格走勢折線圖與史低價醒目提示',
-            '提供斷碼缺貨尺寸灰階與刪除線提示'
-          ],
-          timestamp: 1774571400000
-        };
+      // 預設 Seed Data (防空機制)
+      const defaultSeed = {
+        version: '1.0.0',
+        releaseDate: '2026-06-24',
+        type: 'major',
+        description: [
+          'UNIQLO 台灣官網商品查價網正式上線',
+          '支持商品歷史價格走勢折線圖與史低價醒目提示',
+          '提供斷碼缺貨尺寸灰階與刪除線提示'
+        ],
+        timestamp: 1774571400000
+      };
 
-        if (list.length === 0) {
-          // 若 Firestore 中尚未有資料，寫入預設 Seed
-          await setDoc(doc(db, 'versions', defaultSeed.version), defaultSeed);
-          setVersions([defaultSeed]);
-        } else {
-          setVersions(list);
-        }
-      } catch (error) {
-        console.error("Failed to load versions from Firestore:", error);
-        // Fallback 本地預設值
-        setVersions([{
-          version: '1.0.0',
-          releaseDate: '2026-06-24',
-          type: 'major',
-          description: ['UNIQLO 比價網正式發布'],
-          timestamp: 1774571400000
-        }]);
+      if (list.length === 0) {
+        // 若 Firestore 中尚未有資料，寫入預設 Seed
+        await setDoc(doc(db, 'versions', defaultSeed.version), defaultSeed);
+        setVersions([defaultSeed]);
+      } else {
+        setVersions(list);
       }
-    }
-    loadVersions();
+    }, (error) => {
+      console.error("Failed to load versions from Firestore realtime:", error);
+      // Fallback 本地預設值
+      setVersions([{
+        version: '1.0.0',
+        releaseDate: '2026-06-24',
+        type: 'major',
+        description: ['UNIQLO 比價網正式發布'],
+        timestamp: 1774571400000
+      }]);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   // 發布新版本
@@ -224,6 +380,18 @@ export default function App() {
     await setDoc(doc(db, 'versions', fullVer.version), fullVer);
     // 更新本地狀態
     setVersions(prev => [...prev, fullVer]);
+  };
+
+  // 刪除版本
+  const handleDeleteVersion = async (version) => {
+    if (!db) throw new Error('Firestore 未連接');
+    try {
+      await deleteDoc(doc(db, 'versions', version));
+      setVersions(prev => prev.filter(v => v.version !== version));
+    } catch (error) {
+      console.error("Failed to delete version:", error);
+      alert(`刪除失敗: ${error.message}`);
+    }
   };
 
   // 我的最愛儲存
@@ -313,7 +481,7 @@ export default function App() {
 
     // 3. 尺寸篩選
     if (selectedSize !== 'ALL') {
-      result = result.filter(p => p.sizes && p.sizes.includes(selectedSize));
+      result = result.filter(p => p.size && p.size.includes(selectedSize));
     }
 
     // 4. 排序
@@ -363,18 +531,38 @@ export default function App() {
     setVisibleCount(prev => prev + 24);
   };
 
-  const handleProductClick = (product) => {
+  const handleProductClick = async (product) => {
     // 點擊時 views + 1
     setProducts(prevProducts =>
       prevProducts.map(p => p.id === product.id ? { ...p, views: (p.views || 0) + 1 } : p)
     );
     setActiveProduct({ ...product, views: (product.views || 0) + 1 });
     setSelectedModalColor(product.colors && product.colors.length > 0 ? product.colors[0] : null);
+
+    // 非同步載入歷史價格
+    setLoadingHistory(true);
+    setActiveProductHistory(null);
+    try {
+      if (db) {
+        const priceDocRef = doc(db, 'product_prices', product.id);
+        const priceSnap = await getDoc(priceDocRef);
+        if (priceSnap.exists()) {
+          setActiveProductHistory(priceSnap.data().historyPrices || []);
+        } else {
+          setActiveProductHistory([]);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to fetch product history:', err);
+    } finally {
+      setLoadingHistory(false);
+    }
   };
 
   const handleCloseModal = () => {
     setActiveProduct(null);
     setSelectedModalColor(null);
+    setActiveProductHistory(null);
   };
 
   const isFeaturedHome = selectedCategory === 'ALL' && selectedSex === 'ALL' && searchTerm.trim() === '';
@@ -396,11 +584,19 @@ export default function App() {
       {/* 主體內容 */}
       <main style={styles.main}>
         {currentView === 'admin' ? (
-          <AdminPanel
-            currentVersion={versions.length > 0 ? [...versions].sort((a, b) => b.timestamp - a.timestamp)[0].version : '1.0.0'}
-            versions={versions}
-            onPublishVersion={handlePublishVersion}
-          />
+          !isAdminLoggedIn ? (
+            <AdminLoginForm onLogin={() => {
+              sessionStorage.setItem('isAdminLoggedIn', 'true');
+              setIsAdminLoggedIn(true);
+            }} />
+          ) : (
+            <AdminPanel
+              currentVersion={versions.length > 0 ? [...versions].sort((a, b) => b.timestamp - a.timestamp)[0].version : '1.0.0'}
+              versions={versions}
+              onPublishVersion={handlePublishVersion}
+              onDeleteVersion={handleDeleteVersion}
+            />
+          )
         ) : loading ? (
           // 骨架屏載入狀態
           <div className="product-grid">
@@ -568,31 +764,6 @@ export default function App() {
         )}
       </main>
 
-      {/* 頁尾版權與版本顯示 */}
-      <footer style={styles.footer}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center' }}>
-          <span>© {new Date().getFullYear()} UNIQLO 快速查價網. All rights reserved.</span>
-          <button 
-            onClick={() => setShowVersionModal(true)}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: 'var(--uq-red)',
-              cursor: 'pointer',
-              fontSize: '12px',
-              fontWeight: '700',
-              textDecoration: 'underline',
-              display: 'inline-flex',
-              alignItems: 'center',
-              padding: '4px 8px',
-              borderRadius: '4px',
-            }}
-          >
-            當前版本 v{versions.length > 0 ? [...versions].sort((a, b) => b.timestamp - a.timestamp)[0].version : '1.0.0'} (查看歷史更新)
-          </button>
-        </div>
-      </footer>
-
       {/* 歷史更新 Modal */}
       {showVersionModal && (
         <VersionHistoryModal 
@@ -616,7 +787,11 @@ export default function App() {
               <div className="detail-left">
                 <div style={styles.detailPicWrapper}>
                   <img
-                    src={selectedModalColor?.largePicUrl || activeProduct.mainPic}
+                    src={(() => {
+                      const pic = selectedModalColor?.largePicUrl || activeProduct.mainPic;
+                      if (!pic) return '';
+                      return pic.startsWith('http') ? pic : `https://www.uniqlo.com/tw${pic}`;
+                    })()}
                     alt={activeProduct.name}
                     style={styles.detailPic}
                     onError={(e) => {
@@ -698,7 +873,7 @@ export default function App() {
                   <div style={styles.metaRow}>
                     <strong style={styles.metaLabel}>尺寸：</strong>
                     <div style={styles.tagGroup}>
-                      {getProductSizesWithAvailability(activeProduct.sizes).map(({ size, available }) => (
+                      {getProductSizesWithAvailability(activeProduct.size).map(({ size, available }) => (
                         <span
                           key={size}
                           style={{
@@ -726,7 +901,7 @@ export default function App() {
                               width: '24px',
                               height: '24px',
                               borderRadius: '50%',
-                              backgroundImage: c.chipUrl ? `url(${c.chipUrl})` : 'none',
+                              backgroundImage: c.chipUrl ? `url(${c.chipUrl.startsWith('http') ? c.chipUrl : `https://www.uniqlo.com/tw${c.chipUrl}`})` : 'none',
                               backgroundColor: '#eeeeee',
                               backgroundSize: 'cover',
                               backgroundPosition: 'center',
@@ -773,15 +948,45 @@ export default function App() {
 
             {/* 下方歷史價格折線圖 */}
             <div style={styles.chartSection}>
-              <PriceChart historyData={activeProduct.historyPrices} />
+              {loadingHistory ? (
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '220px', color: 'var(--text-secondary)' }}>
+                  <span>正在讀取歷史價格資料...</span>
+                </div>
+              ) : activeProductHistory ? (
+                <PriceChart historyData={activeProductHistory} />
+              ) : (
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '220px', color: 'var(--text-secondary)' }}>
+                  <span>暫無歷史價格資料</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
       )}
 
-      {/* 頁腳 */}
+      {/* 頁尾版權與版本顯示 */}
       <footer style={styles.footer}>
-        <p>© 2026 UNIQLO 台灣商品比價首選網 | 僅供學術與練習使用</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center' }}>
+          <span>© 2026 UNIQLO 台灣商品比價首選網 | 僅供學術與練習使用</span>
+          <button 
+            onClick={() => setShowVersionModal(true)}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--uq-red)',
+              cursor: 'pointer',
+              fontSize: '12px',
+              fontWeight: '700',
+              textDecoration: 'underline',
+              display: 'inline-flex',
+              alignItems: 'center',
+              padding: '4px 8px',
+              borderRadius: '4px',
+            }}
+          >
+            當前版本 v{versions.length > 0 ? [...versions].sort((a, b) => b.timestamp - a.timestamp)[0].version : '1.0.0'} (查看歷史更新)
+          </button>
+        </div>
       </footer>
     </div>
   );

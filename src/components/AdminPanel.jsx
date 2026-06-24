@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, ShieldCheck, HelpCircle, ArrowRight, ClipboardList, Clock } from 'lucide-react';
 
-export default function AdminPanel({ currentVersion = '1.0.0', versions = [], onPublishVersion }) {
+export default function AdminPanel({ currentVersion = '1.0.0', versions = [], onPublishVersion, onDeleteVersion }) {
   const [upgradeType, setUpgradeType] = useState('patch'); // 'major' | 'minor' | 'patch'
   const [nextVersion, setNextVersion] = useState('');
   const [descriptionList, setDescriptionList] = useState(['']);
@@ -265,6 +265,32 @@ export default function AdminPanel({ currentVersion = '1.0.0', versions = [], on
                       <span style={styles.historyVersion}>v{v.version}</span>
                       <span style={{ ...styles.historyType, color: label.color, backgroundColor: label.bg }}>{label.text}</span>
                       <span style={styles.historyDate}>{v.releaseDate}</span>
+                      {onDeleteVersion && (
+                        <button
+                          onClick={() => {
+                            if (window.confirm(`確定要刪除版本 v${v.version} 嗎？`)) {
+                              onDeleteVersion(v.version);
+                            }
+                          }}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            color: 'var(--uq-red)',
+                            cursor: 'pointer',
+                            padding: '4px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            borderRadius: '4px',
+                            transition: 'background-color 0.2s',
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(231,31,25,0.06)'}
+                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                          title="刪除此版本"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      )}
                     </div>
                     <ul style={styles.historyDescList}>
                       {v.description.map((desc, i) => (
