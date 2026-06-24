@@ -838,9 +838,6 @@ export default function App() {
                 <div style={styles.detailCodeRow}>
                   <span>商品編號: <code>{activeProduct.code}</code></span>
                   <span>官網貨號: <code>{activeProduct.productCode}</code></span>
-                  <span style={{ marginLeft: 'auto', color: 'var(--uq-red)', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <span>👁️</span> {activeProduct.views || 0} 次瀏覽
-                  </span>
                 </div>
 
                 <hr style={styles.divider} />
