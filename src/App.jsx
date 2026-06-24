@@ -6,7 +6,9 @@ import PriceChart from './components/PriceChart';
 import productsData from './data/products.json';
 import { Search, SlidersHorizontal, ArrowUpDown, X, Heart, ExternalLink, TrendingDown, Menu, User } from 'lucide-react';
 import { db } from './firebase';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, doc, setDoc } from 'firebase/firestore';
+import AdminPanel from './components/AdminPanel';
+import VersionHistoryModal from './components/VersionHistoryModal';
 
 const isHistoricalLowest = (product) => {
   if (!product || !product.historyPrices || product.historyPrices.length === 0) return false;
@@ -36,6 +38,19 @@ const isWomenProduct = (p) => {
   if (!p.sex) return false;
   const s = p.sex.toLowerCase();
   return s.includes('女') || s.includes('women') || s.includes('unisex') || s.includes('適穿');
+};
+
+const isKidsProduct = (p) => {
+  if (!p.sex) return false;
+  const s = p.sex.toLowerCase();
+  return s.includes('童裝') || s.includes('男童') || s.includes('女童') || s.includes('kids');
+};
+
+const isBabyProduct = (p) => {
+  if (!p.sex) return false;
+  const s = p.sex.toLowerCase();
+  const g = p.gender ? p.gender.toLowerCase() : '';
+  return s.includes('新生兒') || s.includes('嬰幼兒') || s.includes('baby') || g.includes('新生兒') || g.includes('嬰幼兒');
 };
 
 const ALL_STANDARD_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL'];
@@ -108,6 +123,11 @@ export default function App() {
   const [selectedSize, setSelectedSize] = useState('ALL');
   const [selectedSex, setSelectedSex] = useState('ALL'); // 'ALL', 'men', 'women'
 
+  // 後台路由與版本管理狀態
+  const [currentView, setCurrentView] = useState('home'); // 'home' | 'admin'
+  const [versions, setVersions] = useState([]);
+  const [showVersionModal, setShowVersionModal] = useState(false);
+
   // 詳情頁商品 Modal
   const [activeProduct, setActiveProduct] = useState(null);
   const [selectedModalColor, setSelectedModalColor] = useState(null);
@@ -144,6 +164,67 @@ export default function App() {
     }
     loadFromFirestore();
   }, []);
+
+  // 從 Firestore 載入版本資訊
+  useEffect(() => {
+    async function loadVersions() {
+      if (!db) return;
+      try {
+        const querySnapshot = await getDocs(collection(db, "versions"));
+        const list = [];
+        querySnapshot.forEach((doc) => {
+          list.push(doc.data());
+        });
+
+        // 預設 Seed Data (防空機制)
+        const defaultSeed = {
+          version: '1.0.0',
+          releaseDate: '2026-06-24',
+          type: 'major',
+          description: [
+            'UNIQLO 台灣官網商品查價網正式上線',
+            '支持商品歷史價格走勢折線圖與史低價醒目提示',
+            '提供斷碼缺貨尺寸灰階與刪除線提示'
+          ],
+          timestamp: 1774571400000
+        };
+
+        if (list.length === 0) {
+          // 若 Firestore 中尚未有資料，寫入預設 Seed
+          await setDoc(doc(db, 'versions', defaultSeed.version), defaultSeed);
+          setVersions([defaultSeed]);
+        } else {
+          setVersions(list);
+        }
+      } catch (error) {
+        console.error("Failed to load versions from Firestore:", error);
+        // Fallback 本地預設值
+        setVersions([{
+          version: '1.0.0',
+          releaseDate: '2026-06-24',
+          type: 'major',
+          description: ['UNIQLO 比價網正式發布'],
+          timestamp: 1774571400000
+        }]);
+      }
+    }
+    loadVersions();
+  }, []);
+
+  // 發布新版本
+  const handlePublishVersion = async (newVerObj) => {
+    if (!db) throw new Error('Firestore 未連接');
+    const today = new Date().toISOString().split('T')[0];
+    const fullVer = {
+      ...newVerObj,
+      releaseDate: today,
+      timestamp: Date.now()
+    };
+    // 寫入資料庫
+    await setDoc(doc(db, 'versions', fullVer.version), fullVer);
+    // 更新本地狀態
+    setVersions(prev => [...prev, fullVer]);
+  };
 
   // 我的最愛儲存
   useEffect(() => {
@@ -223,6 +304,10 @@ export default function App() {
         result = result.filter(p => isMenProduct(p));
       } else if (selectedSex === 'women') {
         result = result.filter(p => isWomenProduct(p));
+      } else if (selectedSex === 'kids') {
+        result = result.filter(p => isKidsProduct(p));
+      } else if (selectedSex === 'baby') {
+        result = result.filter(p => isBabyProduct(p));
       }
     }
 
@@ -261,6 +346,14 @@ export default function App() {
     return products.filter(p => isWomenProduct(p) && p.isNewArrival).slice(0, 10);
   }, [products]);
 
+  const kidsNewArrivals = useMemo(() => {
+    return products.filter(p => isKidsProduct(p) && p.isNewArrival).slice(0, 10);
+  }, [products]);
+
+  const babyNewArrivals = useMemo(() => {
+    return products.filter(p => isBabyProduct(p) && p.isNewArrival).slice(0, 10);
+  }, [products]);
+
   // 當搜尋條件改變時重置顯示數量
   useEffect(() => {
     setVisibleCount(24);
@@ -296,11 +389,19 @@ export default function App() {
         selectedSex={selectedSex}
         setSelectedSex={setSelectedSex}
         favorites={favorites}
+        currentView={currentView}
+        setCurrentView={setCurrentView}
       />
 
       {/* 主體內容 */}
       <main style={styles.main}>
-        {loading ? (
+        {currentView === 'admin' ? (
+          <AdminPanel
+            currentVersion={versions.length > 0 ? [...versions].sort((a, b) => b.timestamp - a.timestamp)[0].version : '1.0.0'}
+            versions={versions}
+            onPublishVersion={handlePublishVersion}
+          />
+        ) : loading ? (
           // 骨架屏載入狀態
           <div className="product-grid">
             {Array.from({ length: 12 }).map((_, i) => (
@@ -339,7 +440,7 @@ export default function App() {
             </div>
 
             {/* 區塊 3：女裝新品上市 TOP 10 */}
-            <div>
+            <div style={{ marginBottom: 32 }}>
               <h3 className="section-title">女裝最新商品</h3>
               {womenNewArrivals.length === 0 ? (
                 <div style={styles.emptyFeatured}>暫無新品上市資料</div>
@@ -347,6 +448,38 @@ export default function App() {
                 <div className="horizontal-scroll-container">
                   {womenNewArrivals.map(product => (
                     <div key={`women-new-${product.id}`} className="horizontal-scroll-item">
+                      <ProductCard product={product} onClick={handleProductClick} />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* 區塊 4：童裝新品上市 TOP 10 */}
+            <div style={{ marginBottom: 32 }}>
+              <h3 className="section-title">童裝最新商品</h3>
+              {kidsNewArrivals.length === 0 ? (
+                <div style={styles.emptyFeatured}>暫無新品上市資料</div>
+              ) : (
+                <div className="horizontal-scroll-container">
+                  {kidsNewArrivals.map(product => (
+                    <div key={`kids-new-${product.id}`} className="horizontal-scroll-item">
+                      <ProductCard product={product} onClick={handleProductClick} />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* 區塊 5：嬰幼兒新品上市 TOP 10 */}
+            <div>
+              <h3 className="section-title">嬰幼兒最新商品</h3>
+              {babyNewArrivals.length === 0 ? (
+                <div style={styles.emptyFeatured}>暫無新品上市資料</div>
+              ) : (
+                <div className="horizontal-scroll-container">
+                  {babyNewArrivals.map(product => (
+                    <div key={`baby-new-${product.id}`} className="horizontal-scroll-item">
                       <ProductCard product={product} onClick={handleProductClick} />
                     </div>
                   ))}
@@ -362,7 +495,7 @@ export default function App() {
               <div style={styles.resultsCount}>
                 {selectedCategory === 'favorites' ? '我的追蹤清單' : (
                   <>
-                    篩選結果 ({selectedSex === 'men' ? '男裝' : selectedSex === 'women' ? '女裝' : '全部'})
+                    篩選結果 ({selectedSex === 'men' ? '男裝' : selectedSex === 'women' ? '女裝' : selectedSex === 'kids' ? '童裝' : selectedSex === 'baby' ? '嬰幼兒' : '全部'})
                     {selectedCategory !== 'ALL' && ` - ${categories.find(c => c.code === selectedCategory)?.name}`}
                     {searchTerm && ` - 搜尋: "${searchTerm}"`}
                   </>
@@ -434,6 +567,39 @@ export default function App() {
           </section>
         )}
       </main>
+
+      {/* 頁尾版權與版本顯示 */}
+      <footer style={styles.footer}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center' }}>
+          <span>© {new Date().getFullYear()} UNIQLO 快速查價網. All rights reserved.</span>
+          <button 
+            onClick={() => setShowVersionModal(true)}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--uq-red)',
+              cursor: 'pointer',
+              fontSize: '12px',
+              fontWeight: '700',
+              textDecoration: 'underline',
+              display: 'inline-flex',
+              alignItems: 'center',
+              padding: '4px 8px',
+              borderRadius: '4px',
+            }}
+          >
+            當前版本 v{versions.length > 0 ? [...versions].sort((a, b) => b.timestamp - a.timestamp)[0].version : '1.0.0'} (查看歷史更新)
+          </button>
+        </div>
+      </footer>
+
+      {/* 歷史更新 Modal */}
+      {showVersionModal && (
+        <VersionHistoryModal 
+          versions={versions} 
+          onClose={() => setShowVersionModal(false)} 
+        />
+      )}
 
       {/* 商品詳情 Modal */}
       {activeProduct && (

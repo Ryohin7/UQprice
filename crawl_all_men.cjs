@@ -6,10 +6,14 @@ const CONFIG = {
   categories: [
     { code: 'all_men', label: '全部男裝' },
     { code: 'all_women', label: '全部女裝' },
+    { code: 'all_kids', label: '全部童裝' },
+    { code: 'all_baby', label: '全部嬰幼兒' },
   ],
   newArrivals: [
     { code: 'feature-new-men', label: '男裝新品' },
     { code: 'feature-new-women', label: '女裝新品' },
+    { code: 'feature-new-kids', label: '童裝新品' },
+    { code: 'feature-new-baby', label: '嬰幼兒新品' },
   ],
   pageSize: 100,
   // 反封鎖設定
@@ -187,22 +191,65 @@ function parseProduct(item, today) {
     salesPromotionLabel.push({ labelType: '2', labelText: `截至 ${mm}/${dd} 限定價格` });
   }
 
+  // 整理分類階層邏輯 (topCategories -> levelOne -> levelTwo -> levelThree)
+  const categoryNames = [];
+  const levels = [item.topCategories, item.levelOne, item.levelTwo, item.levelThree];
+  levels.forEach(levelList => {
+    if (levelList && Array.isArray(levelList)) {
+      levelList.forEach(c => {
+        if (c.name && !categoryNames.includes(c.name)) {
+          categoryNames.push(c.name);
+        }
+      });
+    }
+  });
+  // Fallback to categoryName
+  if (categoryNames.length === 0 && item.categoryName && Array.isArray(item.categoryName)) {
+    item.categoryName.forEach(name => {
+      if (name && !categoryNames.includes(name)) categoryNames.push(name);
+    });
+  }
+
+  // 狀態欄位字串轉譯
+  const isNew = (item.isNew === 'Y' || (item.identity && item.identity.includes('new_product'))) ? 'Y' : 'N';
+  const isConcessionalRate = (item.isConcessionalRate === 'Y' || (item.identity && item.identity.includes('concessional_rate'))) ? 'Y' : 'N';
+  const isTimeDoptimal = (item.isTimeDoptimal === 'Y' || (item.identity && item.identity.includes('time_doptimal'))) ? 'Y' : 'N';
+
+  // 轉換色票絕對路徑
+  const absChipPic = (item.chipPic || []).map(p => p ? `https://www.uniqlo.com/tw${p}` : '');
+
   return {
     id: item.productCode || item.code,
+    ProductId: item.productCode || item.code, // 官網貨號
     productCode: item.productCode,
-    code: item.code,
+    code: item.code,                           // 商品編號
     omsProductCode: item.omsProductCode,
-    name: item.name || item.productName,
+    name: item.name || item.productName,       // 商品名
     shortName: item.shortName || item.productName,
+    size: sizes,                               // 尺寸 (已轉譯尺寸名稱)
+    sizes,                                     // 保留舊 sizes 欄位以相容前端
+    styleText: item.styleText || [],          // 顏色名稱陣列
+    chipPic: absChipPic,                       // 色票圖網址陣列
     minPrice: item.minPrice,
     maxPrice: item.maxPrice,
-    originPrice: item.originPrice,
+    originPrice: item.originPrice,             // 原價
     mainPic: item.mainPic ? `https://www.uniqlo.com/tw${item.mainPic}` : '',
-    sex: item.sex || item.gender,
-    sizes,
-    colors,
-    salesPromotionLabel,
-    historyPrices
+    sex: item.sex || item.gender,              // 商品性別
+    colors,                                    // 保留舊 colors 欄位以相容前端
+    salesPromotionLabel,                       // 保留舊促銷標籤以相容前端
+    historyPrices,
+    isNew,                                     // Y 新品 N 舊品
+    isConcessionalRate,                        // Y 特價商品
+    isTimeDoptimal,                            // Y 期間限定特價
+    timeLimitedBegin: item.timeLimitedBegin || null,
+    timeLimitedEnd: item.timeLimitedEnd || null,
+    planOnDate: item.planOnDate || null,
+    firstListTime: item.firstListTime || item.new || null,
+    planOutDate: item.planOutDate || null,
+    makePantsLengthFlag: item.makePantsLengthFlag || 'N',
+    identity: item.identity || [],
+    listYearSeason: item.listYearSeason || item.season || null,
+    categoryNames                              // 按 level 階層分類名稱陣列
   };
 }
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Download, Heart, Search, X, Menu, ChevronDown } from 'lucide-react';
+import { Download, Heart, Search, X, Menu, ChevronDown, User } from 'lucide-react';
 
 export default function Header({
   searchTerm,
@@ -8,13 +8,17 @@ export default function Header({
   setSelectedCategory,
   selectedSex,
   setSelectedSex,
-  favorites
+  favorites,
+  currentView = 'home',
+  setCurrentView
 }) {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showInstallBtn, setShowInstallBtn] = useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [menAccordionOpen, setMenAccordionOpen] = useState(false);
   const [womenAccordionOpen, setWomenAccordionOpen] = useState(false);
+  const [kidsAccordionOpen, setKidsAccordionOpen] = useState(false);
+  const [babyAccordionOpen, setBabyAccordionOpen] = useState(false);
 
   useEffect(() => {
     window.addEventListener('beforeinstallprompt', (e) => {
@@ -119,6 +123,52 @@ export default function Header({
               ))}
             </div>
           </li>
+          <li className="nav-item">
+            童裝 KIDS
+            <div className="dropdown-card">
+              {subCategories.map(sub => (
+                <button
+                  key={`kids-${sub.code}`}
+                  className="dropdown-item"
+                  onClick={() => handleCategorySelect('kids', sub.code)}
+                  style={{
+                    color: selectedSex === 'kids' && selectedCategory === sub.code ? 'var(--uq-red)' : 'var(--text-secondary)',
+                    fontWeight: selectedSex === 'kids' && selectedCategory === sub.code ? 'bold' : 'normal',
+                    border: 'none',
+                    background: 'none',
+                    cursor: 'pointer',
+                    width: '100%',
+                    textAlign: 'left'
+                  }}
+                >
+                  {sub.code === 'ALL' ? '全部童裝' : sub.name}
+                </button>
+              ))}
+            </div>
+          </li>
+          <li className="nav-item">
+            嬰幼兒 BABY
+            <div className="dropdown-card">
+              {subCategories.map(sub => (
+                <button
+                  key={`baby-${sub.code}`}
+                  className="dropdown-item"
+                  onClick={() => handleCategorySelect('baby', sub.code)}
+                  style={{
+                    color: selectedSex === 'baby' && selectedCategory === sub.code ? 'var(--uq-red)' : 'var(--text-secondary)',
+                    fontWeight: selectedSex === 'baby' && selectedCategory === sub.code ? 'bold' : 'normal',
+                    border: 'none',
+                    background: 'none',
+                    cursor: 'pointer',
+                    width: '100%',
+                    textAlign: 'left'
+                  }}
+                >
+                  {sub.code === 'ALL' ? '全部嬰幼兒' : sub.name}
+                </button>
+              ))}
+            </div>
+          </li>
         </ul>
 
         {/* 搜尋欄 & 操作按鈕區 */}
@@ -166,6 +216,27 @@ export default function Header({
             <button onClick={handleInstallClick} style={styles.installBtn} className="desktop-install-btn">
               <Download size={14} style={{ marginRight: 4 }} />
               <span>App</span>
+            </button>
+          )}
+
+          {/* 後台管理 / 返回首頁按鈕 - 僅桌面版顯示 */}
+          {setCurrentView && (
+            <button
+              onClick={() => {
+                setCurrentView(currentView === 'home' ? 'admin' : 'home');
+                setSearchTerm('');
+                setSelectedCategory('ALL');
+                setSelectedSex('ALL');
+              }}
+              style={{
+                ...styles.adminBtn,
+                color: currentView === 'admin' ? 'var(--uq-red)' : 'var(--text-primary)',
+                backgroundColor: currentView === 'admin' ? 'rgba(231,31,25,0.04)' : 'transparent',
+              }}
+              className="desktop-admin-btn"
+            >
+              <User size={18} />
+              <span style={styles.favText} className="fav-text-span">{currentView === 'home' ? '後台管理' : '返回首頁'}</span>
             </button>
           )}
 
@@ -266,6 +337,80 @@ export default function Header({
                   </div>
                 )}
               </div>
+ 
+              {/* 童裝分類 */}
+              <div className="accordion-section">
+                <div
+                  className="accordion-title"
+                  onClick={() => setKidsAccordionOpen(!kidsAccordionOpen)}
+                >
+                  <span>童裝 KIDS</span>
+                  <ChevronDown
+                     size={16}
+                     style={{
+                       transform: kidsAccordionOpen ? 'rotate(180deg)' : 'rotate(0)',
+                       transition: 'transform 0.2s'
+                     }}
+                  />
+                </div>
+                {kidsAccordionOpen && (
+                  <div className="accordion-content">
+                    {subCategories.map(sub => (
+                      <div
+                        key={`mob-kids-${sub.code}`}
+                        className="accordion-item-link"
+                        onClick={() => {
+                          handleCategorySelect('kids', sub.code);
+                          setMobileDrawerOpen(false);
+                        }}
+                        style={{
+                          color: selectedSex === 'kids' && selectedCategory === sub.code ? 'var(--uq-red)' : 'var(--text-secondary)',
+                          fontWeight: selectedSex === 'kids' && selectedCategory === sub.code ? 'bold' : 'normal'
+                        }}
+                      >
+                        {sub.code === 'ALL' ? '全部童裝' : sub.name}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* 嬰幼兒分類 */}
+              <div className="accordion-section">
+                <div
+                  className="accordion-title"
+                  onClick={() => setBabyAccordionOpen(!babyAccordionOpen)}
+                >
+                  <span>嬰幼兒 BABY</span>
+                  <ChevronDown
+                     size={16}
+                     style={{
+                       transform: babyAccordionOpen ? 'rotate(180deg)' : 'rotate(0)',
+                       transition: 'transform 0.2s'
+                     }}
+                  />
+                </div>
+                {babyAccordionOpen && (
+                  <div className="accordion-content">
+                    {subCategories.map(sub => (
+                      <div
+                        key={`mob-baby-${sub.code}`}
+                        className="accordion-item-link"
+                        onClick={() => {
+                          handleCategorySelect('baby', sub.code);
+                          setMobileDrawerOpen(false);
+                        }}
+                        style={{
+                          color: selectedSex === 'baby' && selectedCategory === sub.code ? 'var(--uq-red)' : 'var(--text-secondary)',
+                          fontWeight: selectedSex === 'baby' && selectedCategory === sub.code ? 'bold' : 'normal'
+                        }}
+                      >
+                        {sub.code === 'ALL' ? '全部嬰幼兒' : sub.name}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
 
               {/* 我的追蹤 (手機端整合) */}
               <div
@@ -294,11 +439,30 @@ export default function Header({
                     handleInstallClick();
                     setMobileDrawerOpen(false);
                   }}
-                  style={{ borderBottom: 'none' }}
                 >
                   <span style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--uq-red)' }}>
                     <Download size={16} />
                     安裝桌面 App
+                  </span>
+                </div>
+              )}
+
+              {/* 後台管理 / 返回首頁 (手機端整合) */}
+              {setCurrentView && (
+                <div
+                  className="accordion-title"
+                  onClick={() => {
+                    setCurrentView(currentView === 'home' ? 'admin' : 'home');
+                    setMobileDrawerOpen(false);
+                    setSearchTerm('');
+                    setSelectedCategory('ALL');
+                    setSelectedSex('ALL');
+                  }}
+                  style={{ borderBottom: 'none' }}
+                >
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px', color: currentView === 'admin' ? 'var(--uq-red)' : 'var(--text-primary)' }}>
+                    <User size={16} />
+                    {currentView === 'home' ? '進入後台管理' : '返回首頁'}
                   </span>
                 </div>
               )}
@@ -383,6 +547,18 @@ const styles = {
     alignItems: 'center',
   },
   favBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    fontSize: '14px',
+    fontWeight: '700',
+    padding: '8px 12px',
+    borderRadius: '20px',
+    border: 'none',
+    cursor: 'pointer',
+    transition: 'var(--transition-fast)',
+  },
+  adminBtn: {
     display: 'flex',
     alignItems: 'center',
     gap: '6px',
