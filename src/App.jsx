@@ -398,8 +398,6 @@ export default function App() {
     };
     // 寫入資料庫
     await setDoc(doc(db, 'versions', fullVer.version), fullVer);
-    // 更新本地狀態
-    setVersions(prev => [...prev, fullVer]);
   };
 
   // 刪除版本
@@ -407,7 +405,6 @@ export default function App() {
     if (!db) throw new Error('Firestore 未連接');
     try {
       await deleteDoc(doc(db, 'versions', version));
-      setVersions(prev => prev.filter(v => v.version !== version));
     } catch (error) {
       console.error("Failed to delete version:", error);
       alert(`刪除失敗: ${error.message}`);
