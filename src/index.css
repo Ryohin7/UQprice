@@ -1,4 +1,9 @@
-@import url('https://fonts.googleapis.com/css2?family=Liter&family=Noto+Sans+TC:wght@400;500;700&display=swap');
+@font-face {
+  font-family: 'Hiragino Sans TC';
+  src: url('../font/Hiragino Sans TC W6.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
 
 :root {
   --uq-red: #e71f19;
@@ -9,9 +14,9 @@
   --bg-white: #ffffff;
   --bg-light: #f6f6f6;
   --border-color: #e5e5e5;
-  --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
-  --shadow-md: 0 8px 24px rgba(0,0,0,0.06);
-  --font-sans: 'Liter', 'Noto Sans TC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.06);
+  --font-sans: 'Hiragino Sans TC', sans-serif;
   --transition-fast: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   --transition-smooth: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -20,6 +25,7 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  font-family: 'Hiragino Sans TC', sans-serif !important;
 }
 
 body {
@@ -37,7 +43,7 @@ body {
   background-color: var(--bg-white);
   max-width: 1400px;
   margin: 0 auto;
-  box-shadow: 0 0 20px rgba(0,0,0,0.02);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.02);
 }
 
 /* 骨架屏動畫 */
@@ -45,9 +51,11 @@ body {
   0% {
     background-color: #ededed;
   }
+
   50% {
     background-color: #f7f7f7;
   }
+
   100% {
     background-color: #ededed;
   }
@@ -61,7 +69,6 @@ body {
 /* 千分位價格注目樣式 */
 .price-tag {
   font-family: 'Liter', 'Noto Sans TC', sans-serif;
-  font-weight: 700;
   color: var(--uq-red);
 }
 
@@ -183,6 +190,7 @@ body {
   .desktop-tabs {
     display: none !important;
   }
+
   .mobile-hamburger {
     display: block;
   }
@@ -197,24 +205,30 @@ body {
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
 }
+
 .horizontal-scroll-container::-webkit-scrollbar {
   height: 6px;
 }
+
 .horizontal-scroll-container::-webkit-scrollbar-track {
   background: transparent;
 }
+
 .horizontal-scroll-container::-webkit-scrollbar-thumb {
   background: #cccccc;
   border-radius: 3px;
 }
+
 .horizontal-scroll-item {
   flex: 0 0 220px;
   scroll-snap-align: start;
   transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
+
 .horizontal-scroll-item:hover {
   transform: translateY(-4px);
 }
+
 @media (max-width: 768px) {
   .horizontal-scroll-item {
     flex: 0 0 160px;
@@ -242,6 +256,7 @@ body {
   list-style: none;
   margin-left: 32px;
 }
+
 .nav-item {
   position: relative;
   padding: 16px 0;
@@ -251,9 +266,11 @@ body {
   color: var(--text-primary);
   transition: color 0.2s;
 }
+
 .nav-item:hover {
   color: var(--uq-red);
 }
+
 .nav-item::after {
   content: '';
   position: absolute;
@@ -264,6 +281,7 @@ body {
   background-color: var(--uq-red);
   transition: width 0.2s ease;
 }
+
 .nav-item:hover::after {
   width: 100%;
 }
@@ -300,6 +318,7 @@ body {
   font-weight: normal;
   text-align: left;
 }
+
 .dropdown-item:hover {
   background-color: var(--bg-light);
   color: var(--uq-red);
@@ -311,6 +330,7 @@ body {
     opacity: 0;
     transform: translateY(8px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -324,11 +344,12 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0,0,0,0.4);
+  background-color: rgba(0, 0, 0, 0.4);
   z-index: 990;
   animation: fadeIn 0.25s ease-out;
   backdrop-filter: blur(2px);
 }
+
 .mobile-drawer {
   position: fixed;
   top: 0;
@@ -336,7 +357,7 @@ body {
   width: 280px;
   height: 100%;
   background-color: var(--bg-white);
-  box-shadow: -4px 0 24px rgba(0,0,0,0.15);
+  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
   z-index: 1000;
   padding: 24px 20px;
   display: flex;
@@ -345,9 +366,11 @@ body {
   transform: translateX(100%);
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
+
 .mobile-drawer.open {
   transform: translateX(0);
 }
+
 .drawer-header {
   display: flex;
   justify-content: space-between;
@@ -355,10 +378,12 @@ body {
   border-bottom: 1px solid var(--border-color);
   padding-bottom: 16px;
 }
+
 .drawer-title {
   font-weight: 700;
   font-size: 16px;
 }
+
 .drawer-close {
   background: none;
   border: none;
@@ -367,6 +392,7 @@ body {
   display: flex;
   align-items: center;
 }
+
 .drawer-menu {
   display: flex;
   flex-direction: column;
@@ -374,6 +400,7 @@ body {
   overflow-y: auto;
   flex: 1;
 }
+
 .accordion-title {
   display: flex;
   justify-content: space-between;
@@ -385,6 +412,7 @@ body {
   cursor: pointer;
   user-select: none;
 }
+
 .accordion-content {
   display: flex;
   flex-direction: column;
@@ -394,6 +422,7 @@ body {
   border-radius: 4px;
   margin-top: 4px;
 }
+
 .accordion-item-link {
   padding: 8px 0;
   font-size: 14px;
@@ -402,23 +431,30 @@ body {
   transition: color 0.2s;
   text-align: left;
 }
+
 .accordion-item-link:hover {
   color: var(--uq-red);
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 /* 手機版 Header 自適應優化：只留搜尋欄與漢堡選單 */
 @media (max-width: 768px) {
+
   .desktop-logo,
   .desktop-fav-btn,
   .desktop-install-btn {
     display: none !important;
   }
-  
+
   .nav-actions-container {
     width: 100%;
     display: flex;
@@ -426,13 +462,13 @@ body {
     align-items: center;
     gap: 12px;
   }
-  
+
   .search-bar-wrapper {
     flex: 1;
     display: block !important;
     width: auto !important;
   }
-  
+
   .mobile-menu-btn {
     display: flex !important;
     align-items: center;
@@ -449,6 +485,7 @@ body {
   width: 130px;
   transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
+
 .search-bar-wrapper:focus-within {
   width: 200px;
 }
