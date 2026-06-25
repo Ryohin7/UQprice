@@ -38,10 +38,10 @@ export default function ProductCard({ product, onClick }) {
 
       {/* 商品圖片區 */}
       <div style={styles.imageContainer}>
-        <img 
-          src={displayPic ? (displayPic.startsWith('http') ? displayPic : `https://www.uniqlo.com/tw${displayPic}`) : ''} 
-          alt={product.name} 
-          style={styles.image} 
+        <img
+          src={displayPic ? (displayPic.startsWith('http') ? displayPic : `https://www.uniqlo.com/tw${displayPic}`) : ''}
+          alt={product.name}
+          style={styles.image}
           loading="lazy"
           onError={(e) => {
             e.target.src = 'https://www.uniqlo.com/tw/favicon-uq.ico';
@@ -58,8 +58,8 @@ export default function ProductCard({ product, onClick }) {
         {promoLabels.length > 0 && (
           <div style={styles.promoLabelRow}>
             {promoLabels.map((label, idx) => (
-              <span 
-                key={idx} 
+              <span
+                key={idx}
                 style={{
                   ...styles.promoBadge,
                   backgroundColor: label === '歷史最低價' ? '#8b0000' : 'var(--uq-red)'
@@ -70,20 +70,6 @@ export default function ProductCard({ product, onClick }) {
             ))}
           </div>
         )}
-        
-        {/* 價格區 */}
-        <div style={styles.priceContainer}>
-          <span style={{ display: 'inline-flex', alignItems: 'baseline', whiteSpace: 'nowrap' }}>
-            <span style={{ fontSize: '12px', color: 'var(--text-secondary)', marginRight: '2px' }}>售價</span>
-            <span style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--uq-red)' }}>{formatPrice(product.minPrice)}</span>
-            <span style={{ fontSize: '12px', color: 'var(--text-secondary)', marginLeft: '2px' }}>元</span>
-          </span>
-          {isSale && (
-            <span style={styles.originPrice}>
-              原價 {formatPrice(product.originPrice)}元
-            </span>
-          )}
-        </div>
 
         {/* 顏色選擇晶片 */}
         {product.colors && product.colors.length > 0 && (
@@ -110,6 +96,20 @@ export default function ProductCard({ product, onClick }) {
             )}
           </div>
         )}
+
+        {/* 價格區 */}
+        <div style={styles.priceContainer}>
+          <span style={{ display: 'inline-flex', alignItems: 'baseline', whiteSpace: 'nowrap' }}>
+            <span style={{ fontSize: '12px', color: 'var(--text-secondary)', marginRight: '2px' }}>售價</span>
+            <span style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--uq-red)' }}>{formatPrice(product.minPrice)}</span>
+            <span style={{ fontSize: '12px', color: 'var(--text-secondary)', marginLeft: '2px' }}>元</span>
+          </span>
+          {isSale && (
+            <span style={styles.originPrice}>
+              原價 {formatPrice(product.originPrice)}元
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -202,7 +202,8 @@ const styles = {
     display: 'flex',
     alignItems: 'baseline',
     gap: '6px',
-    marginBottom: '10px',
+    marginTop: 'auto',
+    marginBottom: '0',
   },
   currentPrice: {
     fontSize: '16px',
@@ -218,7 +219,7 @@ const styles = {
     gap: '4px',
     flexWrap: 'wrap',
     paddingTop: '6px',
-    borderTop: '1px dashed var(--border-color)',
+    borderTop: 'none',
   },
   colorCircle: {
     width: '18px',

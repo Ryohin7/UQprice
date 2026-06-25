@@ -926,11 +926,11 @@ export default function App() {
                   </div>
                   {activeProduct.originPrice && activeProduct.minPrice < activeProduct.originPrice && (
                     <div style={{ display: 'inline-flex', alignItems: 'baseline', whiteSpace: 'nowrap', marginLeft: '16px' }}>
-                      <span style={{ fontSize: '12px', color: 'var(--text-light)', marginRight: '2px' }}>原價</span>
-                      <span style={{ fontSize: '18px', textDecoration: 'line-through', color: 'var(--text-light)' }}>
+                      <span style={{ fontSize: '14px', color: 'var(--text-light)', marginRight: '2px' }}>原價</span>
+                      <span style={{ fontSize: '14px', textDecoration: 'line-through', color: 'var(--text-light)' }}>
                         {formatPrice(activeProduct.originPrice)}
                       </span>
-                      <span style={{ fontSize: '12px', color: 'var(--text-light)', marginLeft: '2px' }}>元</span>
+                      <span style={{ fontSize: '14px', color: 'var(--text-light)', marginLeft: '2px' }}>元</span>
                     </div>
                   )}
                   {activeProduct.originPrice && activeProduct.minPrice < activeProduct.originPrice && (
@@ -1049,7 +1049,7 @@ export default function App() {
                 cursor: 'pointer',
                 fontSize: '12px',
                 fontWeight: '700',
-                textDecoration: 'underline',
+                textDecoration: 'none',
                 display: 'inline-flex',
                 alignItems: 'center',
                 padding: '4px 8px',
@@ -1229,7 +1229,7 @@ const styles = {
   },
   detailPriceRow: {
     display: 'flex',
-    alignItems: 'center',
+    alignItems: 'baseline',
     gap: '24px',
   },
   priceColumn: {
