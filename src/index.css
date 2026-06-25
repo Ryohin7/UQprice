@@ -1,9 +1,4 @@
-@font-face {
-  font-family: 'Hiragino Sans TC';
-  src: url('../font/Hiragino Sans TC W6.otf') format('opentype');
-  font-weight: normal;
-  font-style: normal;
-}
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
 
 :root {
   --uq-red: #e71f19;
@@ -16,7 +11,7 @@
   --border-color: #e5e5e5;
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
   --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.06);
-  --font-sans: 'Hiragino Sans TC', sans-serif;
+  --font-sans: 'Noto Sans TC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --transition-fast: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   --transition-smooth: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -25,7 +20,7 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  font-family: 'Hiragino Sans TC', sans-serif !important;
+  font-family: 'Noto Sans TC', sans-serif !important;
 }
 
 body {
@@ -68,7 +63,8 @@ body {
 
 /* 千分位價格注目樣式 */
 .price-tag {
-  font-family: 'Liter', 'Noto Sans TC', sans-serif;
+  font-family: 'Noto Sans TC', sans-serif;
+  font-weight: 700;
   color: var(--uq-red);
 }
 
