@@ -64,7 +64,9 @@ export default function Header({
     { code: 'sale_price', name: '特價商品' },
     { code: 'tops', name: '上衣類' },
     { code: 'bottoms', name: '下裝類' },
-    { code: 'outerwear', name: '外套類' }
+    { code: 'outerwear', name: '外套類' },
+    { code: 'innerwear', name: '內衣/褲/襪' },
+    { code: 'accessories', name: '配件' }
   ];
 
   return (

@@ -150,6 +150,9 @@ body {
   flex: 1.2;
   max-width: 500px;
   width: 100%;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
 }
 
 .detail-right {
@@ -163,6 +166,8 @@ body {
   .detail-left {
     max-width: 100%;
     align-self: center;
+    aspect-ratio: 1;
+    min-height: auto;
   }
 }
 

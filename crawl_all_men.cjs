@@ -257,7 +257,7 @@ function parseProduct(item, today) {
 
 // ========== 主流程 ==========
 
-async function crawl() {
+async function crawl(triggerType = 'manual') {
   const today = new Date().toISOString().split('T')[0];
   const startTime = Date.now();
   const productMap = new Map();
@@ -317,7 +317,7 @@ async function crawl() {
   console.log('💾 本地 JSON 已儲存備份');
 
   // ===== Step 3: 同步到 Firestore =====
-  await syncToFirestore(allProducts);
+  await syncToFirestore(allProducts, triggerType, startTime);
 
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
   console.log(`\n🏁 全部完成！耗時 ${elapsed}s`);
@@ -325,7 +325,7 @@ async function crawl() {
 
 // ========== Firestore 同步 ==========
 
-async function syncToFirestore(products) {
+async function syncToFirestore(products, triggerType = 'manual', startTime = Date.now()) {
   console.log('\n===== Step 3: 增量同步至 Firestore =====');
   try {
     // 載入環境變數
@@ -523,7 +523,13 @@ async function syncToFirestore(products) {
     });
     batchOpCount++;
 
-    // F. 寫入同步日誌
+    // F. 寫入同步日誌與詳細資料報表
+    const campaignCount = campaignProducts.length;
+    const newArrivalsCount = products.filter(p => p.isNewArrival === true || p.isNew === 'Y' || p.isNew === true).length;
+    const saleCount = products.filter(p => p.isConcessionalRate === true || p.isConcessionalRate === 'Y').length;
+
+    const durationSec = parseFloat(((Date.now() - startTime) / 1000).toFixed(1));
+
     const dateStr = today.replace(/-/g, '');
     const logRef = doc(db, 'system', `sync_logs_${dateStr}`);
     batch.set(logRef, {
@@ -534,8 +540,31 @@ async function syncToFirestore(products) {
       unchanged: unchangedCount,
       expired: expiredCount,
       status: 'success',
-      duration: ((Date.now() - startTime) / 1000),
-      timestamp: Date.now()
+      duration: durationSec,
+      timestamp: Date.now(),
+      type: triggerType,
+      campaignCount,
+      newArrivalsCount,
+      saleCount
+    });
+    batchOpCount++;
+
+    // 寫入 crawler_reports 歷史報表集合（不覆蓋）
+    const reportRef = doc(collection(db, 'crawler_reports'));
+    batch.set(reportRef, {
+      timestamp: Date.now(),
+      date: today,
+      type: triggerType,
+      total: products.length,
+      created: createdCount,
+      updated: updatedCount,
+      unchanged: unchangedCount,
+      expired: expiredCount,
+      campaignCount,
+      newArrivalsCount,
+      saleCount,
+      duration: durationSec,
+      status: 'success'
     });
     batchOpCount++;
 
@@ -552,7 +581,37 @@ async function syncToFirestore(products) {
 
   } catch (e) {
     console.error('❌ Firestore 增量同步失敗:', e);
+    // 寫入失敗報表
+    try {
+      const durationSec = parseFloat(((Date.now() - startTime) / 1000).toFixed(1));
+      const reportRef = doc(collection(db, 'crawler_reports'));
+      await setDoc(reportRef, {
+        timestamp: Date.now(),
+        date: new Date().toISOString().split('T')[0],
+        type: triggerType,
+        total: products.length,
+        created: 0,
+        updated: 0,
+        unchanged: 0,
+        expired: 0,
+        campaignCount: 0,
+        newArrivalsCount: 0,
+        saleCount: 0,
+        duration: durationSec,
+        status: 'failed',
+        error: e.message || String(e)
+      });
+    } catch (writeErr) {
+      console.error('❌ 寫入失敗日誌失敗:', writeErr);
+    }
   }
 }
 
-crawl();
+// 解析命令列參數
+const args = process.argv.slice(2);
+let triggerType = 'manual';
+if (args.includes('--auto') || args.includes('--type=auto') || process.env.GITHUB_ACTIONS === 'true') {
+  triggerType = 'auto';
+}
+
+crawl(triggerType);

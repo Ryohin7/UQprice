@@ -6,7 +6,7 @@ import PriceChart from './components/PriceChart';
 
 import { Search, SlidersHorizontal, ArrowUpDown, X, Heart, ExternalLink, TrendingDown, Menu, User, Lock } from 'lucide-react';
 import { db } from './firebase';
-import { collection, getDocs, doc, setDoc, deleteDoc, onSnapshot, getDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, setDoc, deleteDoc, onSnapshot, getDoc, updateDoc, increment } from 'firebase/firestore';
 import AdminPanel from './components/AdminPanel';
 import VersionHistoryModal from './components/VersionHistoryModal';
 
@@ -32,9 +32,9 @@ function AdminLoginForm({ onLogin }) {
         </div>
         <h2 style={loginStyles.title}>管理員登入</h2>
         <p style={loginStyles.subtitle}>請輸入管理員帳密以進行系統版本發布</p>
-        
+
         {error && <div style={loginStyles.error}>{error}</div>}
-        
+
         <div style={loginStyles.formGroup}>
           <label style={loginStyles.label}>管理員帳號</label>
           <input
@@ -63,8 +63,8 @@ function AdminLoginForm({ onLogin }) {
           登入系統
         </button>
 
-        <button 
-          type="button" 
+        <button
+          type="button"
           onClick={() => window.location.href = '/'}
           style={loginStyles.backButton}
         >
@@ -227,16 +227,7 @@ const getProductSizesWithAvailability = (productSizes) => {
   }));
 };
 
-const addMockViews = (items) => {
-  return items.map(item => {
-    const codeNum = parseInt(item.code) || 0;
-    const mockViews = (codeNum % 899) + 100;
-    return {
-      ...item,
-      views: item.views || mockViews
-    };
-  });
-};
+
 
 const formatSizeDisplay = (size) => {
   if (!size) return '';
@@ -245,7 +236,7 @@ const formatSizeDisplay = (size) => {
   if (s === 'MSC025') return '25~27cm';
   if (s === 'MSC027') return '27~29cm';
   if (s === 'SIZ999') return 'ONE SIZE';
-  
+
   if (s.startsWith('CMD')) {
     const numPart = s.substring(3);
     const num = parseInt(numPart);
@@ -253,7 +244,7 @@ const formatSizeDisplay = (size) => {
       return `${num}cm`;
     }
   }
-  
+
   if (s.startsWith('INS')) {
     const numPart = s.substring(3);
     const num = parseInt(numPart);
@@ -261,7 +252,7 @@ const formatSizeDisplay = (size) => {
       return `${num}inch`;
     }
   }
-  
+
   return size;
 };
 
@@ -282,6 +273,7 @@ export default function App() {
     return sessionStorage.getItem('isAdminLoggedIn') === 'true';
   });
   const [versions, setVersions] = useState([]);
+  const [crawlerReports, setCrawlerReports] = useState([]);
   const [showVersionModal, setShowVersionModal] = useState(false);
 
   // 詳情頁商品 Modal
@@ -305,14 +297,24 @@ export default function App() {
       setLoading(false);
       return;
     }
-    const unsubscribe = onSnapshot(collection(db, "products"), (querySnapshot) => {
+    const unsubscribe = onSnapshot(collection(db, "products"), async (querySnapshot) => {
       const items = [];
       querySnapshot.forEach((doc) => {
         items.push(doc.data());
       });
       if (items.length > 0) {
         console.log(`Successfully loaded ${items.length} products from Firestore (realtime).`);
-        setProducts(addMockViews(items));
+        // 載入真實瀏覽次數並合併
+        try {
+          const viewsSnap = await getDocs(collection(db, 'product_views'));
+          const viewsMap = {};
+          viewsSnap.forEach(d => { viewsMap[d.id] = d.data().views || 0; });
+          const merged = items.map(p => ({ ...p, views: viewsMap[p.id] || 0 }));
+          setProducts(merged);
+        } catch (e) {
+          console.warn('Failed to load product views, using 0:', e);
+          setProducts(items.map(p => ({ ...p, views: 0 })));
+        }
       }
       setLoading(false);
     }, (error) => {
@@ -364,8 +366,26 @@ export default function App() {
       }]);
     });
 
+  }, []);
+
+  // 監聽爬蟲更新報表 (即時更新)
+  useEffect(() => {
+    if (!db) return;
+    const unsubscribe = onSnapshot(collection(db, "crawler_reports"), (querySnapshot) => {
+      const list = [];
+      querySnapshot.forEach((doc) => {
+        list.push({ id: doc.id, ...doc.data() });
+      });
+      // 依時間戳降序排列
+      list.sort((a, b) => b.timestamp - a.timestamp);
+      setCrawlerReports(list);
+    }, (error) => {
+      console.error("Failed to load crawler reports from Firestore realtime:", error);
+    });
+
     return () => unsubscribe();
   }, []);
+
 
   // 發布新版本
   const handlePublishVersion = async (newVerObj) => {
@@ -394,6 +414,17 @@ export default function App() {
     }
   };
 
+  // 觸發手動爬蟲
+  const handleTriggerCrawler = async () => {
+    if (!db) throw new Error('Firestore 未連接');
+    await setDoc(doc(db, 'system', 'crawler_trigger'), {
+      action: 'start',
+      timestamp: Date.now(),
+      type: 'manual'
+    });
+  };
+
+
   // 我的最愛儲存
   useEffect(() => {
     localStorage.setItem('uq_favorites', JSON.stringify(favorites));
@@ -417,6 +448,8 @@ export default function App() {
     { code: 'tops', name: '上衣類' },
     { code: 'bottoms', name: '下裝類' },
     { code: 'outerwear', name: '外套類' },
+    { code: 'innerwear', name: '內衣/褲/襪' },
+    { code: 'accessories', name: '配件' },
     { code: 'limited_price', name: '限定價格' },
     { code: 'sale_price', name: '特價商品' },
     { code: 'favorites', name: '我的追蹤' }
@@ -458,11 +491,40 @@ export default function App() {
           p.salesPromotionLabel && p.salesPromotionLabel.some(l => l.labelText && l.labelText.includes('特價商品'))
         );
       } else if (selectedCategory === 'tops') {
-        result = result.filter(p => p.name.includes('T恤') || p.name.includes('襯衫') || p.name.includes('POLO'));
+        result = result.filter(p =>
+          p.categoryNames && p.categoryNames.some(c =>
+            c.includes('T恤') || c.includes('襯衫') || c.includes('POLO') ||
+            c.includes('上衣') || c.includes('背心') || c.includes('針織衫')
+          )
+        );
       } else if (selectedCategory === 'bottoms') {
-        result = result.filter(p => p.name.includes('褲'));
+        result = result.filter(p =>
+          p.categoryNames && p.categoryNames.some(c =>
+            c.includes('褲') || c.includes('裙')
+          )
+        );
       } else if (selectedCategory === 'outerwear') {
-        result = result.filter(p => p.name.includes('外套') || p.name.includes('大衣') || p.name.includes('連帽'));
+        result = result.filter(p =>
+          p.categoryNames && p.categoryNames.some(c =>
+            c.includes('外套') || c.includes('大衣') || c.includes('風衣')
+          )
+        );
+      } else if (selectedCategory === 'innerwear') {
+        result = result.filter(p =>
+          p.categoryNames && p.categoryNames.some(c =>
+            c.includes('內衣') || c.includes('內褲') || c.includes('胸罩') ||
+            c.includes('BRATOP') || c.includes('HEATTECH') || c.includes('襪')
+          )
+        );
+      } else if (selectedCategory === 'accessories') {
+        result = result.filter(p =>
+          p.categoryNames && p.categoryNames.some(c =>
+            c.includes('配件') || c.includes('帽子') ||
+            c.includes('皮帶') || c.includes('包包') || c.includes('圍兜') ||
+            c.includes('雨傘') || c.includes('太陽眼鏡') || c.includes('方巾') ||
+            c.includes('手套') || c.includes('鞋子')
+          )
+        );
       }
     }
 
@@ -532,11 +594,21 @@ export default function App() {
   };
 
   const handleProductClick = async (product) => {
-    // 點擊時 views + 1
+    // 點擊時 views + 1 (前端即時更新 + Firestore 持久化)
+    const newViews = (product.views || 0) + 1;
     setProducts(prevProducts =>
-      prevProducts.map(p => p.id === product.id ? { ...p, views: (p.views || 0) + 1 } : p)
+      prevProducts.map(p => p.id === product.id ? { ...p, views: newViews } : p)
     );
-    setActiveProduct({ ...product, views: (product.views || 0) + 1 });
+    setActiveProduct({ ...product, views: newViews });
+    // 非同步寫入 Firestore
+    if (db) {
+      try {
+        const viewRef = doc(db, 'product_views', product.id);
+        await setDoc(viewRef, { views: increment(1) }, { merge: true });
+      } catch (e) {
+        console.warn('Failed to increment product view:', e);
+      }
+    }
     setSelectedModalColor(product.colors && product.colors.length > 0 ? product.colors[0] : null);
 
     // 非同步載入歷史價格
@@ -595,6 +667,8 @@ export default function App() {
               versions={versions}
               onPublishVersion={handlePublishVersion}
               onDeleteVersion={handleDeleteVersion}
+              crawlerReports={crawlerReports}
+              onTriggerCrawler={handleTriggerCrawler}
             />
           )
         ) : loading ? (
@@ -610,13 +684,17 @@ export default function App() {
             {/* 區塊 1：熱門瀏覽 TOP 10 */}
             <div style={{ marginBottom: 32 }}>
               <h3 className="section-title">熱門瀏覽 TOP 10</h3>
-              <div className="horizontal-scroll-container">
-                {topViewsProducts.map(product => (
-                  <div key={`top-${product.id}`} className="horizontal-scroll-item">
-                    <ProductCard product={product} onClick={handleProductClick} />
-                  </div>
-                ))}
-              </div>
+              {!topViewsProducts.some(product => product.views > 0) ? (
+                <div style={styles.emptyFeatured}>沒有資料</div>
+              ) : (
+                <div className="horizontal-scroll-container">
+                  {topViewsProducts.map(product => (
+                    <div key={`top-${product.id}`} className="horizontal-scroll-item">
+                      <ProductCard product={product} onClick={handleProductClick} />
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* 區塊 2：男裝新品上市 TOP 10 */}
@@ -766,9 +844,9 @@ export default function App() {
 
       {/* 歷史更新 Modal */}
       {showVersionModal && (
-        <VersionHistoryModal 
-          versions={versions} 
-          onClose={() => setShowVersionModal(false)} 
+        <VersionHistoryModal
+          versions={versions}
+          onClose={() => setShowVersionModal(false)}
         />
       )}
 
@@ -964,25 +1042,25 @@ export default function App() {
       {/* 頁尾版權與版本顯示 */}
       <footer style={styles.footer}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center' }}>
-          <span>© 2026 UNIQLO 台灣商品比價首選網 | 僅供學術與練習使用</span>
-          <button 
-            onClick={() => setShowVersionModal(true)}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: 'var(--uq-red)',
-              cursor: 'pointer',
-              fontSize: '12px',
-              fontWeight: '700',
-              textDecoration: 'underline',
-              display: 'inline-flex',
-              alignItems: 'center',
-              padding: '4px 8px',
-              borderRadius: '4px',
-            }}
-          >
-            當前版本 v{versions.length > 0 ? [...versions].sort((a, b) => b.timestamp - a.timestamp)[0].version : '1.0.0'} (查看歷史更新)
-          </button>
+          <span>商品資訊皆來自UNIQLO官網，本站資訊僅供參考。< /span>
+            <button
+              onClick={() => setShowVersionModal(true)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--uq-red)',
+                cursor: 'pointer',
+                fontSize: '12px',
+                fontWeight: '700',
+                textDecoration: 'underline',
+                display: 'inline-flex',
+                alignItems: 'center',
+                padding: '4px 8px',
+                borderRadius: '4px',
+              }}
+            >
+              當前版本 v{versions.length > 0 ? [...versions].sort((a, b) => b.timestamp - a.timestamp)[0].version : '1.0.0'} (查看歷史更新)
+            </button>
         </div>
       </footer>
     </div>
@@ -1114,7 +1192,8 @@ const styles = {
   },
   detailPicWrapper: {
     width: '100%',
-    paddingTop: '100%',
+    flex: 1,
+    minHeight: '300px',
     position: 'relative',
     backgroundColor: 'var(--bg-light)',
     border: '1px solid var(--border-color)',
@@ -1127,7 +1206,7 @@ const styles = {
     left: 0,
     width: '100%',
     height: '100%',
-    objectFit: 'cover',
+    objectFit: 'contain',
   },
   detailGender: {
     fontSize: '12px',
