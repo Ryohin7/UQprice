@@ -1,5 +1,6 @@
 const fs = require('fs');
 const crypto = require('crypto');
+const path = require('path');
 
 // ========== 設定 ==========
 const CONFIG = {
@@ -23,9 +24,11 @@ const CONFIG = {
   batchSize: 3,     // 每爬幾頁休息一次
   batchPause: 3000, // 批次間額外休息 ms
   // 路徑
-  outputPath: 'C:/Users/jacky/.gemini/antigravity-ide/scratch/products_db.json',
-  localJsonPath: 'c:/Users/jacky/OneDrive/Desktop/UNIQLO/src/data/products.json',
-  envPath: 'c:/Users/jacky/OneDrive/Desktop/UNIQLO/.env',
+  outputPath: process.env.GITHUB_ACTIONS === 'true'
+    ? path.resolve('./products_db.json')
+    : 'C:/Users/jacky/.gemini/antigravity-ide/scratch/products_db.json',
+  localJsonPath: './src/data/products.json',
+  envPath: './.env',
 };
 
 // 隨機 User-Agent 清單
@@ -313,8 +316,16 @@ async function crawl(triggerType = 'manual') {
   const allProducts = Array.from(productMap.values());
 
   // 儲存本地 JSON (供備份)
-  fs.writeFileSync(CONFIG.outputPath, JSON.stringify(allProducts, null, 2));
-  console.log('💾 本地 JSON 已儲存備份');
+  try {
+    const dir = path.dirname(CONFIG.outputPath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    fs.writeFileSync(CONFIG.outputPath, JSON.stringify(allProducts, null, 2));
+    console.log('💾 本地 JSON 已儲存備份');
+  } catch (err) {
+    console.warn('⚠️ 無法寫入本地備份 JSON，已跳過備份步驟:', err.message);
+  }
 
   // ===== Step 3: 同步到 Firestore =====
   await syncToFirestore(allProducts, triggerType, startTime);
