@@ -9,6 +9,7 @@ import { db } from './firebase';
 import { collection, getDocs, doc, setDoc, deleteDoc, onSnapshot, getDoc, updateDoc, increment } from 'firebase/firestore';
 import AdminPanel from './components/AdminPanel';
 import VersionHistoryModal from './components/VersionHistoryModal';
+import NotFound from './components/NotFound';
 
 function AdminLoginForm({ onLogin }) {
   const [username, setUsername] = useState('');
@@ -256,6 +257,81 @@ const formatSizeDisplay = (size) => {
   return size;
 };
 
+const DEFAULT_NAVIGATION = [
+  {
+    id: 'men',
+    name: '男裝 MENS',
+    sex: 'men',
+    order: 1,
+    subCategories: [
+      { code: 'ALL', name: '全部男裝', matchType: 'built-in' },
+      { code: 'new_arrival', name: '新品上市', matchType: 'built-in' },
+      { code: 'coming_soon', name: '即將上市', matchType: 'built-in' },
+      { code: 'limited_price', name: '限定價格', matchType: 'built-in' },
+      { code: 'sale_price', name: '特價商品', matchType: 'built-in' },
+      { code: 'tops', name: '上衣類', matchType: 'custom', selectedCategories: ['T恤/背心/休閒', 'T恤/POLO衫', '背心', '上衣', '襯衫', '針織衫', 'POLO衫'] },
+      { code: 'bottoms', name: '下裝類', matchType: 'custom', selectedCategories: ['褲', '裙', '短褲', '長褲', '牛仔褲', '休閒長褲'] },
+      { code: 'outerwear', name: '外套類', matchType: 'custom', selectedCategories: ['外套', '大衣', '風衣', '羽絨外套', '夾克'] },
+      { code: 'innerwear', name: '內衣/褲/襪', matchType: 'custom', selectedCategories: ['內衣', '內褲', '胸罩', 'BRATOP', 'HEATTECH', '襪', '襪子', '家居服'] },
+      { code: 'accessories', name: '配件', matchType: 'custom', selectedCategories: ['配件', '帽子', '皮帶', '包包', '圍兜', '雨傘', '太陽眼鏡', '方巾', '手套', '鞋子', '鞋'] }
+    ]
+  },
+  {
+    id: 'women',
+    name: '女裝 WOMENS',
+    sex: 'women',
+    order: 2,
+    subCategories: [
+      { code: 'ALL', name: '全部女裝', matchType: 'built-in' },
+      { code: 'new_arrival', name: '新品上市', matchType: 'built-in' },
+      { code: 'coming_soon', name: '即將上市', matchType: 'built-in' },
+      { code: 'limited_price', name: '限定價格', matchType: 'built-in' },
+      { code: 'sale_price', name: '特價商品', matchType: 'built-in' },
+      { code: 'tops', name: '上衣類', matchType: 'custom', selectedCategories: ['T恤/背心/休閒', 'T恤/POLO衫', '背心', '上衣', '襯衫', '針織衫', 'POLO衫', '洋裝'] },
+      { code: 'bottoms', name: '下裝類', matchType: 'custom', selectedCategories: ['褲', '裙', '短褲', '長褲', '牛仔褲', '休閒長褲', '半身裙'] },
+      { code: 'outerwear', name: '外套類', matchType: 'custom', selectedCategories: ['外套', '大衣', '風衣', '羽絨外套', '夾克', '開襟外套'] },
+      { code: 'innerwear', name: '內衣/褲/襪', matchType: 'custom', selectedCategories: ['內衣', '內褲', '胸罩', 'BRATOP', '家居服', '襪', '襪子'] },
+      { code: 'accessories', name: '配件', matchType: 'custom', selectedCategories: ['配件', '帽子', '皮帶', '包包', '圍兜', '雨傘', '太陽眼鏡', '方巾', '手套', '鞋子', '鞋'] }
+    ]
+  },
+  {
+    id: 'kids',
+    name: '童裝 KIDS',
+    sex: 'kids',
+    order: 3,
+    subCategories: [
+      { code: 'ALL', name: '全部童裝', matchType: 'built-in' },
+      { code: 'new_arrival', name: '新品上市', matchType: 'built-in' },
+      { code: 'coming_soon', name: '即將上市', matchType: 'built-in' },
+      { code: 'limited_price', name: '限定價格', matchType: 'built-in' },
+      { code: 'sale_price', name: '特價商品', matchType: 'built-in' },
+      { code: 'tops', name: '上衣類', matchType: 'custom', selectedCategories: ['T恤', '上衣', '襯衫', '針織衫', 'POLO衫', '洋裝'] },
+      { code: 'bottoms', name: '下裝類', matchType: 'custom', selectedCategories: ['褲', '裙', '短褲', '長褲', '休閒長褲'] },
+      { code: 'outerwear', name: '外套類', matchType: 'custom', selectedCategories: ['外套', '夾克', '連帽外套'] },
+      { code: 'innerwear', name: '內衣/褲/襪', matchType: 'custom', selectedCategories: ['內衣', '內褲', '家居服', '襪', '襪子'] },
+      { code: 'accessories', name: '配件', matchType: 'custom', selectedCategories: ['配件', '包包', '帽子', '雨傘'] }
+    ]
+  },
+  {
+    id: 'baby',
+    name: '嬰幼兒 BABY',
+    sex: 'baby',
+    order: 4,
+    subCategories: [
+      { code: 'ALL', name: '全部嬰幼兒', matchType: 'built-in' },
+      { code: 'new_arrival', name: '新品上市', matchType: 'built-in' },
+      { code: 'coming_soon', name: '即將上市', matchType: 'built-in' },
+      { code: 'limited_price', name: '限定價格', matchType: 'built-in' },
+      { code: 'sale_price', name: '特價商品', matchType: 'built-in' },
+      { code: 'tops', name: '上衣類', matchType: 'custom', selectedCategories: ['上衣', '包屁衣', '包臀衣', '連身衣'] },
+      { code: 'bottoms', name: '下裝類', matchType: 'custom', selectedCategories: ['褲', '短褲', '長褲', '內搭褲'] },
+      { code: 'outerwear', name: '外套類', matchType: 'custom', selectedCategories: ['外套', '背心外套'] },
+      { code: 'innerwear', name: '內衣/家居服', matchType: 'custom', selectedCategories: ['內衣', '家居服', '睡衣', '襪子'] },
+      { code: 'accessories', name: '配件', matchType: 'custom', selectedCategories: ['配件', '圍兜', '帽子'] }
+    ]
+  }
+];
+
 export default function App() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -264,10 +340,89 @@ export default function App() {
   const [sortBy, setSortBy] = useState('default'); // 'default', 'priceAsc', 'priceDesc', 'discountDesc'
   const [selectedSize, setSelectedSize] = useState('ALL');
   const [selectedSex, setSelectedSex] = useState('ALL'); // 'ALL', 'men', 'women'
+  const [navigation, setNavigation] = useState([]);
+
+  // 從 Firestore 載入導航分類 (一次性獲取)
+  useEffect(() => {
+    if (!db) return;
+    const loadNavigation = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, "navigation"));
+        const list = [];
+        querySnapshot.forEach((doc) => {
+          list.push(doc.data());
+        });
+
+        if (list.length === 0) {
+          // 若資料庫無導航結構，寫入預設 Seed
+          for (const item of DEFAULT_NAVIGATION) {
+            await setDoc(doc(db, 'navigation', item.id), item);
+          }
+          setNavigation(DEFAULT_NAVIGATION);
+        } else {
+          list.sort((a, b) => a.order - b.order);
+          // 自動向下相容補上缺失的 'coming_soon'
+          const processedList = list.map(mainCat => {
+            const hasComingSoon = (mainCat.subCategories || []).some(s => s.code === 'coming_soon');
+            if (!hasComingSoon) {
+              const updatedSubs = [...(mainCat.subCategories || [])];
+              const newArrivalIdx = updatedSubs.findIndex(s => s.code === 'new_arrival');
+              const insertIdx = newArrivalIdx !== -1 ? newArrivalIdx + 1 : 0;
+              updatedSubs.splice(insertIdx, 0, { code: 'coming_soon', name: '即將上市', matchType: 'built-in' });
+              return { ...mainCat, subCategories: updatedSubs };
+            }
+            return mainCat;
+          });
+          setNavigation(processedList);
+        }
+      } catch (error) {
+        console.error("Failed to load navigation from Firestore, using offline fallback:", error);
+        setNavigation(DEFAULT_NAVIGATION);
+      }
+    };
+    loadNavigation();
+  }, []);
+
+  // 儲存導航變更回 Firestore
+  const handleSaveNavigation = async (updatedNav) => {
+    if (!db) throw new Error('Firestore 未連接');
+    try {
+      for (const item of updatedNav) {
+        await setDoc(doc(db, 'navigation', item.id), item);
+      }
+      const existingIds = navigation.map(n => n.id);
+      const updatedIds = updatedNav.map(n => n.id);
+      const deletedIds = existingIds.filter(id => !updatedIds.includes(id));
+      for (const id of deletedIds) {
+        await deleteDoc(doc(db, 'navigation', id));
+      }
+    } catch (error) {
+      console.error("Failed to save navigation changes:", error);
+      throw error;
+    }
+  };
+
+  // 取得目前資料庫中所有不重複商品分類清單
+  const allUniqueCategories = useMemo(() => {
+    const set = new Set();
+    products.forEach(p => {
+      if (p.categoryNames && Array.isArray(p.categoryNames)) {
+        p.categoryNames.forEach(c => {
+          if (c && c.trim() !== '') {
+            set.add(c.trim());
+          }
+        });
+      }
+    });
+    return Array.from(set).sort();
+  }, [products]);
 
   // 後台路由與版本管理狀態
   const [currentView, setCurrentView] = useState(() => {
-    return window.location.pathname === '/admin' ? 'admin' : 'home';
+    const path = window.location.pathname;
+    if (path === '/admin') return 'admin';
+    if (path === '/' || path === '') return 'home';
+    return '404';
   });
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(() => {
     return sessionStorage.getItem('isAdminLoggedIn') === 'true';
@@ -291,99 +446,107 @@ export default function App() {
     return saved ? JSON.parse(saved) : [];
   });
 
-  // 從 Firestore 監聽最新商品 (即時更新)
+  // 從 Firestore 載入最新商品與瀏覽次數 (一次性獲取)
   useEffect(() => {
     if (!db) {
       setLoading(false);
       return;
     }
-    const unsubscribe = onSnapshot(collection(db, "products"), async (querySnapshot) => {
-      const items = [];
-      querySnapshot.forEach((doc) => {
-        items.push(doc.data());
-      });
-      if (items.length > 0) {
-        console.log(`Successfully loaded ${items.length} products from Firestore (realtime).`);
-        // 載入真實瀏覽次數並合併
-        try {
-          const viewsSnap = await getDocs(collection(db, 'product_views'));
-          const viewsMap = {};
-          viewsSnap.forEach(d => { viewsMap[d.id] = d.data().views || 0; });
+    const loadProductsAndViews = async () => {
+      try {
+        const [productsSnap, viewsSnap] = await Promise.all([
+          getDocs(collection(db, "products")),
+          getDocs(collection(db, "product_views"))
+        ]);
+
+        const items = [];
+        productsSnap.forEach((doc) => {
+          items.push(doc.data());
+        });
+
+        const viewsMap = {};
+        viewsSnap.forEach((d) => {
+          viewsMap[d.id] = d.data().views || 0;
+        });
+
+        if (items.length > 0) {
+          console.log(`Successfully loaded ${items.length} products from Firestore.`);
           const merged = items.map(p => ({ ...p, views: viewsMap[p.id] || 0 }));
           setProducts(merged);
-        } catch (e) {
-          console.warn('Failed to load product views, using 0:', e);
-          setProducts(items.map(p => ({ ...p, views: 0 })));
         }
+      } catch (error) {
+        console.error("Failed to load products or views from Firestore:", error);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
-    }, (error) => {
-      console.error("Failed to load products from Firestore realtime, using offline cache:", error);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
+    };
+    loadProductsAndViews();
   }, []);
 
-  // 從 Firestore 監聽版本資訊 (即時更新)
+  // 從 Firestore 載入版本資訊 (一次性獲取)
   useEffect(() => {
     if (!db) return;
-    const unsubscribe = onSnapshot(collection(db, "versions"), async (querySnapshot) => {
-      const list = [];
-      querySnapshot.forEach((doc) => {
-        list.push(doc.data());
-      });
+    const loadVersions = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, "versions"));
+        const list = [];
+        querySnapshot.forEach((doc) => {
+          list.push(doc.data());
+        });
 
-      // 預設 Seed Data (防空機制)
-      const defaultSeed = {
-        version: '1.0.0',
-        releaseDate: '2026-06-24',
-        type: 'major',
-        description: [
-          'UNIQLO 台灣官網商品查價網正式上線',
-          '支持商品歷史價格走勢折線圖與史低價醒目提示',
-          '提供斷碼缺貨尺寸灰階與刪除線提示'
-        ],
-        timestamp: 1774571400000
-      };
+        // 預設 Seed Data (防空機制)
+        const defaultSeed = {
+          version: '1.0.0',
+          releaseDate: '2026-06-24',
+          type: 'major',
+          description: [
+            'UNIQLO 台灣官網商品查價網正式上線',
+            '支持商品歷史價格走勢折線圖與史低價醒目提示',
+            '提供斷碼缺貨尺寸灰階與刪除線提示'
+          ],
+          timestamp: 1774571400000
+        };
 
-      if (list.length === 0) {
-        // 若 Firestore 中尚未有資料，寫入預設 Seed
-        await setDoc(doc(db, 'versions', defaultSeed.version), defaultSeed);
-        setVersions([defaultSeed]);
-      } else {
-        setVersions(list);
+        if (list.length === 0) {
+          // 若 Firestore 中尚未有資料，寫入預設 Seed
+          await setDoc(doc(db, 'versions', defaultSeed.version), defaultSeed);
+          setVersions([defaultSeed]);
+        } else {
+          setVersions(list);
+        }
+      } catch (error) {
+        console.error("Failed to load versions from Firestore:", error);
+        // Fallback 本地預設值
+        setVersions([{
+          version: '1.0.0',
+          releaseDate: '2026-06-24',
+          type: 'major',
+          description: ['UNIQLO 比價網正式發布'],
+          timestamp: 1774571400000
+        }]);
       }
-    }, (error) => {
-      console.error("Failed to load versions from Firestore realtime:", error);
-      // Fallback 本地預設值
-      setVersions([{
-        version: '1.0.0',
-        releaseDate: '2026-06-24',
-        type: 'major',
-        description: ['UNIQLO 比價網正式發布'],
-        timestamp: 1774571400000
-      }]);
-    });
-
+    };
+    loadVersions();
   }, []);
 
-  // 監聽爬蟲更新報表 (即時更新)
+  // 從 Firestore 載入爬蟲更新報表 (一次性獲取)
   useEffect(() => {
     if (!db) return;
-    const unsubscribe = onSnapshot(collection(db, "crawler_reports"), (querySnapshot) => {
-      const list = [];
-      querySnapshot.forEach((doc) => {
-        list.push({ id: doc.id, ...doc.data() });
-      });
-      // 依時間戳降序排列
-      list.sort((a, b) => b.timestamp - a.timestamp);
-      setCrawlerReports(list);
-    }, (error) => {
-      console.error("Failed to load crawler reports from Firestore realtime:", error);
-    });
-
-    return () => unsubscribe();
+    const loadCrawlerReports = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, "crawler_reports"));
+        const list = [];
+        querySnapshot.forEach((doc) => {
+          list.push({ id: doc.id, ...doc.data() });
+        });
+        // 依時間戳降序排列
+        list.sort((a, b) => b.timestamp - a.timestamp);
+        setCrawlerReports(list);
+      } catch (error) {
+        console.error("Failed to load crawler reports from Firestore:", error);
+      }
+    };
+    loadCrawlerReports();
   }, []);
 
 
@@ -436,21 +599,26 @@ export default function App() {
     }
   };
 
-  // 類別清單
-  const categories = [
-    { code: 'ALL', name: '全部商品' },
-    { code: 'men', name: '男裝' },
-    { code: 'women', name: '女裝' },
-    { code: 'new_arrival', name: '新品上市' },
-    { code: 'tops', name: '上衣類' },
-    { code: 'bottoms', name: '下裝類' },
-    { code: 'outerwear', name: '外套類' },
-    { code: 'innerwear', name: '內衣/褲/襪' },
-    { code: 'accessories', name: '配件' },
-    { code: 'limited_price', name: '限定價格' },
-    { code: 'sale_price', name: '特價商品' },
-    { code: 'favorites', name: '我的追蹤' }
-  ];
+  // 動態類別清單 (由內建促銷與資料庫 navigation 合併而成)
+  const categories = useMemo(() => {
+    const list = [
+      { code: 'ALL', name: '全部商品' },
+      { code: 'favorites', name: '我的追蹤' },
+      { code: 'new_arrival', name: '新品上市' },
+      { code: 'limited_price', name: '限定價格' },
+      { code: 'sale_price', name: '特價商品' },
+    ];
+    const seenCodes = new Set(list.map(l => l.code));
+    navigation.forEach(mainCat => {
+      mainCat.subCategories.forEach(sub => {
+        if (!seenCodes.has(sub.code)) {
+          seenCodes.add(sub.code);
+          list.push({ code: sub.code, name: sub.name });
+        }
+      });
+    });
+    return list;
+  }, [navigation]);
 
   // 所有的尺寸
   const sizes = ['ALL', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL'];
@@ -459,26 +627,45 @@ export default function App() {
   const filteredProducts = useMemo(() => {
     let result = [...products];
 
-    // 1. 搜尋詞篩選 (品名、貨號)
+    // 1. 搜尋詞篩選 (品名、貨號、分類、以及性別關鍵字多重 AND 比對)
     if (searchTerm.trim() !== '') {
-      const q = searchTerm.toLowerCase();
-      result = result.filter(
-        p => p.name.toLowerCase().includes(q) ||
-          p.code.includes(q) ||
-          (p.productCode && p.productCode.toLowerCase().includes(q))
-      );
+      const keywords = searchTerm.trim().toLowerCase().split(/\s+/);
+      result = result.filter(p => {
+        // 商品必須符合所有的關鍵字 (AND)
+        return keywords.every(k => {
+          // 判斷是否為性別詞彙
+          if (k === '男裝' || k === '男' || k === 'men') {
+            return isMenProduct(p) || p.name.toLowerCase().includes(k);
+          }
+          if (k === '女裝' || k === '女' || k === 'women') {
+            return isWomenProduct(p) || p.name.toLowerCase().includes(k);
+          }
+          if (k === '童裝' || k === '童' || k === '兒童' || k === 'kids') {
+            return isKidsProduct(p) || p.name.toLowerCase().includes(k);
+          }
+          if (k === '嬰幼兒' || k === '嬰' || k === '幼兒' || k === '嬰兒' || k === 'baby') {
+            return isBabyProduct(p) || p.name.toLowerCase().includes(k);
+          }
+          
+          // 一般詞彙比對
+          const nameMatch = p.name.toLowerCase().includes(k);
+          const codeMatch = p.code.includes(k) || (p.productCode && p.productCode.toLowerCase().includes(k));
+          const categoryMatch = p.categoryNames && p.categoryNames.some(c => c.toLowerCase().includes(k));
+          
+          return nameMatch || codeMatch || categoryMatch;
+        });
+      });
     }
 
-    // 2. 類別篩選
+    // 2. 類別篩選 (支持動態與自訂分類過濾)
     if (selectedCategory !== 'ALL') {
-      if (selectedCategory === 'men') {
-        result = result.filter(p => isMenProduct(p));
-      } else if (selectedCategory === 'women') {
-        result = result.filter(p => isWomenProduct(p));
+      if (selectedCategory === 'favorites') {
+        result = result.filter(p => favorites.includes(p.id));
       } else if (selectedCategory === 'new_arrival') {
         result = result.filter(p => p.isNewArrival === true);
-      } else if (selectedCategory === 'favorites') {
-        result = result.filter(p => favorites.includes(p.id));
+      } else if (selectedCategory === 'coming_soon') {
+        const now = Date.now();
+        result = result.filter(p => p.firstListTime && p.firstListTime > now);
       } else if (selectedCategory === 'limited_price') {
         result = result.filter(p =>
           p.salesPromotionLabel && p.salesPromotionLabel.some(l => l.labelText && l.labelText.includes('限定價格'))
@@ -487,41 +674,43 @@ export default function App() {
         result = result.filter(p =>
           p.salesPromotionLabel && p.salesPromotionLabel.some(l => l.labelText && l.labelText.includes('特價商品'))
         );
-      } else if (selectedCategory === 'tops') {
-        result = result.filter(p =>
-          p.categoryNames && p.categoryNames.some(c =>
-            c.includes('T恤') || c.includes('襯衫') || c.includes('POLO') ||
-            c.includes('上衣') || c.includes('背心') || c.includes('針織衫')
-          )
-        );
-      } else if (selectedCategory === 'bottoms') {
-        result = result.filter(p =>
-          p.categoryNames && p.categoryNames.some(c =>
-            c.includes('褲') || c.includes('裙')
-          )
-        );
-      } else if (selectedCategory === 'outerwear') {
-        result = result.filter(p =>
-          p.categoryNames && p.categoryNames.some(c =>
-            c.includes('外套') || c.includes('大衣') || c.includes('風衣')
-          )
-        );
-      } else if (selectedCategory === 'innerwear') {
-        result = result.filter(p =>
-          p.categoryNames && p.categoryNames.some(c =>
-            c.includes('內衣') || c.includes('內褲') || c.includes('胸罩') ||
-            c.includes('BRATOP') || c.includes('HEATTECH') || c.includes('襪')
-          )
-        );
-      } else if (selectedCategory === 'accessories') {
-        result = result.filter(p =>
-          p.categoryNames && p.categoryNames.some(c =>
-            c.includes('配件') || c.includes('帽子') ||
-            c.includes('皮帶') || c.includes('包包') || c.includes('圍兜') ||
-            c.includes('雨傘') || c.includes('太陽眼鏡') || c.includes('方巾') ||
-            c.includes('手套') || c.includes('鞋子')
-          )
-        );
+      } else {
+        // 自定義次分類的資料庫分類關聯過濾
+        let targetSub = null;
+        for (const mainCat of navigation) {
+          const sub = mainCat.subCategories.find(s => s.code === selectedCategory);
+          if (sub) {
+            targetSub = sub;
+            break;
+          }
+        }
+
+        if (targetSub) {
+          if (targetSub.matchType === 'custom') {
+            const selectedCats = targetSub.selectedCategories || [];
+            result = result.filter(p => 
+              p.categoryNames && p.categoryNames.some(cName => selectedCats.includes(cName))
+            );
+          } else {
+            // 保留 built-in 預設向後相容
+            if (selectedCategory === 'tops') {
+              result = result.filter(p =>
+                p.categoryNames && p.categoryNames.some(c =>
+                  c.includes('T恤') || c.includes('襯衫') || c.includes('POLO') ||
+                  c.includes('上衣') || c.includes('背心') || c.includes('針織衫')
+                )
+              );
+            } else if (selectedCategory === 'bottoms') {
+              result = result.filter(p =>
+                p.categoryNames && p.categoryNames.some(c => c.includes('褲') || c.includes('裙'))
+              );
+            } else if (selectedCategory === 'outerwear') {
+              result = result.filter(p =>
+                p.categoryNames && p.categoryNames.some(c => c.includes('外套') || c.includes('大衣') || c.includes('風衣'))
+              );
+            }
+          }
+        }
       }
     }
 
@@ -558,7 +747,7 @@ export default function App() {
     }
 
     return result;
-  }, [products, searchTerm, selectedCategory, selectedSize, sortBy, selectedSex, favorites]);
+  }, [products, searchTerm, selectedCategory, selectedSize, sortBy, selectedSex, favorites, navigation]);
 
   // 首頁精選三大區塊資料篩選
   const topViewsProducts = useMemo(() => {
@@ -648,6 +837,7 @@ export default function App() {
         favorites={favorites}
         currentView={currentView}
         setCurrentView={setCurrentView}
+        navigation={navigation}
       />
 
       {/* 主體內容 */}
@@ -666,8 +856,13 @@ export default function App() {
               onDeleteVersion={handleDeleteVersion}
               crawlerReports={crawlerReports}
               onTriggerCrawler={handleTriggerCrawler}
+              navigation={navigation}
+              allUniqueCategories={allUniqueCategories}
+              onSaveNavigation={handleSaveNavigation}
             />
           )
+        ) : currentView === '404' ? (
+          <NotFound onReturnHome={() => setCurrentView('home')} />
         ) : loading ? (
           // 骨架屏載入狀態
           <div className="product-grid">

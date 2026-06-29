@@ -110,16 +110,26 @@ async function crawlCategory(categoryCode, label) {
   for (let page = 1; page <= totalPages; page++) {
     console.log(`    Page ${page}/${totalPages}...`);
 
-    const url = `https://d.uniqlo.com/tw/hmall-sc-service/search/byCategoryId/v2?categoryId=${categoryCode}&price=&color=&size=&unisex=&babyAge=&multiProduct=&flashes=&season=&fit=&material=&identity=&stock=&pageNo=${page}&pageSize=${CONFIG.pageSize}&sort=orderOfCategoryNames&code=&query=&description=&stockFilter=`;
+    const url = 'https://d.uniqlo.com/tw/p/search/products/by-category';
+    const payload = {
+      categoryCode: categoryCode,
+      pageInfo: {
+        page: page,
+        pageSize: CONFIG.pageSize
+      }
+    };
 
     try {
       const startTime = Date.now();
       const res = await safeFetch(url, {
+        method: 'POST',
         headers: {
           'User-Agent': randomUA(),
+          'Content-Type': 'application/json',
           'Accept': 'application/json',
           'Referer': 'https://www.uniqlo.com/'
-        }
+        },
+        body: JSON.stringify(payload)
       });
       const elapsed = Date.now() - startTime;
       console.log(`    ✔ HTTP ${res.status} (${elapsed}ms)`);
@@ -135,9 +145,9 @@ async function crawlCategory(categoryCode, label) {
         break;
       }
 
-      const rawItems = json.resp[0] || [];
-      const pagination = json.resp[1] || {};
-      totalPages = pagination.totalPages || 1;
+      const data = json.resp[0] || {};
+      const rawItems = data.productList || [];
+      totalPages = Math.ceil((data.productSum || 0) / CONFIG.pageSize) || 1;
 
       console.log(`    Found ${rawItems.length} items (Total pages: ${totalPages})`);
       products.push(...rawItems);

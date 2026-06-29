@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, ShieldCheck, HelpCircle, ArrowRight, ClipboardList, Clock } from 'lucide-react';
+import CategoryManager from './CategoryManager';
 
 export default function AdminPanel({
   currentVersion = '1.0.0',
@@ -7,14 +8,17 @@ export default function AdminPanel({
   onPublishVersion,
   onDeleteVersion,
   crawlerReports = [],
-  onTriggerCrawler
+  onTriggerCrawler,
+  navigation = [],
+  allUniqueCategories = [],
+  onSaveNavigation
 }) {
   const [upgradeType, setUpgradeType] = useState('patch'); // 'major' | 'minor' | 'patch'
   const [nextVersion, setNextVersion] = useState('');
   const [descriptionList, setDescriptionList] = useState(['']);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [activeTab, setActiveTab] = useState('versions'); // 'versions' | 'reports'
+  const [activeTab, setActiveTab] = useState('versions'); // 'versions' | 'reports' | 'categories'
   const [isTriggering, setIsTriggering] = useState(false);
 
   const handleTriggerCrawler = async () => {
@@ -141,6 +145,17 @@ export default function AdminPanel({
           }}
         >
           資料更新報表
+        </button>
+        <button
+          onClick={() => setActiveTab('categories')}
+          style={{
+            ...styles.tabButton,
+            backgroundColor: activeTab === 'categories' ? 'var(--uq-red)' : 'transparent',
+            color: activeTab === 'categories' ? '#ffffff' : 'var(--text-secondary)',
+            border: activeTab === 'categories' ? '1px solid var(--uq-red)' : '1px solid transparent',
+          }}
+        >
+          Header 分類管理
         </button>
       </div>
 
@@ -354,7 +369,7 @@ export default function AdminPanel({
             </div>
           </div>
         </div>
-      ) : (
+      ) : activeTab === 'reports' ? (
         <div style={styles.reportGrid}>
           {/* 頂部同步狀態概覽 */}
           <div style={styles.reportSummaryCard}>
@@ -477,8 +492,14 @@ export default function AdminPanel({
                 </tbody>
               </table>
             </div>
-          </div>
         </div>
+        </div>
+      ) : (
+        <CategoryManager
+          initialNavigation={navigation}
+          allUniqueCategories={allUniqueCategories}
+          onSaveNavigation={onSaveNavigation}
+        />
       )}
     </div>
   );

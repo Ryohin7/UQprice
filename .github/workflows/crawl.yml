@@ -2,8 +2,8 @@ name: Weekly Uniqlo Crawler
 
 on:
   schedule:
-    # 台灣時間每週四早上 08:55 (UTC 00:55) 自動執行
-    - cron: '55 0 * * 4'
+    # 台灣時間每週三、四、五早上 08:55 (UTC 00:55) 自動執行
+    - cron: '55 0 * * 3,4,5'
   workflow_dispatch: # 支援手動在 GitHub 頁面點擊按鈕執行
 
 jobs:

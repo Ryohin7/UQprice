@@ -25,6 +25,17 @@ export default function ProductCard({ product, onClick }) {
     ...(isHistoricalLowest(product) ? ['歷史最低價'] : [])
   ];
 
+  const now = Date.now();
+  const isPreOrder = product.firstListTime && product.firstListTime > now;
+
+  const getPreOrderDateString = (timestamp) => {
+    if (!timestamp) return '';
+    const date = new Date(timestamp);
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    return `${month}月${day}日`;
+  };
+
   return (
     <div style={styles.card} onClick={() => onClick(product)}>
       {/* 降價標籤 (壓在圖片上) */}
@@ -53,6 +64,13 @@ export default function ProductCard({ product, onClick }) {
       <div style={styles.infoContainer}>
         <span style={styles.gender}>{product.sex || '男女適穿'}</span>
         <h3 style={styles.name}>{product.shortName}</h3>
+
+        {/* 預訂販售提示 (品名下方) */}
+        {isPreOrder && (
+          <div style={styles.preOrderText}>
+            {getPreOrderDateString(product.firstListTime)}預訂販售
+          </div>
+        )}
 
         {/* 促銷標籤 (品名下方) */}
         {promoLabels.length > 0 && (
@@ -197,6 +215,14 @@ const styles = {
     overflow: 'hidden',
     height: '38px',
     lineHeight: '19px',
+  },
+  preOrderText: {
+    color: 'var(--uq-red)',
+    fontSize: '12px',
+    fontWeight: 'bold',
+    marginTop: '2px',
+    marginBottom: '6px',
+    display: 'block',
   },
   priceContainer: {
     display: 'flex',

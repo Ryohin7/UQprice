@@ -25,15 +25,16 @@
 *   **版本刪除功能**：後台版本列表提供「刪除」按鈕，確認後可從資料庫刪除，頁尾版本號會即時回退。
 *   **「返回首頁」按鈕**：登入頁面與 Header 中均配置了清晰的返回首頁按鈕。
 
-### 4. 🔄 即時監聽與 Service Worker 防快取
-*   **Firestore 即時監聽**：首頁商品與版本列表全面改用 `onSnapshot` 進行即時監聽，數據一有變動（如價格更新、發布/刪除版本）即時渲染。
+### 4. 🔄 Firestore 讀取量優化與 Service Worker 防快取
+*   **一次性加載優化**：為節省 Firestore 讀取次數，全站改為一次性 `getDocs` 載入，並修補了背景監聽器的記憶體洩漏漏洞，讀取數降至原先的百分之一。
 *   **PWA 網路優先策略 (Network-First)**：Service Worker 改為網路優先，確保使用者每次都能載入最新的前端程式碼，避免本地舊快取干擾。
 
-### 5. 🏷️ 尺寸代碼正則轉譯
-*   **兒童與嬰幼兒尺寸轉譯**：支持自動匹配 `CMC110` / `CMA80` / `CMB70` 等格式，正則表達式會自動提取後方數字轉譯為 `110cm` / `80cm` / `70cm`，使童裝尺碼更直覺。
+### 5. 🏷️ 尺寸與預購商品提醒
+*   **預購商品標示**：若商品 `firstListTime` 晚於目前時間，會在商品卡片品名下方以紅字顯示「`X月X日預訂販售`」。
+*   **兒童與嬰幼兒尺寸轉譯**：支持自動匹配 `CMC110` / `CMA80` 等格式，自動提取後方數字轉譯為 `110cm` / `80cm`，使童裝尺碼更直覺。
 
-### 6. 📅 GitHub Actions 每周自動爬蟲
-*   **排程定時執行**：配置 `.github/workflows/crawl.yml`，定於每週四早上 **08:55（台灣時間）** 自動在 GitHub 雲端環境中啟動爬蟲同步，並支持手動觸發。
+### 6. 📅 GitHub Actions 自動爬蟲
+*   **排程定時執行**：配置 `.github/workflows/crawl.yml`，定於每週的**星期三、四、五早上 08:55（台灣時間）** 自動在 GitHub 雲端環境中啟動爬蟲同步，並支持手動觸發。
 
 ---
 
@@ -49,10 +50,11 @@
 ### 2. 獨立管理員後台與版本日誌管理
 *   **隱藏後台入口與 `/admin` 路由**：首頁與選單中已不顯示後台管理按鈕，改為透過獨立路由 `/admin` 手動造訪。未登入時會顯示精美的管理員登入頁面（帳密為 `admin` / `admin123`），登入狀態存於 `sessionStorage`，防止刷頁登出。
 *   **版本管理與刪除功能**：支援重大改版、新增功能、修復優化的版本日誌發布，當前最新版本會即時顯示於最底層頁尾。後台版本列表提供「刪除」功能，點擊確認後可從 Firestore 刪除並即時降回前一版本號。
+*   **分類管理拖曳排序與篩選可視化**：管理員可手動拖曳主分類與次分類調整前台 Header 排序，並且點擊系統內建次分類（如全部、新品、即將上市等）能直接在右側查看其詳細數據過濾邏輯。
 *   **「返回首頁」捷徑**：後台登入頁與 Header 中均配置了「返回首頁」按鈕，點擊後能重新載回查價首頁。
 
-### 3. 即時資料同步 (Real-time Sync) 與防快取機制
-*   **Firestore 即時監聽**：首頁商品與版本歷史拋棄本機 JSON 快取，全面使用 `onSnapshot` 與資料庫同步。數據一經變更（如發布或刪除版本、價格更新）將即時渲染至畫面。
+### 3. 資料載入與防快取機制
+*   **Firestore 一次性加載**：首頁商品與版本歷史拋棄本機 JSON 快取，改用一次性 `getDocs` 獲取，避免使用實時監聽 `onSnapshot` 所造成的平方級讀取數暴增。
 *   **PWA 網路優先策略 (Network-First)**：將 Service Worker 的靜態檔案快取策略改為網路優先。有網路時，網頁一律存取伺服器上最新的 HTML、CSS 與 JS，防止因本地 Service Worker 快取舊代碼而看不見最新功能更新。
 
 ### 4. 首頁三大精選區塊
@@ -180,9 +182,9 @@ npm run dev
 node crawl_all_men.cjs
 ```
 
-### 5. 每週自動排程爬蟲 (GitHub Actions)
+### 5. 自動排程爬蟲 (GitHub Actions)
 專案已配置 GitHub 工作流 [.github/workflows/crawl.yml](file:///c:/Users/jacky/OneDrive/Desktop/UNIQLO/.github/workflows/crawl.yml)。
-* **自動執行**：每週四早上 **08:55（台灣時間）** 自動在 GitHub 雲端環境中啟動爬蟲，執行增量爬取與 Firestore 資料庫同步。
+* **自動執行**：每週的**星期三、四、五早上 08:55（台灣時間）** 自動在 GitHub 雲端環境中啟動爬蟲，執行增量爬取與 Firestore 資料庫同步。
 * **手動執行**：支援 `workflow_dispatch`，可在 GitHub 專案的 **Actions** 頁面手動點選 **Run workflow** 隨時更新。
 * **GitHub Repository Secrets 配置**：
   請至您的 GitHub Repository 點選 `Settings` > `Secrets and variables` > `Actions` > `New repository secret`，新增以下 6 個環境變數（值請照您的 `.env` 檔案內填寫）：
