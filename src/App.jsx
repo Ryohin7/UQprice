@@ -13,17 +13,34 @@ import NotFound from './components/NotFound';
 import { logPageView, logSearch, logViewProduct, logAddToFavorites, logRemoveFromFavorites, logClickExternalLink } from './utils/analytics';
 
 
+// 計算密碼的 SHA-256 雜湊值 (防範明文密碼外洩)
+async function sha256(message) {
+  const msgBuffer = new TextEncoder().encode(message);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 function AdminLoginForm({ onLogin }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (username === 'admin' && password === 'admin123') {
-      onLogin();
-    } else {
-      setError('帳號或密碼錯誤！');
+    try {
+      const inputHash = await sha256(password);
+      // 從環境變數讀取預期的密碼雜湊，若無則預設為 admin@88348599 的雜湊
+      const expectedHash = import.meta.env.VITE_ADMIN_PASSWORD_HASH || '84a08f015876f8bed8932442e645a8c06af4fa6b278d6b301fc208cd5deb8668';
+
+      if (username === 'admin' && inputHash === expectedHash) {
+        onLogin();
+      } else {
+        setError('帳號或密碼錯誤！');
+      }
+    } catch (err) {
+      console.error('密碼安全性比對失敗:', err);
+      setError('系統錯誤，請稍後重試！');
     }
   };
 
@@ -679,12 +696,12 @@ export default function App() {
           if (k === '嬰幼兒' || k === '嬰' || k === '幼兒' || k === '嬰兒' || k === 'baby') {
             return isBabyProduct(p) || p.name.toLowerCase().includes(k);
           }
-          
+
           // 一般詞彙比對
           const nameMatch = p.name.toLowerCase().includes(k);
           const codeMatch = p.code.includes(k) || (p.productCode && p.productCode.toLowerCase().includes(k));
           const categoryMatch = p.categoryNames && p.categoryNames.some(c => c.toLowerCase().includes(k));
-          
+
           return nameMatch || codeMatch || categoryMatch;
         });
       });
@@ -721,7 +738,7 @@ export default function App() {
         if (targetSub) {
           if (targetSub.matchType === 'custom') {
             const selectedCats = targetSub.selectedCategories || [];
-            result = result.filter(p => 
+            result = result.filter(p =>
               p.categoryNames && p.categoryNames.some(cName => selectedCats.includes(cName))
             );
           } else {
