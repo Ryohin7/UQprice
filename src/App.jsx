@@ -10,6 +10,8 @@ import { collection, getDocs, doc, setDoc, deleteDoc, onSnapshot, getDoc, update
 import AdminPanel from './components/AdminPanel';
 import VersionHistoryModal from './components/VersionHistoryModal';
 import NotFound from './components/NotFound';
+import { logPageView, logSearch, logViewProduct, logAddToFavorites, logRemoveFromFavorites, logClickExternalLink } from './utils/analytics';
+
 
 function AdminLoginForm({ onLogin }) {
   const [username, setUsername] = useState('');
@@ -446,6 +448,30 @@ export default function App() {
     return saved ? JSON.parse(saved) : [];
   });
 
+  // 監聽路由切換發送 GA PageView
+  useEffect(() => {
+    let title = 'UNIQLO 比價網站 | 即時搜尋最新與歷史價格';
+    let path = '/';
+    if (currentView === 'admin') {
+      title = '管理員後台 | UNIQLO 比價網站';
+      path = '/admin';
+    } else if (currentView === '404') {
+      title = '404 頁面不存在 | UNIQLO 比價網站';
+      path = '/404';
+    }
+    logPageView(path, title);
+  }, [currentView]);
+
+  // 搜尋字詞 GA 追蹤 (防抖 1 秒)
+  useEffect(() => {
+    if (!searchTerm.trim()) return;
+    const timer = setTimeout(() => {
+      logSearch(searchTerm);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+
   // 從 Firestore 載入最新商品與瀏覽次數 (一次性獲取)
   useEffect(() => {
     if (!db) {
@@ -592,10 +618,17 @@ export default function App() {
 
   const toggleFavorite = (productId, e) => {
     e.stopPropagation();
+    const targetProduct = products.find(p => p.id === productId);
     if (favorites.includes(productId)) {
       setFavorites(favorites.filter(id => id !== productId));
+      if (targetProduct) {
+        logRemoveFromFavorites(targetProduct);
+      }
     } else {
       setFavorites([...favorites, productId]);
+      if (targetProduct) {
+        logAddToFavorites(targetProduct);
+      }
     }
   };
 
@@ -780,6 +813,9 @@ export default function App() {
   };
 
   const handleProductClick = async (product) => {
+    // 記錄 GA 商品檢視事件
+    logViewProduct(product);
+
     // 點擊時 views + 1 (前端即時更新 + Firestore 持久化)
     const newViews = (product.views || 0) + 1;
     setProducts(prevProducts =>
@@ -1205,6 +1241,7 @@ export default function App() {
                     target="_blank"
                     rel="noreferrer"
                     style={styles.linkBtn}
+                    onClick={() => logClickExternalLink(activeProduct)}
                   >
                     <ExternalLink size={18} style={{ marginRight: 6 }} />
                     前往官網購買
