@@ -348,32 +348,45 @@ async function crawl(triggerType = 'manual') {
 
 async function syncToFirestore(products, triggerType = 'manual', startTime = Date.now()) {
   console.log('\n===== Step 3: 增量同步至 Firestore =====');
+  // 載入環境變數
+  if (fs.existsSync(CONFIG.envPath)) {
+    const content = fs.readFileSync(CONFIG.envPath, 'utf8');
+    content.split('\n').forEach(line => {
+      const parts = line.trim().split('=');
+      if (parts.length >= 2) {
+        process.env[parts[0].trim()] = parts.slice(1).join('=').trim();
+      }
+    });
+  }
+
+  const { initializeApp } = await import('firebase/app');
+  const { getFirestore, doc, setDoc, getDoc, getDocs, collection, writeBatch } = await import('firebase/firestore');
+  const { getAuth, signInWithEmailAndPassword } = await import('firebase/auth');
+
+  const firebaseConfig = {
+    apiKey: process.env.VITE_FIREBASE_API_KEY,
+    authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
+    projectId: process.env.VITE_FIREBASE_PROJECT_ID,
+    storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+    appId: process.env.VITE_FIREBASE_APP_ID
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const auth = getAuth(app);
+
   try {
-    // 載入環境變數
-    if (fs.existsSync(CONFIG.envPath)) {
-      const content = fs.readFileSync(CONFIG.envPath, 'utf8');
-      content.split('\n').forEach(line => {
-        const parts = line.trim().split('=');
-        if (parts.length >= 2) {
-          process.env[parts[0].trim()] = parts.slice(1).join('=').trim();
-        }
-      });
+    // 進行爬蟲帳號登入
+    const email = process.env.VITE_CRAWLER_EMAIL;
+    const password = process.env.VITE_CRAWLER_PASSWORD;
+    if (email && password) {
+      console.log(`  🔐 正在以 ${email} 身份登入 Firebase...`);
+      await signInWithEmailAndPassword(auth, email, password);
+      console.log('  🔓 登入成功！');
+    } else {
+      console.warn('  ⚠️ 未設定 VITE_CRAWLER_EMAIL 或 VITE_CRAWLER_PASSWORD，將以匿名身份繼續執行（可能導致寫入失敗）');
     }
-
-    const { initializeApp } = await import('firebase/app');
-    const { getFirestore, doc, setDoc, getDoc, getDocs, collection, writeBatch } = await import('firebase/firestore');
-
-    const firebaseConfig = {
-      apiKey: process.env.VITE_FIREBASE_API_KEY,
-      authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
-      projectId: process.env.VITE_FIREBASE_PROJECT_ID,
-      storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET,
-      messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-      appId: process.env.VITE_FIREBASE_APP_ID
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
 
     const today = new Date().toISOString().split('T')[0];
     

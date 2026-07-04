@@ -3,19 +3,24 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
+    // 驗證是否為爬蟲專用帳號
+    function isCrawler() {
+      return request.auth != null && request.auth.token.email == 'crawler-bot@uqprice.com';
+    }
+
     // ==========================================
     // 1. 商品資料庫 (products) 與 歷史價格 (product_prices)
     // ==========================================
     match /products/{productId} {
       // 任何造訪網站的使用者都可以讀取商品資料
       allow read: if true;
-      // 拒絕任何人在前端直接新增、修改或刪除商品 (必須由後端爬蟲定時同步)
-      allow write: if false;
+      // 僅允許爬蟲帳號進行新增、修改或刪除
+      allow write: if isCrawler();
     }
     
     match /product_prices/{productId} {
       allow read: if true;
-      allow write: if false;
+      allow write: if isCrawler();
     }
 
     // ==========================================
@@ -35,8 +40,7 @@ service cloud.firestore {
     // ==========================================
     match /versions/{versionId} {
       allow read: if true;
-      // 拒絕未授權的前端寫入 (若未來有搭配 Firebase Auth 可改為 if request.auth != null)
-      allow write: if false;
+      allow write: if isCrawler();
     }
 
     // ==========================================
@@ -44,8 +48,7 @@ service cloud.firestore {
     // ==========================================
     match /navigation/{navigationId} {
       allow read: if true;
-      // 拒絕未授權的前端寫入 (若未來有搭配 Firebase Auth 可改為 if request.auth != null)
-      allow write: if false;
+      allow write: if isCrawler();
     }
 
     // ==========================================
@@ -53,12 +56,12 @@ service cloud.firestore {
     // ==========================================
     match /system/{systemId} {
       allow read: if true;
-      allow write: if false;
+      allow write: if isCrawler();
     }
 
     match /crawler_reports/{reportId} {
       allow read: if true;
-      allow write: if false;
+      allow write: if isCrawler();
     }
   }
 }
