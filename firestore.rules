@@ -63,5 +63,13 @@ service cloud.firestore {
       allow read: if true;
       allow write: if isCrawler();
     }
+
+    // ==========================================
+    // 6. 期間限定商品快速索引 (campaign_products)
+    // ==========================================
+    match /campaign_products/{campaignId} {
+      allow read: if true;
+      allow write: if isCrawler();
+    }
   }
 }
