@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
 
 // Firebase 配置
 // 使用 env 環境變數以確保安全性與 Vercel 部署相容
@@ -15,12 +16,14 @@ const firebaseConfig = {
 // 初始化 Firebase
 let app;
 let db;
+let auth;
 
 try {
   // 如果提供了 env 變數，則進行初始化
   if (firebaseConfig.apiKey) {
     app = initializeApp(firebaseConfig);
     db = getFirestore(app);
+    auth = getAuth(app);
     console.log("Firebase initialized successfully.");
   } else {
     console.log("Firebase environment variables missing. Running in offline/local-only mode.");
@@ -29,5 +32,5 @@ try {
   console.error("Firebase initialization failed:", error);
 }
 
-export { db };
+export { db, auth };
 export default app;

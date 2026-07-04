@@ -3,9 +3,12 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // 驗證是否為爬蟲專用帳號
+    // 驗證是否為爬蟲或管理員帳號
     function isCrawler() {
-      return request.auth != null && request.auth.token.email == 'crawler-bot@uqprice.com';
+      return request.auth != null && (
+        request.auth.token.email == 'crawler-bot@uqprice.com' ||
+        request.auth.token.email == 'admin@uqprice.com'
+      );
     }
 
     // ==========================================

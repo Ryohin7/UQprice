@@ -5,7 +5,8 @@ import SkeletonCard from './components/SkeletonCard';
 import PriceChart from './components/PriceChart';
 
 import { Search, SlidersHorizontal, ArrowUpDown, X, Heart, ExternalLink, TrendingDown, Menu, User, Lock } from 'lucide-react';
-import { db } from './firebase';
+import { db, auth } from './firebase';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 import { collection, getDocs, doc, setDoc, deleteDoc, onSnapshot, getDoc, updateDoc, increment } from 'firebase/firestore';
 import AdminPanel from './components/AdminPanel';
 import VersionHistoryModal from './components/VersionHistoryModal';
@@ -34,13 +35,18 @@ function AdminLoginForm({ onLogin }) {
       const expectedHash = import.meta.env.VITE_ADMIN_PASSWORD_HASH || '84a08f015876f8bed8932442e645a8c06af4fa6b278d6b301fc208cd5deb8668';
 
       if (username === 'admin' && inputHash === expectedHash) {
+        // 本地密碼驗證通過後，嘗試使用 Firebase Auth 登入管理員帳號以獲得 Firestore 寫入權限
+        if (auth) {
+          setError('正在驗證管理員安全憑證...');
+          await signInWithEmailAndPassword(auth, 'admin@uqprice.com', password);
+        }
         onLogin();
       } else {
         setError('帳號或密碼錯誤！');
       }
     } catch (err) {
-      console.error('密碼安全性比對失敗:', err);
-      setError('系統錯誤，請稍後重試！');
+      console.error('密碼安全性比對失敗或 Firebase 認證失敗:', err);
+      setError('登入失敗，請確認已在 Firebase 註冊 admin@uqprice.com 帳號且密碼正確！');
     }
   };
 
