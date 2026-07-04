@@ -27,7 +27,7 @@ const CONFIG = {
   outputPath: process.env.GITHUB_ACTIONS === 'true'
     ? path.resolve('./products_db.json')
     : 'C:/Users/jacky/.gemini/antigravity-ide/scratch/products_db.json',
-  localJsonPath: './src/data/products.json',
+  localJsonPath: './public/products.json',
   envPath: './.env',
 };
 
@@ -335,6 +335,18 @@ async function crawl(triggerType = 'manual') {
     console.log('💾 本地 JSON 已儲存備份');
   } catch (err) {
     console.warn('⚠️ 無法寫入本地備份 JSON，已跳過備份步驟:', err.message);
+  }
+
+  // 儲存本地 JSON (供前端靜態搜尋使用)
+  try {
+    const dir = path.dirname(CONFIG.localJsonPath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    fs.writeFileSync(CONFIG.localJsonPath, JSON.stringify(allProducts, null, 2));
+    console.log('💾 前端 JSON 已儲存至 public/products.json');
+  } catch (err) {
+    console.warn('⚠️ 無法寫入前端靜態 JSON:', err.message);
   }
 
   // ===== Step 3: 同步到 Firestore =====

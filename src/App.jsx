@@ -497,28 +497,26 @@ export default function App() {
     }
     const loadProductsAndViews = async () => {
       try {
-        const [productsSnap, viewsSnap] = await Promise.all([
-          getDocs(collection(db, "products")),
+        const [productsRes, viewsSnap] = await Promise.all([
+          fetch('/products.json').then(res => {
+            if (!res.ok) throw new Error('Failed to load products.json');
+            return res.json();
+          }),
           getDocs(collection(db, "product_views"))
         ]);
-
-        const items = [];
-        productsSnap.forEach((doc) => {
-          items.push(doc.data());
-        });
 
         const viewsMap = {};
         viewsSnap.forEach((d) => {
           viewsMap[d.id] = d.data().views || 0;
         });
 
-        if (items.length > 0) {
-          console.log(`Successfully loaded ${items.length} products from Firestore.`);
-          const merged = items.map(p => ({ ...p, views: viewsMap[p.id] || 0 }));
+        if (productsRes && productsRes.length > 0) {
+          console.log(`Successfully loaded ${productsRes.length} products from local JSON.`);
+          const merged = productsRes.map(p => ({ ...p, views: viewsMap[p.id] || 0 }));
           setProducts(merged);
         }
       } catch (error) {
-        console.error("Failed to load products or views from Firestore:", error);
+        console.error("Failed to load products or views:", error);
       } finally {
         setLoading(false);
       }

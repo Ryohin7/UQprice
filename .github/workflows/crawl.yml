@@ -34,3 +34,11 @@ jobs:
           VITE_CRAWLER_EMAIL: ${{ secrets.VITE_CRAWLER_EMAIL }}
           VITE_CRAWLER_PASSWORD: ${{ secrets.VITE_CRAWLER_PASSWORD }}
         run: node crawl_all_men.cjs
+
+      - name: Commit and Push Updated products.json
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add public/products.json
+          git diff-index --quiet HEAD || (git commit -m "data: auto-update products.json from crawler" && git push)
+
