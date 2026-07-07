@@ -237,8 +237,8 @@ body {
   font-size: 18px;
   font-weight: 700;
   color: var(--text-primary);
-  margin-bottom: 16px;
-  margin-top: 24px;
+  margin-bottom: 8px;
+  margin-top: 16px;
   display: flex;
   align-items: center;
   border-left: 4px solid var(--uq-red);
@@ -502,7 +502,11 @@ body {
 
   /* 防止內容被底部固定欄位擋住 */
   body, #root {
-    padding-bottom: 68px;
+    padding-bottom: 50px;
+  }
+
+  footer {
+    padding: 8px 12px 4px 12px !important;
   }
 }
 

@@ -322,7 +322,7 @@ const styles = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: '12px 24px',
+    padding: '6px 24px',
     borderBottom: '1px solid var(--border-color)',
     backgroundColor: 'var(--bg-white)',
     position: 'sticky',

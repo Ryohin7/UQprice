@@ -931,7 +931,7 @@ export default function App() {
           // 精選首頁模式：三大精選區塊橫向滾動
           <div style={styles.featuredHome}>
             {/* 區塊 1：熱門瀏覽 TOP 10 */}
-            <div style={{ marginBottom: 32 }}>
+            <div style={{ marginBottom: 16 }}>
               <h3 className="section-title">熱門瀏覽 TOP 10</h3>
               {!topViewsProducts.some(product => product.views > 0) ? (
                 <div style={styles.emptyFeatured}>沒有資料</div>
@@ -947,7 +947,7 @@ export default function App() {
             </div>
 
             {/* 區塊 2：男裝新品上市 TOP 10 */}
-            <div style={{ marginBottom: 32 }}>
+            <div style={{ marginBottom: 16 }}>
               <h3 className="section-title">男裝最新商品</h3>
               {menNewArrivals.length === 0 ? (
                 <div style={styles.emptyFeatured}>暫無新品上市資料</div>
@@ -963,7 +963,7 @@ export default function App() {
             </div>
 
             {/* 區塊 3：女裝新品上市 TOP 10 */}
-            <div style={{ marginBottom: 32 }}>
+            <div style={{ marginBottom: 16 }}>
               <h3 className="section-title">女裝最新商品</h3>
               {womenNewArrivals.length === 0 ? (
                 <div style={styles.emptyFeatured}>暫無新品上市資料</div>
@@ -979,7 +979,7 @@ export default function App() {
             </div>
 
             {/* 區塊 4：童裝新品上市 TOP 10 */}
-            <div style={{ marginBottom: 32 }}>
+            <div style={{ marginBottom: 16 }}>
               <h3 className="section-title">童裝最新商品</h3>
               {kidsNewArrivals.length === 0 ? (
                 <div style={styles.emptyFeatured}>暫無新品上市資料</div>
@@ -1332,7 +1332,7 @@ const styles = {
   featuredHome: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '32px',
+    gap: '16px',
     padding: '8px 0',
   },
   emptyFeatured: {
@@ -1613,7 +1613,7 @@ const styles = {
   },
   footer: {
     borderTop: '1px solid var(--border-color)',
-    padding: '24px',
+    padding: '12px',
     textAlign: 'center',
     fontSize: '12px',
     color: 'var(--text-light)',
