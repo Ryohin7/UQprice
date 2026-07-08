@@ -660,4 +660,11 @@ if (args.includes('--auto') || args.includes('--type=auto') || process.env.GITHU
   triggerType = 'auto';
 }
 
-crawl(triggerType);
+crawl(triggerType)
+  .then(() => {
+    process.exit(0);
+  })
+  .catch((err) => {
+    console.error('Fatal error during crawl:', err);
+    process.exit(1);
+  });
