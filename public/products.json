@@ -68945,7 +68945,6 @@
     "size": [
       "XS",
       "S",
-      "L",
       "XL"
     ],
     "styleText": [
@@ -84012,106 +84011,6 @@
     "status": "active"
   },
   {
-    "id": "u0000000054251",
-    "ProductId": "u0000000054251",
-    "productCode": "u0000000054251",
-    "code": "487958",
-    "omsProductCode": "487958000",
-    "name": "SMART長褲",
-    "shortName": "SMART長褲",
-    "size": [
-      "XS",
-      "S",
-      "M",
-      "L",
-      "XL",
-      "XXL",
-      "3XL"
-    ],
-    "styleText": [
-      "05 GRAY",
-      "09 BLACK",
-      "38 DARK BROWN",
-      "69 NAVY"
-    ],
-    "chipPic": [
-      "/hmall/test/u0000000054251/chip/22/COL05.jpg",
-      "/hmall/test/u0000000054251/chip/22/COL09.jpg",
-      "/hmall/test/u0000000054251/chip/22/COL38.jpg",
-      "/hmall/test/u0000000054251/chip/22/COL69.jpg"
-    ],
-    "minPrice": 990,
-    "maxPrice": 990,
-    "originPrice": 990,
-    "mainPic": "/hmall/test/u0000000054251/main/first/561/1.jpg",
-    "sex": "女裝",
-    "colors": [
-      {
-        "code": "COL05",
-        "name": "05 GRAY",
-        "chipUrl": "/hmall/test/u0000000054251/chip/22/COL05.jpg",
-        "largePicUrl": "/hmall/test/u0000000054251/sku/225/COL05.jpg"
-      },
-      {
-        "code": "COL09",
-        "name": "09 BLACK",
-        "chipUrl": "/hmall/test/u0000000054251/chip/22/COL09.jpg",
-        "largePicUrl": "/hmall/test/u0000000054251/sku/225/COL09.jpg"
-      },
-      {
-        "code": "COL38",
-        "name": "38 DARK BROWN",
-        "chipUrl": "/hmall/test/u0000000054251/chip/22/COL38.jpg",
-        "largePicUrl": "/hmall/test/u0000000054251/sku/225/COL38.jpg"
-      },
-      {
-        "code": "COL69",
-        "name": "69 NAVY",
-        "chipUrl": "/hmall/test/u0000000054251/chip/22/COL69.jpg",
-        "largePicUrl": "/hmall/test/u0000000054251/sku/225/COL69.jpg"
-      }
-    ],
-    "salesPromotionLabel": [],
-    "historyPrices": [
-      {
-        "date": "2026-07-10",
-        "price": 990
-      }
-    ],
-    "isNew": true,
-    "isConcessionalRate": false,
-    "isTimeDoptimal": false,
-    "timeLimitedBegin": null,
-    "timeLimitedEnd": null,
-    "planOnDate": null,
-    "firstListTime": 1782693000000,
-    "planOutDate": null,
-    "makePantsLengthFlag": "N",
-    "identity": [
-      "new_product",
-      "revision",
-      "pickUp"
-    ],
-    "listYearSeason": "秋季",
-    "categoryNames": [
-      "全商品",
-      "熱門推薦",
-      "女裝",
-      "下身類",
-      "週週新品一覽",
-      "微正裝褲",
-      "全部褲裝/裙子",
-      "女裝 新品一覽",
-      "寬褲",
-      "長褲",
-      "SMART 長褲",
-      "微正裝"
-    ],
-    "active": true,
-    "status": "active",
-    "isNewArrival": true
-  },
-  {
     "id": "u0000000053349",
     "ProductId": "u0000000053349",
     "productCode": "u0000000053349",
@@ -89516,6 +89415,104 @@
     "makePantsLengthFlag": "N",
     "identity": [
       "ECONLY",
+      "new_product",
+      "revision",
+      "pickUp"
+    ],
+    "listYearSeason": "秋季",
+    "categoryNames": [
+      "全商品",
+      "熱門推薦",
+      "女裝",
+      "下身類",
+      "週週新品一覽",
+      "微正裝褲",
+      "全部褲裝/裙子",
+      "女裝 新品一覽",
+      "長褲",
+      "SMART 長褲"
+    ],
+    "active": true,
+    "status": "active",
+    "isNewArrival": true
+  },
+  {
+    "id": "u0000000054251",
+    "ProductId": "u0000000054251",
+    "productCode": "u0000000054251",
+    "code": "487958",
+    "omsProductCode": "487958000",
+    "name": "SMART長褲",
+    "shortName": "SMART長褲",
+    "size": [
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL",
+      "3XL"
+    ],
+    "styleText": [
+      "05 GRAY",
+      "09 BLACK",
+      "38 DARK BROWN",
+      "69 NAVY"
+    ],
+    "chipPic": [
+      "/hmall/test/u0000000054251/chip/22/COL05.jpg",
+      "/hmall/test/u0000000054251/chip/22/COL09.jpg",
+      "/hmall/test/u0000000054251/chip/22/COL38.jpg",
+      "/hmall/test/u0000000054251/chip/22/COL69.jpg"
+    ],
+    "minPrice": 990,
+    "maxPrice": 990,
+    "originPrice": 990,
+    "mainPic": "/hmall/test/u0000000054251/main/first/561/1.jpg",
+    "sex": "女裝",
+    "colors": [
+      {
+        "code": "COL05",
+        "name": "05 GRAY",
+        "chipUrl": "/hmall/test/u0000000054251/chip/22/COL05.jpg",
+        "largePicUrl": "/hmall/test/u0000000054251/sku/225/COL05.jpg"
+      },
+      {
+        "code": "COL09",
+        "name": "09 BLACK",
+        "chipUrl": "/hmall/test/u0000000054251/chip/22/COL09.jpg",
+        "largePicUrl": "/hmall/test/u0000000054251/sku/225/COL09.jpg"
+      },
+      {
+        "code": "COL38",
+        "name": "38 DARK BROWN",
+        "chipUrl": "/hmall/test/u0000000054251/chip/22/COL38.jpg",
+        "largePicUrl": "/hmall/test/u0000000054251/sku/225/COL38.jpg"
+      },
+      {
+        "code": "COL69",
+        "name": "69 NAVY",
+        "chipUrl": "/hmall/test/u0000000054251/chip/22/COL69.jpg",
+        "largePicUrl": "/hmall/test/u0000000054251/sku/225/COL69.jpg"
+      }
+    ],
+    "salesPromotionLabel": [],
+    "historyPrices": [
+      {
+        "date": "2026-07-10",
+        "price": 990
+      }
+    ],
+    "isNew": true,
+    "isConcessionalRate": false,
+    "isTimeDoptimal": false,
+    "timeLimitedBegin": null,
+    "timeLimitedEnd": null,
+    "planOnDate": null,
+    "firstListTime": 1782693000000,
+    "planOutDate": null,
+    "makePantsLengthFlag": "N",
+    "identity": [
       "new_product",
       "revision",
       "pickUp"
@@ -106727,7 +106724,8 @@
       "S",
       "M",
       "L",
-      "XL"
+      "XL",
+      "XXL"
     ],
     "styleText": [
       "08 DARK GRAY"
