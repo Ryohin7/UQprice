@@ -1515,6 +1515,7 @@
     "size": [
       "XS",
       "S",
+      "L",
       "XL",
       "XXL"
     ],
@@ -21450,78 +21451,6 @@
     "status": "active"
   },
   {
-    "id": "u0000000053225",
-    "ProductId": "u0000000053225",
-    "productCode": "u0000000053225",
-    "code": "478231",
-    "omsProductCode": "478231051",
-    "name": "防風連帽外套",
-    "shortName": "防風連帽外套",
-    "size": [
-      "XL"
-    ],
-    "styleText": [
-      "58 DARK GREEN"
-    ],
-    "chipPic": [
-      "/hmall/test/u0000000053225/chip/22/COL58.jpg"
-    ],
-    "minPrice": 590,
-    "maxPrice": 590,
-    "originPrice": 1990,
-    "mainPic": "/hmall/test/u0000000053225/main/first/561/1.jpg",
-    "sex": "男裝",
-    "colors": [
-      {
-        "code": "COL58",
-        "name": "58 DARK GREEN",
-        "chipUrl": "/hmall/test/u0000000053225/chip/22/COL58.jpg",
-        "largePicUrl": "/hmall/test/u0000000053225/sku/225/COL58.jpg"
-      }
-    ],
-    "salesPromotionLabel": [
-      {
-        "labelType": "1",
-        "labelText": "特價商品"
-      }
-    ],
-    "historyPrices": [
-      {
-        "date": "2026-07-17",
-        "price": 590
-      }
-    ],
-    "isNew": false,
-    "isConcessionalRate": true,
-    "isTimeDoptimal": false,
-    "timeLimitedBegin": null,
-    "timeLimitedEnd": null,
-    "planOnDate": null,
-    "firstListTime": 1748219400000,
-    "planOutDate": null,
-    "makePantsLengthFlag": "N",
-    "identity": [
-      "concessional_rate",
-      "pickUp"
-    ],
-    "listYearSeason": "春季",
-    "categoryNames": [
-      "全商品",
-      "熱門推薦",
-      "男裝",
-      "外套類",
-      "夏日SALE 特價專區",
-      "男裝 特價商品",
-      "布勞森/連帽外套",
-      "全部外套",
-      "外套",
-      "連帽外套",
-      "機能外套(防風/防潑水/BLOCKTECH防風雨)"
-    ],
-    "active": true,
-    "status": "active"
-  },
-  {
     "id": "u0000000052976",
     "ProductId": "u0000000052976",
     "productCode": "u0000000052976",
@@ -26934,9 +26863,11 @@
       "M"
     ],
     "styleText": [
+      "04 GRAY",
       "09 BLACK"
     ],
     "chipPic": [
+      "/hmall/test/u0000000054253/chip/22/COL04.jpg",
       "/hmall/test/u0000000054253/chip/22/COL09.jpg"
     ],
     "minPrice": 990,
@@ -26945,6 +26876,12 @@
     "mainPic": "/hmall/test/u0000000054253/main/first/561/1.jpg",
     "sex": "女裝/男女適穿",
     "colors": [
+      {
+        "code": "COL04",
+        "name": "04 GRAY",
+        "chipUrl": "/hmall/test/u0000000054253/chip/22/COL04.jpg",
+        "largePicUrl": "/hmall/test/u0000000054253/sku/225/COL04.jpg"
+      },
       {
         "code": "COL09",
         "name": "09 BLACK",
@@ -32285,93 +32222,6 @@
     "active": true,
     "status": "active",
     "isNewArrival": true
-  },
-  {
-    "id": "u0000000053908",
-    "ProductId": "u0000000053908",
-    "productCode": "u0000000053908",
-    "code": "484147",
-    "omsProductCode": "484147000",
-    "name": "開領POLO針織衫(短袖)",
-    "shortName": "開領POLO針織衫(短袖)",
-    "size": [
-      "M"
-    ],
-    "styleText": [
-      "32 BEIGE",
-      "73 PURPLE"
-    ],
-    "chipPic": [
-      "/hmall/test/u0000000053908/chip/22/COL32.jpg",
-      "/hmall/test/u0000000053908/chip/22/COL73.jpg"
-    ],
-    "minPrice": 490,
-    "maxPrice": 490,
-    "originPrice": 990,
-    "mainPic": "/hmall/test/u0000000053908/main/first/561/1.jpg",
-    "sex": "男裝/男女適穿​",
-    "colors": [
-      {
-        "code": "COL32",
-        "name": "32 BEIGE",
-        "chipUrl": "/hmall/test/u0000000053908/chip/22/COL32.jpg",
-        "largePicUrl": "/hmall/test/u0000000053908/sku/225/COL32.jpg"
-      },
-      {
-        "code": "COL73",
-        "name": "73 PURPLE",
-        "chipUrl": "/hmall/test/u0000000053908/chip/22/COL73.jpg",
-        "largePicUrl": "/hmall/test/u0000000053908/sku/225/COL73.jpg"
-      }
-    ],
-    "salesPromotionLabel": [
-      {
-        "labelType": "1",
-        "labelText": "特價商品"
-      }
-    ],
-    "historyPrices": [
-      {
-        "date": "2026-07-17",
-        "price": 490
-      }
-    ],
-    "isNew": false,
-    "isConcessionalRate": true,
-    "isTimeDoptimal": false,
-    "timeLimitedBegin": null,
-    "timeLimitedEnd": null,
-    "planOnDate": null,
-    "firstListTime": 1773966600000,
-    "planOutDate": null,
-    "makePantsLengthFlag": "N",
-    "identity": [
-      "SELECTED",
-      "concessional_rate",
-      "pickUp"
-    ],
-    "listYearSeason": "春季",
-    "categoryNames": [
-      "全商品",
-      "女裝",
-      "熱門推薦",
-      "男裝",
-      "針織衫/開襟外套",
-      "2026年 春夏聯名系列",
-      "夏日SALE 特價專區",
-      "女裝 特價商品",
-      "Uniqlo U",
-      "全部春夏聯名商品",
-      "大師聯名系列 特價商品",
-      "男裝 特價商品",
-      "短袖",
-      "針織衫",
-      "針織衫(短袖)",
-      "男裝/男女適穿",
-      "3/20販售"
-    ],
-    "active": true,
-    "status": "active"
   },
   {
     "id": "u0000000053930",
@@ -60754,152 +60604,6 @@
     "status": "active"
   },
   {
-    "id": "u0000000054883",
-    "ProductId": "u0000000054883",
-    "productCode": "u0000000054883",
-    "code": "489391",
-    "omsProductCode": "489391000",
-    "name": "Sou Fujimoto 圓領T恤(短袖)",
-    "shortName": "Sou Fujimoto 圓領T恤(短袖)",
-    "size": [
-      "XS",
-      "S",
-      "M",
-      "L",
-      "XL",
-      "XXL",
-      "3XL",
-      "4XL"
-    ],
-    "styleText": [
-      "00 WHITE"
-    ],
-    "chipPic": [
-      "/hmall/test/u0000000054883/chip/22/COL00.jpg"
-    ],
-    "minPrice": 490,
-    "maxPrice": 490,
-    "originPrice": 490,
-    "mainPic": "/hmall/test/u0000000054883/main/first/561/1.jpg",
-    "sex": "男裝/男女適穿",
-    "colors": [
-      {
-        "code": "COL00",
-        "name": "00 WHITE",
-        "chipUrl": "/hmall/test/u0000000054883/chip/22/COL00.jpg",
-        "largePicUrl": "/hmall/test/u0000000054883/sku/225/COL00.jpg"
-      }
-    ],
-    "salesPromotionLabel": [],
-    "historyPrices": [
-      {
-        "date": "2026-07-17",
-        "price": 490
-      }
-    ],
-    "isNew": false,
-    "isConcessionalRate": false,
-    "isTimeDoptimal": false,
-    "timeLimitedBegin": null,
-    "timeLimitedEnd": null,
-    "planOnDate": null,
-    "firstListTime": 1789605000000,
-    "planOutDate": null,
-    "makePantsLengthFlag": "N",
-    "identity": [
-      "MIDSEP",
-      "pickUp"
-    ],
-    "listYearSeason": "夏季",
-    "categoryNames": [
-      "全商品",
-      "女裝",
-      "熱門推薦",
-      "男裝",
-      "T恤/背心/休閒",
-      "新品預告 (每週更新)",
-      "男裝 新品預告",
-      "女裝 新品預告",
-      "PEACE FOR ALL 慈善T恤",
-      "T恤(短袖)"
-    ],
-    "active": true,
-    "status": "active"
-  },
-  {
-    "id": "u0000000054882",
-    "ProductId": "u0000000054882",
-    "productCode": "u0000000054882",
-    "code": "488728",
-    "omsProductCode": "488728000",
-    "name": "隈研吾 圓領T恤(短袖)",
-    "shortName": "隈研吾 圓領T恤(短袖)",
-    "size": [
-      "XS",
-      "S",
-      "M",
-      "L",
-      "XL",
-      "XXL",
-      "3XL",
-      "4XL"
-    ],
-    "styleText": [
-      "00 WHITE"
-    ],
-    "chipPic": [
-      "/hmall/test/u0000000054882/chip/22/COL00.jpg"
-    ],
-    "minPrice": 490,
-    "maxPrice": 490,
-    "originPrice": 490,
-    "mainPic": "/hmall/test/u0000000054882/main/first/561/1.jpg",
-    "sex": "男裝/男女適穿",
-    "colors": [
-      {
-        "code": "COL00",
-        "name": "00 WHITE",
-        "chipUrl": "/hmall/test/u0000000054882/chip/22/COL00.jpg",
-        "largePicUrl": "/hmall/test/u0000000054882/sku/225/COL00.jpg"
-      }
-    ],
-    "salesPromotionLabel": [],
-    "historyPrices": [
-      {
-        "date": "2026-07-17",
-        "price": 490
-      }
-    ],
-    "isNew": false,
-    "isConcessionalRate": false,
-    "isTimeDoptimal": false,
-    "timeLimitedBegin": null,
-    "timeLimitedEnd": null,
-    "planOnDate": null,
-    "firstListTime": 1789605000000,
-    "planOutDate": null,
-    "makePantsLengthFlag": "N",
-    "identity": [
-      "MIDSEP",
-      "pickUp"
-    ],
-    "listYearSeason": "夏季",
-    "categoryNames": [
-      "全商品",
-      "女裝",
-      "熱門推薦",
-      "男裝",
-      "T恤/背心/休閒",
-      "新品預告 (每週更新)",
-      "男裝 新品預告",
-      "女裝 新品預告",
-      "PEACE FOR ALL 慈善T恤",
-      "T恤(短袖)"
-    ],
-    "active": true,
-    "status": "active"
-  },
-  {
     "id": "u0000000054767",
     "ProductId": "u0000000054767",
     "productCode": "u0000000054767",
@@ -71473,83 +71177,6 @@
     "status": "active"
   },
   {
-    "id": "u0000000053576",
-    "ProductId": "u0000000053576",
-    "productCode": "u0000000053576",
-    "code": "483037",
-    "omsProductCode": "483037000",
-    "name": "工裝短大衣",
-    "shortName": "工裝短大衣",
-    "size": [
-      "XS"
-    ],
-    "styleText": [
-      "09 BLACK"
-    ],
-    "chipPic": [
-      "/hmall/test/u0000000053576/chip/22/COL09.jpg"
-    ],
-    "minPrice": 990,
-    "maxPrice": 990,
-    "originPrice": 2990,
-    "mainPic": "/hmall/test/u0000000053576/main/first/561/1.jpg",
-    "sex": "女裝",
-    "colors": [
-      {
-        "code": "COL09",
-        "name": "09 BLACK",
-        "chipUrl": "/hmall/test/u0000000053576/chip/22/COL09.jpg",
-        "largePicUrl": "/hmall/test/u0000000053576/sku/225/COL09.jpg"
-      }
-    ],
-    "salesPromotionLabel": [
-      {
-        "labelType": "1",
-        "labelText": "特價商品"
-      }
-    ],
-    "historyPrices": [
-      {
-        "date": "2026-07-17",
-        "price": 990
-      }
-    ],
-    "isNew": false,
-    "isConcessionalRate": true,
-    "isTimeDoptimal": false,
-    "timeLimitedBegin": null,
-    "timeLimitedEnd": null,
-    "planOnDate": null,
-    "firstListTime": 1770337800000,
-    "planOutDate": null,
-    "makePantsLengthFlag": "N",
-    "identity": [
-      "SELECTED",
-      "concessional_rate",
-      "pickUp"
-    ],
-    "listYearSeason": "春季",
-    "categoryNames": [
-      "全商品",
-      "女裝",
-      "熱門推薦",
-      "夏日SALE 特價專區",
-      "2026年 春夏聯名系列",
-      "外套類",
-      "UNIQLO : C",
-      "全部外套",
-      "大衣/風衣",
-      "外套系列",
-      "女裝 特價商品",
-      "大師聯名系列 特價商品",
-      "全部春夏聯名商品",
-      "外套",
-      "短大衣"
-    ],
-    "active": true,
-    "status": "active"
-  },
-  {
     "id": "u0000000053257",
     "ProductId": "u0000000053257",
     "productCode": "u0000000053257",
@@ -71735,16 +71362,13 @@
     "shortName": "特級亞麻背心",
     "size": [
       "XS",
-      "S",
-      "L"
+      "S"
     ],
     "styleText": [
-      "37 BROWN",
-      "68 BLUE"
+      "37 BROWN"
     ],
     "chipPic": [
-      "/hmall/test/u0000000053584/chip/22/COL37.jpg",
-      "/hmall/test/u0000000053584/chip/22/COL68.jpg"
+      "/hmall/test/u0000000053584/chip/22/COL37.jpg"
     ],
     "minPrice": 990,
     "maxPrice": 990,
@@ -71757,12 +71381,6 @@
         "name": "37 BROWN",
         "chipUrl": "/hmall/test/u0000000053584/chip/22/COL37.jpg",
         "largePicUrl": "/hmall/test/u0000000053584/sku/225/COL37.jpg"
-      },
-      {
-        "code": "COL68",
-        "name": "68 BLUE",
-        "chipUrl": "/hmall/test/u0000000053584/chip/22/COL68.jpg",
-        "largePicUrl": "/hmall/test/u0000000053584/sku/225/COL68.jpg"
       }
     ],
     "salesPromotionLabel": [
@@ -72380,7 +71998,8 @@
     "size": [
       "S",
       "M",
-      "L"
+      "L",
+      "XL"
     ],
     "styleText": [
       "00 WHITE",
@@ -72804,7 +72423,6 @@
     "name": "針織細肩帶背心",
     "shortName": "針織細肩帶背心",
     "size": [
-      "S",
       "M",
       "L",
       "XL"
@@ -76359,8 +75977,7 @@
       "XS",
       "S",
       "M",
-      "L",
-      "XXL"
+      "L"
     ],
     "styleText": [
       "01 OFF WHITE",
@@ -84933,7 +84550,6 @@
     "name": "繭型工裝褲",
     "shortName": "繭型工裝褲",
     "size": [
-      "XS",
       "S",
       "M",
       "L",
@@ -90075,14 +89691,18 @@
     "shortName": "Active寬襬褲裙",
     "size": [
       "S",
-      "L"
+      "M",
+      "L",
+      "XL"
     ],
     "styleText": [
       "00 WHITE",
+      "09 BLACK",
       "61 BLUE"
     ],
     "chipPic": [
       "/hmall/test/u0000000053814/chip/22/COL00.jpg",
+      "/hmall/test/u0000000053814/chip/22/COL09.jpg",
       "/hmall/test/u0000000053814/chip/22/COL61.jpg"
     ],
     "minPrice": 590,
@@ -90096,6 +89716,12 @@
         "name": "00 WHITE",
         "chipUrl": "/hmall/test/u0000000053814/chip/22/COL00.jpg",
         "largePicUrl": "/hmall/test/u0000000053814/sku/225/COL00.jpg"
+      },
+      {
+        "code": "COL09",
+        "name": "09 BLACK",
+        "chipUrl": "/hmall/test/u0000000053814/chip/22/COL09.jpg",
+        "largePicUrl": "/hmall/test/u0000000053814/sku/225/COL09.jpg"
       },
       {
         "code": "COL61",
@@ -90141,6 +89767,104 @@
       "裙子",
       "女裝 特價商品",
       "短褲/褲裙",
+      "褲裙",
+      "百慕達/打褶",
+      "褲裙/寬褲裙",
+      "短褲"
+    ],
+    "active": true,
+    "status": "active"
+  },
+  {
+    "id": "u0000000053807",
+    "ProductId": "u0000000053807",
+    "productCode": "u0000000053807",
+    "code": "483293",
+    "omsProductCode": "483293000",
+    "name": "Active百褶褲裙",
+    "shortName": "Active百褶褲裙",
+    "size": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "styleText": [
+      "00 WHITE",
+      "59 DARK GREEN",
+      "69 NAVY"
+    ],
+    "chipPic": [
+      "/hmall/test/u0000000053807/chip/22/COL00.jpg",
+      "/hmall/test/u0000000053807/chip/22/COL59.jpg",
+      "/hmall/test/u0000000053807/chip/22/COL69.jpg"
+    ],
+    "minPrice": 590,
+    "maxPrice": 590,
+    "originPrice": 790,
+    "mainPic": "/hmall/test/u0000000053807/main/first/561/1.jpg",
+    "sex": "女裝",
+    "colors": [
+      {
+        "code": "COL00",
+        "name": "00 WHITE",
+        "chipUrl": "/hmall/test/u0000000053807/chip/22/COL00.jpg",
+        "largePicUrl": "/hmall/test/u0000000053807/sku/225/COL00.jpg"
+      },
+      {
+        "code": "COL59",
+        "name": "59 DARK GREEN",
+        "chipUrl": "/hmall/test/u0000000053807/chip/22/COL59.jpg",
+        "largePicUrl": "/hmall/test/u0000000053807/sku/225/COL59.jpg"
+      },
+      {
+        "code": "COL69",
+        "name": "69 NAVY",
+        "chipUrl": "/hmall/test/u0000000053807/chip/22/COL69.jpg",
+        "largePicUrl": "/hmall/test/u0000000053807/sku/225/COL69.jpg"
+      }
+    ],
+    "salesPromotionLabel": [
+      {
+        "labelType": "1",
+        "labelText": "特價商品"
+      }
+    ],
+    "historyPrices": [
+      {
+        "date": "2026-07-17",
+        "price": 590
+      }
+    ],
+    "isNew": false,
+    "isConcessionalRate": true,
+    "isTimeDoptimal": false,
+    "timeLimitedBegin": null,
+    "timeLimitedEnd": null,
+    "planOnDate": null,
+    "firstListTime": 1774225800000,
+    "planOutDate": null,
+    "makePantsLengthFlag": "N",
+    "identity": [
+      "concessional_rate",
+      "pickUp"
+    ],
+    "listYearSeason": "夏季",
+    "categoryNames": [
+      "全商品",
+      "女裝",
+      "LifeWear Collection全系列",
+      "熱門推薦",
+      "下身類",
+      "2026夏季精選系列",
+      "夏日SALE 特價專區",
+      "洋裝/裙子",
+      "全部褲裝/裙子",
+      "2026 Summer 夏季女裝 COLLECTION",
+      "裙子",
+      "女裝 特價商品",
+      "短褲/褲裙",
+      "Sport Utility Wear",
       "褲裙",
       "百慕達/打褶",
       "褲裙/寬褲裙",
@@ -92157,7 +91881,8 @@
     "shortName": "蛋糕裙(印花)",
     "size": [
       "XS",
-      "S"
+      "S",
+      "L"
     ],
     "styleText": [
       "65 BLUE"
@@ -92980,84 +92705,6 @@
       "女裝 特價商品",
       "全部亞麻商品",
       "女裝亞麻系列",
-      "亞麻混紡/棉麻"
-    ],
-    "active": true,
-    "status": "active"
-  },
-  {
-    "id": "u0000000053818",
-    "ProductId": "u0000000053818",
-    "productCode": "u0000000053818",
-    "code": "484913",
-    "omsProductCode": "484913000",
-    "name": "亞麻混紡寬襬裙",
-    "shortName": "亞麻混紡寬襬裙",
-    "size": [
-      "XS"
-    ],
-    "styleText": [
-      "31 BEIGE"
-    ],
-    "chipPic": [
-      "/hmall/test/u0000000053818/chip/22/COL31.jpg"
-    ],
-    "minPrice": 490,
-    "maxPrice": 490,
-    "originPrice": 1490,
-    "mainPic": "/hmall/test/u0000000053818/main/first/561/1.jpg",
-    "sex": "女裝",
-    "colors": [
-      {
-        "code": "COL31",
-        "name": "31 BEIGE",
-        "chipUrl": "/hmall/test/u0000000053818/chip/22/COL31.jpg",
-        "largePicUrl": "/hmall/test/u0000000053818/sku/225/COL31.jpg"
-      }
-    ],
-    "salesPromotionLabel": [
-      {
-        "labelType": "1",
-        "labelText": "特價商品"
-      }
-    ],
-    "historyPrices": [
-      {
-        "date": "2026-07-17",
-        "price": 490
-      }
-    ],
-    "isNew": false,
-    "isConcessionalRate": true,
-    "isTimeDoptimal": false,
-    "timeLimitedBegin": null,
-    "timeLimitedEnd": null,
-    "planOnDate": null,
-    "firstListTime": 1773361800000,
-    "planOutDate": null,
-    "makePantsLengthFlag": "N",
-    "identity": [
-      "SELECTED",
-      "concessional_rate",
-      "pickUp"
-    ],
-    "listYearSeason": "夏季",
-    "categoryNames": [
-      "全商品",
-      "女裝",
-      "熱門推薦",
-      "女裝亞麻/棉麻系列",
-      "夏日SALE 特價專區",
-      "2026年 春夏聯名系列",
-      "洋裝/裙子",
-      "亞麻混紡",
-      "裙子",
-      "UNIQLO and COMPTOIR DES COTONNIERS",
-      "女裝 特價商品",
-      "全部亞麻商品",
-      "女裝亞麻系列",
-      "大師聯名系列 特價商品",
-      "全部春夏聯名商品",
       "亞麻混紡/棉麻"
     ],
     "active": true,
@@ -93951,88 +93598,6 @@
       "全部春夏聯名商品",
       "棉質",
       "短袖"
-    ],
-    "active": true,
-    "status": "active"
-  },
-  {
-    "id": "u0000000053810",
-    "ProductId": "u0000000053810",
-    "productCode": "u0000000053810",
-    "code": "483823",
-    "omsProductCode": "483823000",
-    "name": "亞麻混紡V領洋裝(短袖)",
-    "shortName": "亞麻混紡V領洋裝(短袖)",
-    "size": [
-      "S"
-    ],
-    "styleText": [
-      "16 RED"
-    ],
-    "chipPic": [
-      "/hmall/test/u0000000053810/chip/22/COL16.jpg"
-    ],
-    "minPrice": 790,
-    "maxPrice": 790,
-    "originPrice": 1490,
-    "mainPic": "/hmall/test/u0000000053810/main/first/561/1.jpg",
-    "sex": "女裝",
-    "colors": [
-      {
-        "code": "COL16",
-        "name": "16 RED",
-        "chipUrl": "/hmall/test/u0000000053810/chip/22/COL16.jpg",
-        "largePicUrl": "/hmall/test/u0000000053810/sku/225/COL16.jpg"
-      }
-    ],
-    "salesPromotionLabel": [
-      {
-        "labelType": "1",
-        "labelText": "特價商品"
-      }
-    ],
-    "historyPrices": [
-      {
-        "date": "2026-07-17",
-        "price": 790
-      }
-    ],
-    "isNew": false,
-    "isConcessionalRate": true,
-    "isTimeDoptimal": false,
-    "timeLimitedBegin": null,
-    "timeLimitedEnd": null,
-    "planOnDate": null,
-    "firstListTime": 1773361800000,
-    "planOutDate": null,
-    "makePantsLengthFlag": "N",
-    "identity": [
-      "SELECTED",
-      "concessional_rate",
-      "pickUp"
-    ],
-    "listYearSeason": "夏季",
-    "categoryNames": [
-      "全商品",
-      "女裝",
-      "熱門推薦",
-      "女裝亞麻/棉麻系列",
-      "夏日SALE 特價專區",
-      "2026年 春夏聯名系列",
-      "洋裝/裙子",
-      "亞麻混紡",
-      "UNIQLO and COMPTOIR DES COTONNIERS",
-      "女裝 特價商品",
-      "洋裝",
-      "全部亞麻商品",
-      "女裝亞麻系列",
-      "大師聯名系列 特價商品",
-      "本週特價商品 (07/14 起)",
-      "全部春夏聯名商品",
-      "亞麻",
-      "短袖",
-      "無袖/短袖",
-      "亞麻混紡/棉麻"
     ],
     "active": true,
     "status": "active"
@@ -100694,7 +100259,6 @@
       "S",
       "M",
       "L",
-      "XL",
       "XXL",
       "3XL"
     ],
@@ -108221,8 +107785,7 @@
       "S",
       "M",
       "L",
-      "XL",
-      "XXL"
+      "XL"
     ],
     "styleText": [
       "64 BLUE"
@@ -118516,6 +118079,102 @@
     "status": "active"
   },
   {
+    "id": "u0000000054102",
+    "ProductId": "u0000000054102",
+    "productCode": "u0000000054102",
+    "code": "488977",
+    "omsProductCode": "488977000",
+    "name": "印花T恤(短袖)",
+    "shortName": "印花T恤(短袖)",
+    "size": [
+      "160cm",
+      "130cm",
+      "150cm",
+      "120cm",
+      "140cm",
+      "110cm"
+    ],
+    "styleText": [
+      "00 WHITE",
+      "03 GRAY",
+      "10 PINK"
+    ],
+    "chipPic": [
+      "/hmall/test/u0000000054102/chip/22/COL00.jpg",
+      "/hmall/test/u0000000054102/chip/22/COL03.jpg",
+      "/hmall/test/u0000000054102/chip/22/COL10.jpg"
+    ],
+    "minPrice": 290,
+    "maxPrice": 290,
+    "originPrice": 390,
+    "mainPic": "/hmall/test/u0000000054102/main/first/561/1.jpg",
+    "sex": "女童",
+    "colors": [
+      {
+        "code": "COL00",
+        "name": "00 WHITE",
+        "chipUrl": "/hmall/test/u0000000054102/chip/22/COL00.jpg",
+        "largePicUrl": "/hmall/test/u0000000054102/sku/225/COL00.jpg"
+      },
+      {
+        "code": "COL03",
+        "name": "03 GRAY",
+        "chipUrl": "/hmall/test/u0000000054102/chip/22/COL03.jpg",
+        "largePicUrl": "/hmall/test/u0000000054102/sku/225/COL03.jpg"
+      },
+      {
+        "code": "COL10",
+        "name": "10 PINK",
+        "chipUrl": "/hmall/test/u0000000054102/chip/22/COL10.jpg",
+        "largePicUrl": "/hmall/test/u0000000054102/sku/225/COL10.jpg"
+      }
+    ],
+    "salesPromotionLabel": [
+      {
+        "labelType": "1",
+        "labelText": "特價商品"
+      }
+    ],
+    "historyPrices": [
+      {
+        "date": "2026-07-17",
+        "price": 290
+      }
+    ],
+    "isNew": false,
+    "isConcessionalRate": true,
+    "isTimeDoptimal": false,
+    "timeLimitedBegin": 1782433800000,
+    "timeLimitedEnd": 1783007999000,
+    "planOnDate": null,
+    "firstListTime": 1780014600000,
+    "planOutDate": null,
+    "makePantsLengthFlag": "N",
+    "identity": [
+      "concessional_rate",
+      "pickUp"
+    ],
+    "listYearSeason": "夏季",
+    "categoryNames": [
+      "童裝",
+      "全商品",
+      "熱門推薦",
+      "上衣/休閒SWEAT/POLO衫",
+      "夏日SALE 特價專區",
+      "女童",
+      "春夏聯名系列",
+      "T恤(男童/女童)",
+      "T恤",
+      "童裝 特價商品",
+      "UNIQLO and Cecilie Bahnsen",
+      "大師聯名系列 特價商品",
+      "短袖",
+      "女童設計上衣"
+    ],
+    "active": true,
+    "status": "active"
+  },
+  {
     "id": "u0000000054099",
     "ProductId": "u0000000054099",
     "productCode": "u0000000054099",
@@ -118606,103 +118265,6 @@
       "UNIQLO and Cecilie Bahnsen",
       "大師聯名系列 特價商品",
       "本週特價商品 (07/14 起)",
-      "短袖",
-      "女童設計上衣"
-    ],
-    "active": true,
-    "status": "active"
-  },
-  {
-    "id": "u0000000054102",
-    "ProductId": "u0000000054102",
-    "productCode": "u0000000054102",
-    "code": "488977",
-    "omsProductCode": "488977000",
-    "name": "印花T恤(短袖)",
-    "shortName": "印花T恤(短袖)",
-    "size": [
-      "160cm",
-      "130cm",
-      "150cm",
-      "120cm",
-      "140cm",
-      "110cm"
-    ],
-    "styleText": [
-      "00 WHITE",
-      "03 GRAY",
-      "10 PINK"
-    ],
-    "chipPic": [
-      "/hmall/test/u0000000054102/chip/22/COL00.jpg",
-      "/hmall/test/u0000000054102/chip/22/COL03.jpg",
-      "/hmall/test/u0000000054102/chip/22/COL10.jpg"
-    ],
-    "minPrice": 290,
-    "maxPrice": 290,
-    "originPrice": 390,
-    "mainPic": "/hmall/test/u0000000054102/main/first/561/1.jpg",
-    "sex": "女童",
-    "colors": [
-      {
-        "code": "COL00",
-        "name": "00 WHITE",
-        "chipUrl": "/hmall/test/u0000000054102/chip/22/COL00.jpg",
-        "largePicUrl": "/hmall/test/u0000000054102/sku/225/COL00.jpg"
-      },
-      {
-        "code": "COL03",
-        "name": "03 GRAY",
-        "chipUrl": "/hmall/test/u0000000054102/chip/22/COL03.jpg",
-        "largePicUrl": "/hmall/test/u0000000054102/sku/225/COL03.jpg"
-      },
-      {
-        "code": "COL10",
-        "name": "10 PINK",
-        "chipUrl": "/hmall/test/u0000000054102/chip/22/COL10.jpg",
-        "largePicUrl": "/hmall/test/u0000000054102/sku/225/COL10.jpg"
-      }
-    ],
-    "salesPromotionLabel": [
-      {
-        "labelType": "1",
-        "labelText": "特價商品"
-      }
-    ],
-    "historyPrices": [
-      {
-        "date": "2026-07-17",
-        "price": 290
-      }
-    ],
-    "isNew": false,
-    "isConcessionalRate": true,
-    "isTimeDoptimal": false,
-    "timeLimitedBegin": 1782433800000,
-    "timeLimitedEnd": 1783007999000,
-    "planOnDate": null,
-    "firstListTime": 1780014600000,
-    "planOutDate": null,
-    "makePantsLengthFlag": "N",
-    "identity": [
-      "concessional_rate",
-      "pickUp"
-    ],
-    "listYearSeason": "夏季",
-    "categoryNames": [
-      "童裝",
-      "全商品",
-      "熱門推薦",
-      "上衣/休閒SWEAT/POLO衫",
-      "夏日SALE 特價專區",
-      "女童",
-      "春夏聯名系列",
-      "T恤(男童/女童)",
-      "UT印花",
-      "童裝 特價商品",
-      "UNIQLO and Cecilie Bahnsen",
-      "大師聯名系列 特價商品",
-      "T恤",
       "短袖",
       "女童設計上衣"
     ],
@@ -121438,7 +121000,8 @@
       "160cm",
       "130cm",
       "150cm",
-      "140cm"
+      "140cm",
+      "110cm"
     ],
     "styleText": [
       "10 PINK"
@@ -127698,6 +127261,94 @@
       "短褲/褲裙",
       "童裝 特價商品",
       "短褲",
+      "男女童皆適穿"
+    ],
+    "active": true,
+    "status": "active"
+  },
+  {
+    "id": "u0000000054467",
+    "ProductId": "u0000000054467",
+    "productCode": "u0000000054467",
+    "code": "483406",
+    "omsProductCode": "483406051",
+    "name": "防潑水輕便短褲",
+    "shortName": "防潑水輕便短褲",
+    "size": [
+      "160cm",
+      "130cm",
+      "150cm",
+      "120cm",
+      "140cm",
+      "110cm"
+    ],
+    "styleText": [
+      "15 RED",
+      "41 YELLOW"
+    ],
+    "chipPic": [
+      "/hmall/test/u0000000054467/chip/22/COL15.jpg",
+      "/hmall/test/u0000000054467/chip/22/COL41.jpg"
+    ],
+    "minPrice": 190,
+    "maxPrice": 190,
+    "originPrice": 490,
+    "mainPic": "/hmall/test/u0000000054467/main/first/561/1.jpg",
+    "sex": "童裝",
+    "colors": [
+      {
+        "code": "COL15",
+        "name": "15 RED",
+        "chipUrl": "/hmall/test/u0000000054467/chip/22/COL15.jpg",
+        "largePicUrl": "/hmall/test/u0000000054467/sku/225/COL15.jpg"
+      },
+      {
+        "code": "COL41",
+        "name": "41 YELLOW",
+        "chipUrl": "/hmall/test/u0000000054467/chip/22/COL41.jpg",
+        "largePicUrl": "/hmall/test/u0000000054467/sku/225/COL41.jpg"
+      }
+    ],
+    "salesPromotionLabel": [
+      {
+        "labelType": "1",
+        "labelText": "特價商品"
+      }
+    ],
+    "historyPrices": [
+      {
+        "date": "2026-07-17",
+        "price": 190
+      }
+    ],
+    "isNew": false,
+    "isConcessionalRate": true,
+    "isTimeDoptimal": false,
+    "timeLimitedBegin": null,
+    "timeLimitedEnd": null,
+    "planOnDate": null,
+    "firstListTime": 1770597000000,
+    "planOutDate": null,
+    "makePantsLengthFlag": "N",
+    "identity": [
+      "concessional_rate",
+      "pickUp"
+    ],
+    "listYearSeason": "夏季",
+    "categoryNames": [
+      "童裝",
+      "全商品",
+      "LifeWear Collection全系列",
+      "熱門推薦",
+      "2026夏季精選系列",
+      "夏日SALE 特價專區",
+      "男童",
+      "下身類",
+      "童裝 特價商品",
+      "2026 Summer 夏季男童/女童 COLLECTION",
+      "短褲/褲裙",
+      "短褲",
+      "褲子",
       "男女童皆適穿"
     ],
     "active": true,
@@ -135706,12 +135357,10 @@
       "110cm"
     ],
     "styleText": [
-      "02 LIGHT GRAY",
       "09 BLACK",
       "69 NAVY"
     ],
     "chipPic": [
-      "/hmall/test/u0000000054768/chip/22/COL02.jpg",
       "/hmall/test/u0000000054768/chip/22/COL09.jpg",
       "/hmall/test/u0000000054768/chip/22/COL69.jpg"
     ],
@@ -135721,12 +135370,6 @@
     "mainPic": "/hmall/test/u0000000054768/main/first/561/1.jpg",
     "sex": "童裝",
     "colors": [
-      {
-        "code": "COL02",
-        "name": "02 LIGHT GRAY",
-        "chipUrl": "/hmall/test/u0000000054768/chip/22/COL02.jpg",
-        "largePicUrl": "/hmall/test/u0000000054768/sku/225/COL02.jpg"
-      },
       {
         "code": "COL09",
         "name": "09 BLACK",
@@ -135767,7 +135410,7 @@
       "熱門推薦",
       "上衣/休閒SWEAT/POLO衫",
       "新品預告 (每週更新)",
-      "男童",
+      "童裝(男女童適穿)",
       "下身類",
       "童裝 新品預告",
       "長褲",
@@ -143093,6 +142736,77 @@
       "pickUp"
     ],
     "listYearSeason": "秋季",
+    "categoryNames": [
+      "全商品",
+      "嬰幼兒",
+      "熱門推薦",
+      "寶寶／嬰幼兒衣服",
+      "夏日SALE 特價專區",
+      "嬰幼兒 特價商品",
+      "褲裝/內搭褲/裙子",
+      "內搭褲(10分)",
+      "褲子/內搭褲"
+    ],
+    "active": true,
+    "status": "active"
+  },
+  {
+    "id": "u0000000052942",
+    "ProductId": "u0000000052942",
+    "productCode": "u0000000052942",
+    "code": "481886",
+    "omsProductCode": "481886000",
+    "name": "寬版舒適內搭褲(10分)(羅紋)(印花)",
+    "shortName": "寬版舒適內搭褲(10分)(羅紋)(印花)",
+    "size": [
+      "080cm",
+      "090cm"
+    ],
+    "styleText": [
+      "01 OFF WHITE"
+    ],
+    "chipPic": [
+      "/hmall/test/u0000000052942/chip/22/COL01.jpg"
+    ],
+    "minPrice": 190,
+    "maxPrice": 190,
+    "originPrice": 249,
+    "mainPic": "/hmall/test/u0000000052942/main/first/561/1.jpg",
+    "sex": "嬰幼兒",
+    "colors": [
+      {
+        "code": "COL01",
+        "name": "01 OFF WHITE",
+        "chipUrl": "/hmall/test/u0000000052942/chip/22/COL01.jpg",
+        "largePicUrl": "/hmall/test/u0000000052942/sku/225/COL01.jpg"
+      }
+    ],
+    "salesPromotionLabel": [
+      {
+        "labelType": "1",
+        "labelText": "特價商品"
+      }
+    ],
+    "historyPrices": [
+      {
+        "date": "2026-07-17",
+        "price": 190
+      }
+    ],
+    "isNew": false,
+    "isConcessionalRate": true,
+    "isTimeDoptimal": false,
+    "timeLimitedBegin": 1770337800000,
+    "timeLimitedEnd": 1770911999000,
+    "planOnDate": null,
+    "firstListTime": 1765758600000,
+    "planOutDate": null,
+    "makePantsLengthFlag": "N",
+    "identity": [
+      "concessional_rate",
+      "pickUp"
+    ],
+    "listYearSeason": "春季",
     "categoryNames": [
       "全商品",
       "嬰幼兒",
