@@ -3,6 +3,7 @@
 // Telegram 把 `/start <code>` 推送到這裡，我們用 Admin SDK 找到對應使用者並寫入 chatId。
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import notify from '../notify_price_drops.cjs';
 
 function getDb() {
   if (!getApps().length) {
@@ -11,12 +12,13 @@ function getDb() {
   return getFirestore();
 }
 
+// 回覆失敗（例如使用者封鎖機器人）不應讓 webhook 出錯，記錄即可
 async function reply(chatId, text) {
-  await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: chatId, text }),
-  });
+  try {
+    await notify.sendTelegram(process.env.TELEGRAM_BOT_TOKEN, chatId, text, null);
+  } catch (err) {
+    console.warn('telegram reply failed:', err.message);
+  }
 }
 
 export default async function handler(req, res) {

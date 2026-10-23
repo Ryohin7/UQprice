@@ -42,23 +42,22 @@ service cloud.firestore {
     // ==========================================
     // 2. 商品瀏覽量統計 (product_views)
     // ==========================================
-    // 瀏覽次數集中在單一文件 product_views/all，結構為 { counts: { [productId]: n } }
-    match /product_views/all {
+    // 瀏覽次數分散在 shard_0 ~ shard_7，結構為 { counts: { [productId]: n } }
+    // (分片數量需與 src/utils/viewCounts.js 的 VIEW_SHARDS 一致)
+    match /product_views/{docId} {
       allow read: if true;
       // 前端每次只能新增或累加一個商品的計數，不可刪除欄位
-      allow create: if request.resource.data.keys().hasOnly(['counts'])
+      allow create: if docId.matches('shard_[0-7]')
+                    && request.resource.data.keys().hasOnly(['counts'])
                     && request.resource.data.counts.keys().size() <= 1;
-      allow update: if request.resource.data.keys().hasOnly(['counts'])
+      allow update: if docId.matches('shard_[0-7]')
+                    && request.resource.data.keys().hasOnly(['counts'])
                     && request.resource.data.counts.diff(resource.data.counts).affectedKeys().size() <= 1
                     && request.resource.data.counts.diff(resource.data.counts).removedKeys().size() == 0;
-      allow delete: if false;
-    }
-    // 舊版逐商品文件 (遷移後可刪除)：僅供讀取
-    match /product_views/{productId} {
-      allow read: if true;
+      // 舊版 (all 與逐商品文件) 僅供管理員維護
       allow write: if isStaff();
     }
-    
+
     // ==========================================
     // 3. 系統版本歷史 (versions)
     // ==========================================

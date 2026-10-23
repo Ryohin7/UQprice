@@ -13,6 +13,10 @@ import VersionHistoryModal from './components/VersionHistoryModal';
 import NotFound from './components/NotFound';
 import AccountModal from './components/AccountModal';
 import { signInWithGoogle, signOutUser, isAdminUser, TELEGRAM_BOT_USERNAME } from './auth';
+import { loadViewCounts, incrementViewCount } from './utils/viewCounts';
+
+// 與 firestore.rules 的 favorites 上限一致
+const MAX_FAVORITES = 300;
 import { logPageView, logSearch, logViewProduct, logAddToFavorites, logRemoveFromFavorites, logClickExternalLink } from './utils/analytics';
 
 
@@ -475,16 +479,16 @@ export default function App() {
     }
     const loadProductsAndViews = async () => {
       try {
-        const [productsRes, viewsSnap] = await Promise.all([
+        const [productsRes, viewsRes] = await Promise.all([
           fetch('/products.json').then(res => {
             if (!res.ok) throw new Error('Failed to load products.json');
             return res.json();
           }),
-          getDoc(doc(db, "product_views", "all"))
+          loadViewCounts(db)
         ]);
 
-        // 瀏覽次數集中存放在單一文件 (counts: { [productId]: n })，載入只需 1 次讀取
-        const viewsMap = viewsSnap.exists() ? (viewsSnap.data().counts || {}) : {};
+        // 瀏覽次數 = 舊版彙總文件 + 8 個分片文件，載入共 9 次讀取
+        const viewsMap = viewsRes;
 
         if (productsRes && productsRes.length > 0) {
           console.log(`Successfully loaded ${productsRes.length} products from local JSON.`);
@@ -633,8 +637,10 @@ export default function App() {
       setTelegramLinked(!!data.telegram?.chatId);
       if (first) {
         first = false;
-        const cloud = Array.isArray(data.favorites) ? data.favorites : [];
-        setFavorites((local) => Array.from(new Set([...cloud, ...local])));
+        // 雲端已有清單時以雲端為準（避免他處已取消追蹤的商品被本機舊資料加回來）；
+        // 雲端尚無清單的新帳號才把本機清單帶上去
+        if (Array.isArray(data.favorites)) setFavorites(data.favorites.slice(0, MAX_FAVORITES));
+        else setFavorites((local) => [...local]); // 觸發寫入，把本機清單同步到雲端
         cloudSyncedRef.current = true;
       }
     }, (err) => console.warn('讀取使用者資料失敗:', err));
@@ -656,11 +662,20 @@ export default function App() {
   // 產生一次性綁定碼，帶使用者到 Telegram 機器人完成連結
   const handleLinkTelegram = async () => {
     if (!db || !user) return;
+    // 必須在使用者點擊的同一個事件迴圈內先開窗，否則手機瀏覽器會把 await 之後的 window.open 當成彈出視窗擋掉
+    const popup = window.open('', '_blank');
     const code = crypto.randomUUID().replace(/-/g, '');
+    const url = `https://t.me/${TELEGRAM_BOT_USERNAME}?start=${code}`;
     try {
       await setDoc(doc(db, 'users', user.uid), { linkCode: code }, { merge: true });
-      window.open(`https://t.me/${TELEGRAM_BOT_USERNAME}?start=${code}`, '_blank', 'noopener');
+      if (popup) {
+        popup.opener = null;
+        popup.location.href = url;
+      } else {
+        window.location.href = url;
+      }
     } catch (err) {
+      if (popup) popup.close();
       console.error('建立 Telegram 綁定碼失敗:', err);
       alert('無法建立綁定連結，請稍後再試。');
     }
@@ -675,6 +690,10 @@ export default function App() {
         logRemoveFromFavorites(targetProduct);
       }
     } else {
+      if (favorites.length >= MAX_FAVORITES) {
+        alert(`追蹤清單最多 ${MAX_FAVORITES} 件商品，請先移除部分商品。`);
+        return;
+      }
       setFavorites([...favorites, productId]);
       if (targetProduct) {
         logAddToFavorites(targetProduct);
@@ -875,8 +894,7 @@ export default function App() {
     // 非同步寫入 Firestore
     if (db) {
       try {
-        const viewRef = doc(db, 'product_views', 'all');
-        await setDoc(viewRef, { counts: { [product.id]: increment(1) } }, { merge: true });
+        await incrementViewCount(db, product.id);
       } catch (e) {
         console.warn('Failed to increment product view:', e);
       }

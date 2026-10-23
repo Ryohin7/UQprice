@@ -31,11 +31,17 @@ function buildMessages(drops, users) {
   return messages;
 }
 
-async function sendTelegram(token, chatId, text) {
+// parseMode 預設 HTML；傳 null 表示純文字
+async function sendTelegram(token, chatId, text, parseMode = 'HTML') {
   const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML', disable_web_page_preview: true }),
+    body: JSON.stringify({
+      chat_id: chatId,
+      text,
+      disable_web_page_preview: true,
+      ...(parseMode ? { parse_mode: parseMode } : {}),
+    }),
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
@@ -91,4 +97,4 @@ async function notifyPriceDrops({ db, firestore, drops }) {
   return { sent, failed };
 }
 
-module.exports = { buildMessages, notifyPriceDrops };
+module.exports = { buildMessages, notifyPriceDrops, sendTelegram };

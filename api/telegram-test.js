@@ -21,7 +21,12 @@ export default async function handler(req, res) {
     const idToken = (req.headers.authorization || '').replace(/^Bearer /, '');
     if (!idToken) return res.status(401).json({ error: '未登入' });
 
-    const decoded = await getAuth().verifyIdToken(idToken);
+    let decoded;
+    try {
+      decoded = await getAuth().verifyIdToken(idToken);
+    } catch {
+      return res.status(401).json({ error: '登入已過期，請重新登入' });
+    }
     const admins = (process.env.ADMIN_EMAILS || '').split(',').map((e) => e.trim().toLowerCase()).filter(Boolean);
     if (!decoded.email_verified || !admins.includes((decoded.email || '').toLowerCase())) {
       return res.status(403).json({ error: '沒有權限' });
@@ -42,14 +47,10 @@ export default async function handler(req, res) {
     const [message] = notify.buildMessages([drop], [{ chatId, favorites: ['test'] }]);
     const text = `🧪 測試訊息（以下為使用者實際會收到的格式）\n\n${message.text}`;
 
-    const tg = await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML', disable_web_page_preview: true }),
-    });
-    if (!tg.ok) {
-      const body = await tg.json().catch(() => ({}));
-      return res.status(502).json({ error: `Telegram 發送失敗：${body.description || tg.status}` });
+    try {
+      await notify.sendTelegram(process.env.TELEGRAM_BOT_TOKEN, chatId, text);
+    } catch (err) {
+      return res.status(502).json({ error: `Telegram 發送失敗：${err.message}` });
     }
     return res.status(200).json({ ok: true, html: text });
   } catch (err) {

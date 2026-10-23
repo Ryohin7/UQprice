@@ -337,7 +337,7 @@ async function crawl(triggerType = 'manual') {
     console.warn('⚠️ 無法寫入本地備份 JSON，已跳過備份步驟:', err.message);
   }
 
-  // 以覆寫前的 public/products.json 作為上次同步的比對基準 (不再讀取 Firestore products)
+  // 舊版 public/products.json 只在 Firestore 尚無 system/sync_baseline 時當作首次比對基準 (之後以 Firestore 為準)
   const prevHashMap = new Map();
   const prevPriceMap = new Map();
   try {
@@ -365,7 +365,7 @@ async function crawl(triggerType = 'manual') {
   }
 
   // ===== Step 3: 同步到 Firestore =====
-  await syncToFirestore(allProducts, triggerType, startTime, prevHashMap, prevPriceMap);
+  await syncToFirestore(allProducts, triggerType, startTime, { hashes: prevHashMap, prices: prevPriceMap });
 
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
   console.log(`\n🏁 全部完成！耗時 ${elapsed}s`);
@@ -373,7 +373,7 @@ async function crawl(triggerType = 'manual') {
 
 // ========== Firestore 同步 ==========
 
-async function syncToFirestore(products, triggerType = 'manual', startTime = Date.now(), prevHashMap = new Map(), prevPriceMap = new Map()) {
+async function syncToFirestore(products, triggerType = 'manual', startTime = Date.now(), legacyBaseline = { hashes: new Map(), prices: new Map() }) {
   console.log('\n===== Step 3: 增量同步至 Firestore =====');
   // 載入環境變數
   if (fs.existsSync(CONFIG.envPath)) {
@@ -418,10 +418,21 @@ async function syncToFirestore(products, triggerType = 'manual', startTime = Dat
 
     const today = new Date().toISOString().split('T')[0];
     
-    // A. 以上次的 products.json 作為比對基準 (商品主資料只存在靜態 JSON，Firestore 僅保留歷史價格)
+    // A. 讀取上次同步的比對基準 (system/sync_baseline：商品 hash 與價格)。
+    //    基準只在「同步與通知都成功」後才更新，所以中途失敗時下次會重新偵測，不會遺失或重複通知。
+    const baselineRef = doc(db, 'system', 'sync_baseline');
+    const baselineSnap = await getDoc(baselineRef);
+    const prevHashMap = baselineSnap.exists()
+      ? new Map(Object.entries(baselineSnap.data().hashes || {}))
+      : legacyBaseline.hashes;
+    const prevPriceMap = baselineSnap.exists()
+      ? new Map(Object.entries(baselineSnap.data().prices || {}))
+      : legacyBaseline.prices;
     const dbActiveIds = new Set(prevHashMap.keys());
     const dbHashMap = prevHashMap;
-    console.log(`  🔍 上次同步商品數: ${dbActiveIds.size}`);
+    const nextHashes = {};
+    const nextPrices = {};
+    console.log(`  🔍 上次同步商品數: ${dbActiveIds.size} (${baselineSnap.exists() ? 'Firestore 基準' : '舊版 JSON 基準'})`);
 
     let createdCount = 0;
     let updatedCount = 0;
@@ -450,6 +461,8 @@ async function syncToFirestore(products, triggerType = 'manual', startTime = Dat
       const priceDocRef = doc(db, 'product_prices', p.id);
       
       const newHash = getProductHash(p);
+      nextHashes[p.id] = newHash;
+      if (typeof p.minPrice === 'number') nextPrices[p.id] = p.minPrice;
       const oldHash = dbHashMap.get(p.id);
 
       // 檢查是否為期間限定特價商品
@@ -602,11 +615,16 @@ async function syncToFirestore(products, triggerType = 'manual', startTime = Dat
     // 提交剩餘的所有變更
     await commitBatchIfNeeded(true);
 
-    // G. 降價通知：失敗不影響同步結果
+    // G. 降價通知 → 成功後才推進比對基準
+    let notifyOk = true;
     try {
       await require('./notify_price_drops.cjs').notifyPriceDrops({ db, firestore: firestoreMod, drops: priceDrops });
     } catch (e) {
-      console.warn('  ⚠️ 降價通知流程失敗:', e.message || e);
+      notifyOk = false;
+      console.warn('  ⚠️ 降價通知流程失敗，本次不更新比對基準，下次執行會重新偵測降價:', e.message || e);
+    }
+    if (notifyOk) {
+      await setDoc(baselineRef, { updatedAt: Date.now(), hashes: nextHashes, prices: nextPrices });
     }
 
     console.log('╔══════════════════════════════════════╗');
