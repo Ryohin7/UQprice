@@ -1,7 +1,7 @@
 // 後台「Telegram 測試」：以與真實降價通知相同的格式，發送一則範例訊息給管理員自己已綁定的 Telegram。
 // 呼叫者必須帶 Firebase ID Token，且信箱在 ADMIN_EMAILS 白名單內。
 import { getFirestore } from 'firebase-admin/firestore';
-import notify from '../notify_price_drops.cjs';
+import notify from '../notifications.cjs';
 import { requireAdmin } from './_lib.js';
 
 const isPrice = (n) => Number.isInteger(n) && n > 0 && n < 1000000;

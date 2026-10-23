@@ -8,7 +8,8 @@
     "build": "vite build && node -e \"require('fs').copyFileSync('dist/index.html', 'dist/404.html')\"",
     "lint": "eslint .",
     "preview": "vite preview",
-    "crawl": "node crawl_all_men.cjs"
+    "crawl": "node crawl_all_men.cjs",
+    "telegram:setup": "node scripts/telegram_setup.cjs"
   },
   "dependencies": {
     "firebase": "^12.15.0",

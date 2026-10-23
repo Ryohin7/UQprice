@@ -1,7 +1,14 @@
 import React from 'react';
 import { X, Send, LogOut, CheckCircle2 } from 'lucide-react';
+import { DROP_PCT_OPTIONS } from '../utils/userSettings';
 
-export default function AccountModal({ user, telegramLinked, onLinkTelegram, onSignOut, onClose }) {
+const GROUPS = [['men', '男裝'], ['women', '女裝'], ['kids', '童裝'], ['baby', '嬰幼兒']];
+
+export default function AccountModal({ user, telegramLinked, onLinkTelegram, onSignOut, settings, onChangeSettings, onClose }) {
+  const set = (patch) => onChangeSettings({ ...settings, ...patch });
+  const toggleGroup = (g) =>
+    set({ newArrival: settings.newArrival.includes(g) ? settings.newArrival.filter((x) => x !== g) : [...settings.newArrival, g] });
+
   return (
     <div className="sheet-overlay" onClick={onClose} role="presentation">
       <div
@@ -50,6 +57,32 @@ export default function AccountModal({ user, telegramLinked, onLinkTelegram, onS
           )}
         </div>
 
+        <div style={{ ...styles.card, marginTop: '12px' }}>
+          <div style={styles.cardTitle}>通知設定</div>
+          <Check label="降價通知" checked={settings.drop} onChange={(v) => set({ drop: v })} />
+          <Check label="尺寸補貨通知" checked={settings.restock} onChange={(v) => set({ restock: v })} />
+          <Check label="限定價格開始與即將結束" checked={settings.limited} onChange={(v) => set({ limited: v })} />
+          <Check label="降價時只通知歷史新低" checked={settings.onlyLowest} onChange={(v) => set({ onlyLowest: v })} />
+          <label style={styles.selectRow}>
+            降幅至少
+            <select
+              value={settings.minDropPct}
+              onChange={(e) => set({ minDropPct: Number(e.target.value) })}
+              style={styles.select}
+            >
+              {DROP_PCT_OPTIONS.map((n) => <option key={n} value={n}>{n === 0 ? '不限' : `${n}%`}</option>)}
+            </select>
+            才通知
+          </label>
+          <div style={styles.groupLabel}>訂閱新品上市</div>
+          <div style={styles.groupRow}>
+            {GROUPS.map(([k, n]) => (
+              <Check key={k} label={n} checked={settings.newArrival.includes(k)} onChange={() => toggleGroup(k)} />
+            ))}
+          </div>
+          <p style={styles.desc}>設有目標價的商品不受降價條件限制，降到目標價以下就會通知。也可以在 Telegram 輸入 /settings 調整。</p>
+        </div>
+
         <button style={styles.signOutBtn} onClick={onSignOut}>
           <LogOut size={16} /> 登出
         </button>
@@ -58,8 +91,24 @@ export default function AccountModal({ user, telegramLinked, onLinkTelegram, onS
   );
 }
 
+function Check({ label, checked, onChange }) {
+  return (
+    <label style={styles.check}>
+      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+      {label}
+    </label>
+  );
+}
+
 const styles = {
+  check: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: 'var(--text-primary)', minHeight: '32px' },
+  selectRow: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: 'var(--text-primary)' },
+  select: { padding: '6px 10px', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-white)', color: 'var(--text-primary)', fontSize: '14px' },
+  groupLabel: { fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)', marginTop: '4px' },
+  groupRow: { display: 'flex', flexWrap: 'wrap', gap: '4px 16px' },
   modal: {
+    maxHeight: '90vh',
+    overflowY: 'auto',
     backgroundColor: 'var(--bg-white)',
     borderRadius: '20px',
     width: '100%',

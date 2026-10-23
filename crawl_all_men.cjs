@@ -454,7 +454,7 @@ async function syncToFirestore(products, triggerType = 'manual', startTime = Dat
 
     // 儲存期間限定商品的快速索引清單
     const campaignProducts = [];
-    const notifier = require('./notify_price_drops.cjs');
+    const notifier = require('./notifications.cjs');
     // 本次降價的商品 (供 Telegram 降價通知使用)
     const priceDrops = [];
 
@@ -535,6 +535,7 @@ async function syncToFirestore(products, triggerType = 'manual', startTime = Dat
       const prevPrice = prevPriceMap.get(p.id);
       if (typeof prevPrice === 'number' && typeof p.minPrice === 'number' && p.minPrice < prevPrice) {
         priceDrops.push({
+          type: 'drop',
           id: p.id,
           name: p.shortName || p.name,
           productCode: p.productCode,
@@ -624,7 +625,17 @@ async function syncToFirestore(products, triggerType = 'manual', startTime = Dat
     // 提交剩餘的所有變更
     await commitBatchIfNeeded(true);
 
-    // G. 追蹤統計 (首頁「最多人收藏」用) 與降價通知 → 通知成功後才推進比對基準
+    // G. 偵測補貨 / 限定價格 / 新品事件 (與上次基準比對)
+    const { productGroups, isLimitedPrice } = await import('./src/utils/productGroups.js');
+    const detected = require('./events.cjs').detectEvents({
+      products,
+      baseline: baselineSnap.exists() ? baselineSnap.data() : null,
+      now: Date.now(),
+      groupsOf: productGroups,
+      isLimited: isLimitedPrice
+    });
+
+    // H. 追蹤統計 (首頁「最多人收藏」用) 與通知 → 通知成功後才推進比對基準
     let notifyOk = true;
     try {
       const users = await notifier.loadUsers({ db, firestore: firestoreMod });
@@ -636,13 +647,13 @@ async function syncToFirestore(products, triggerType = 'manual', startTime = Dat
       } catch (e) {
         console.warn('  追蹤統計寫入失敗 (不影響同步與通知):', e.message || e);
       }
-      await notifier.notifyPriceDrops({ users, drops: priceDrops });
+      await notifier.notifyAll({ users, events: [...priceDrops, ...detected.events], newArrivals: detected.newArrivals });
     } catch (e) {
       notifyOk = false;
-      console.warn('  降價通知流程失敗，本次不更新比對基準，下次執行會重新偵測降價:', e.message || e);
+      console.warn('  通知流程失敗，本次不更新比對基準，下次執行會重新偵測:', e.message || e);
     }
     if (notifyOk) {
-      await setDoc(baselineRef, { updatedAt: Date.now(), hashes: nextHashes, prices: nextPrices });
+      await setDoc(baselineRef, { updatedAt: Date.now(), hashes: nextHashes, prices: nextPrices, ...detected.next });
     }
 
     console.log('╔══════════════════════════════════════╗');

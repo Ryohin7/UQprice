@@ -1,23 +1,9 @@
 // Telegram webhook (Vercel Serverless Function)
-// 使用者在網站按「連結 Telegram」會帶著一次性綁定碼開啟 t.me/<bot>?start=<code>，
-// Telegram 把 `/start <code>` 推送到這裡，我們用 Admin SDK 找到對應使用者並寫入 chatId。
-import { getFirestore, FieldValue } from 'firebase-admin/firestore';
-import notify from '../notify_price_drops.cjs';
+// 綁定：使用者在網站按「連結 Telegram」會帶著一次性綁定碼開啟 t.me/<bot>?start=<code>，
+// Telegram 把 `/start <code>` 推送到這裡。之後的指令 (/list /add /target /settings ...) 與按鈕回呼
+// 也都由這裡處理，詳見 _bot.js。
 import { initAdmin } from './_lib.js';
-
-function getDb() {
-  initAdmin();
-  return getFirestore();
-}
-
-// 回覆失敗（例如使用者封鎖機器人）不應讓 webhook 出錯，記錄即可
-async function reply(chatId, text) {
-  try {
-    await notify.sendTelegram(process.env.TELEGRAM_BOT_TOKEN, chatId, text, null);
-  } catch (err) {
-    console.warn('telegram reply failed:', err.message);
-  }
-}
+import { handleMessage, handleCallback } from './_bot.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
@@ -29,44 +15,15 @@ export default async function handler(req, res) {
   }
 
   try {
-    const msg = req.body?.message;
-    // 僅處理私訊文字，其餘一律回 200 避免 Telegram 重送
-    if (!msg?.text || msg.chat?.type !== 'private') return res.status(200).end();
-
-    const chatId = msg.chat.id;
-    const [command, arg] = msg.text.trim().split(/\s+/);
-    const db = getDb();
-
-    if (command === '/start' && arg) {
-      if (!/^[A-Za-z0-9_-]{16,64}$/.test(arg)) {
-        await reply(chatId, '綁定碼格式不正確，請回到網站重新點擊「連結 Telegram」。');
-        return res.status(200).end();
-      }
-      const found = await db.collection('users').where('linkCode', '==', arg).limit(1).get();
-      if (found.empty) {
-        await reply(chatId, '綁定碼無效或已使用，請回到網站重新點擊「連結 Telegram」。');
-        return res.status(200).end();
-      }
-      // 同一個 Telegram 只綁定一個網站帳號：先解除舊的綁定
-      const dup = await db.collection('users').where('telegram.chatId', '==', chatId).get();
-      const batch = db.batch();
-      dup.forEach((d) => batch.update(d.ref, { telegram: FieldValue.delete() }));
-      batch.update(found.docs[0].ref, {
-        telegram: { chatId, username: msg.from?.username || null, linkedAt: Date.now() },
-        linkCode: FieldValue.delete(),
-      });
-      await batch.commit();
-      await reply(chatId, '已連結。你在「我的追蹤」中的商品降價時，我會在這裡通知你。\n輸入 /stop 可隨時取消通知。');
-    } else if (command === '/stop') {
-      const dup = await db.collection('users').where('telegram.chatId', '==', chatId).get();
-      const batch = db.batch();
-      dup.forEach((d) => batch.update(d.ref, { telegram: FieldValue.delete() }));
-      await batch.commit();
-      await reply(chatId, '已取消降價通知。想再開啟，請到網站重新連結 Telegram。');
-    } else if (command === '/start') {
-      await reply(chatId, '請從網站「我的帳號 → 連結 Telegram」進入，才能綁定你的追蹤清單。');
+    initAdmin();
+    const update = req.body || {};
+    if (update.callback_query) {
+      await handleCallback(update.callback_query);
+    } else if (update.message?.text && update.message.chat?.type === 'private') {
+      await handleMessage(update.message);
     }
   } catch (err) {
+    // 一律回 200，避免 Telegram 不斷重送同一則更新
     console.error('telegram webhook error:', err);
   }
   return res.status(200).end();

@@ -1,7 +1,7 @@
 // 後台「Telegram 推播」：count 取得已連結人數、self 發給自己預覽、send 推播給所有已連結使用者。
 // 呼叫者必須是 ADMIN_EMAILS 白名單內的管理員。
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
-import notify from '../notify_price_drops.cjs';
+import notify from '../notifications.cjs';
 import { requireAdmin } from './_lib.js';
 
 const MAX_RECIPIENTS = 1400;   // 每秒 25 則，60 秒內可完成

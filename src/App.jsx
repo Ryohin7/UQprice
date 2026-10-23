@@ -7,13 +7,16 @@ import PriceChart from './components/PriceChart';
 import { Search, SlidersHorizontal, ArrowUpDown, X, Heart, ExternalLink, TrendingDown, Menu, User, Lock } from 'lucide-react';
 import { db, auth } from './firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import { collection, getDocs, doc, setDoc, deleteDoc, onSnapshot, getDoc, updateDoc, increment } from 'firebase/firestore';
+import { collection, getDocs, doc, setDoc, deleteDoc, onSnapshot, getDoc, updateDoc, increment, deleteField } from 'firebase/firestore';
 import AdminPanel from './components/AdminPanel';
 import VersionHistoryModal from './components/VersionHistoryModal';
 import NotFound from './components/NotFound';
 import AccountModal from './components/AccountModal';
+import TargetPrice from './components/TargetPrice';
+import { normalizeSettings } from './utils/userSettings';
 import { signInWithGoogle, signOutUser, isAdminUser, TELEGRAM_BOT_USERNAME } from './auth';
 import { loadViewCounts, incrementViewCount } from './utils/viewCounts';
+import { isMenProduct, isWomenProduct, isKidsProduct, isBabyProduct, isLimitedPrice } from './utils/productGroups';
 
 // 與 firestore.rules 的 favorites 上限一致
 const MAX_FAVORITES = 300;
@@ -176,31 +179,6 @@ const loginStyles = {
 const isHistoricalLowest = (product) => {
   if (!product) return false;
   return product.isHistoricalLowest === true;
-};
-
-const isMenProduct = (p) => {
-  if (!p.sex) return false;
-  const s = p.sex.toLowerCase();
-  return s.includes('男') || s.includes('men') || s.includes('unisex') || s.includes('適穿');
-};
-
-const isWomenProduct = (p) => {
-  if (!p.sex) return false;
-  const s = p.sex.toLowerCase();
-  return s.includes('女') || s.includes('women') || s.includes('unisex') || s.includes('適穿');
-};
-
-const isKidsProduct = (p) => {
-  if (!p.sex) return false;
-  const s = p.sex.toLowerCase();
-  return s.includes('童裝') || s.includes('男童') || s.includes('女童') || s.includes('kids');
-};
-
-const isBabyProduct = (p) => {
-  if (!p.sex) return false;
-  const s = p.sex.toLowerCase();
-  const g = p.gender ? p.gender.toLowerCase() : '';
-  return s.includes('新生兒') || s.includes('嬰幼兒') || s.includes('baby') || g.includes('新生兒') || g.includes('嬰幼兒');
 };
 
 const ALL_STANDARD_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL'];
@@ -427,6 +405,8 @@ export default function App() {
   const [authReady, setAuthReady] = useState(!auth);
   const [showAccount, setShowAccount] = useState(false);
   const [telegramLinked, setTelegramLinked] = useState(false);
+  const [userSettings, setUserSettings] = useState(() => normalizeSettings(null));
+  const [targets, setTargets] = useState({});
   const isAdminLoggedIn = isAdminUser(user);
   const [versions, setVersions] = useState([]);
   const [crawlerReports, setCrawlerReports] = useState([]);
@@ -623,12 +603,15 @@ export default function App() {
     });
   }, []);
 
-  // 登入後：合併本機與雲端追蹤清單，並即時監聽 Telegram 綁定狀態
+  // 登入後：合併本機與雲端追蹤清單，並即時監聽雲端資料 (Telegram 機器人也會修改追蹤清單、設定與目標價)
   const cloudSyncedRef = React.useRef(false);
+  const lastCloudFavsRef = React.useRef('[]');
   const hadUserRef = React.useRef(false);
   useEffect(() => {
     cloudSyncedRef.current = false;
     setTelegramLinked(false);
+    setUserSettings(normalizeSettings(null));
+    setTargets({});
     // 登出後清掉本機追蹤清單，避免下一位登入者被合併到上一位的資料
     if (!user && hadUserRef.current) setFavorites([]);
     hadUserRef.current = !!user;
@@ -638,23 +621,46 @@ export default function App() {
     return onSnapshot(userRef, (snap) => {
       const data = snap.exists() ? snap.data() : {};
       setTelegramLinked(!!data.telegram?.chatId);
+      setUserSettings(normalizeSettings(data.settings));
+      setTargets(data.targets && typeof data.targets === 'object' ? data.targets : {});
+
+      if (Array.isArray(data.favorites)) {
+        const cloud = data.favorites.slice(0, MAX_FAVORITES);
+        lastCloudFavsRef.current = JSON.stringify(cloud);
+        // 首次：雲端已有清單時以雲端為準；之後：套用其他裝置或 Telegram 機器人造成的變更 (略過本機尚未送出的寫入)
+        if (first || !snap.metadata.hasPendingWrites) setFavorites((local) => (JSON.stringify(local) === lastCloudFavsRef.current ? local : cloud));
+      } else if (first) {
+        setFavorites((local) => [...local]); // 雲端尚無清單的新帳號：觸發寫入，把本機清單帶上去
+      }
       if (first) {
         first = false;
-        // 雲端已有清單時以雲端為準（避免他處已取消追蹤的商品被本機舊資料加回來）；
-        // 雲端尚無清單的新帳號才把本機清單帶上去
-        if (Array.isArray(data.favorites)) setFavorites(data.favorites.slice(0, MAX_FAVORITES));
-        else setFavorites((local) => [...local]); // 觸發寫入，把本機清單同步到雲端
         cloudSyncedRef.current = true;
       }
     }, (err) => console.warn('讀取使用者資料失敗:', err));
   }, [user]);
 
-  // 追蹤清單變動時寫回雲端 (僅限已登入且已完成首次合併)
+  // 追蹤清單變動時寫回雲端 (僅限已登入、已完成首次合併，且內容與雲端不同)
   useEffect(() => {
     if (!db || !user || !cloudSyncedRef.current) return;
+    if (JSON.stringify(favorites) === lastCloudFavsRef.current) return;
     setDoc(doc(db, 'users', user.uid), { favorites }, { merge: true })
       .catch((err) => console.warn('同步追蹤清單失敗:', err));
   }, [favorites, user]);
+
+  const saveSettings = (next) =>
+    setDoc(doc(db, 'users', user.uid), { settings: next }, { merge: true })
+      .catch((err) => console.warn('儲存通知設定失敗:', err));
+
+  const saveTarget = async (productId, price) => {
+    const ref = doc(db, 'users', user.uid);
+    try {
+      if (price == null) await updateDoc(ref, { [`targets.${productId}`]: deleteField() });
+      else await setDoc(ref, { targets: { [productId]: price } }, { merge: true });
+    } catch (err) {
+      console.warn('儲存目標價失敗:', err);
+      alert('儲存失敗，請稍後再試。');
+    }
+  };
 
   const handleSignIn = () => signInWithGoogle();
   const handleSignOut = async () => {
@@ -689,6 +695,7 @@ export default function App() {
     const targetProduct = products.find(p => p.id === productId);
     if (favorites.includes(productId)) {
       setFavorites(favorites.filter(id => id !== productId));
+      if (user && targets[productId] != null) saveTarget(productId, null);
       if (targetProduct) {
         logRemoveFromFavorites(targetProduct);
       }
@@ -855,9 +862,6 @@ export default function App() {
   }, [products, searchTerm, selectedCategory, selectedSize, sortBy, selectedSex, favorites, navigation]);
 
   // 首頁區塊資料：最多人收藏 → 男/女裝限定價格 → 男/女裝最新商品
-  const isLimitedPrice = (p) =>
-    !!p.salesPromotionLabel && p.salesPromotionLabel.some(l => l.labelText && l.labelText.includes('限定價格'));
-
   const topFavoriteProducts = useMemo(() => {
     return products.filter(p => p.favCount > 0)
       .sort((a, b) => b.favCount - a.favCount || (b.views || 0) - (a.views || 0))
@@ -956,6 +960,8 @@ export default function App() {
           telegramLinked={telegramLinked}
           onLinkTelegram={handleLinkTelegram}
           onSignOut={handleSignOut}
+          settings={userSettings}
+          onChangeSettings={saveSettings}
           onClose={() => setShowAccount(false)}
         />
       )}
@@ -1252,6 +1258,15 @@ export default function App() {
                     </div>
                   </div>
                 </div>
+
+                {user && favorites.includes(activeProduct.id) && (
+                  <TargetPrice
+                    productId={activeProduct.id}
+                    currentPrice={activeProduct.minPrice}
+                    target={targets[activeProduct.id] ?? null}
+                    onSave={saveTarget}
+                  />
+                )}
 
                 <div className="sheet-actions">
                   <button

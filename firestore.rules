@@ -98,18 +98,24 @@ service cloud.firestore {
     // ==========================================
     // 7. 使用者資料 (users)：追蹤清單與 Telegram 綁定
     // ==========================================
-    // telegram 欄位只允許後端 (Admin SDK) 寫入，前端僅能改 favorites 與 linkCode，
+    // telegram 欄位只允許後端 (Admin SDK) 寫入，前端僅能改 favorites、linkCode、settings、targets，
     // 避免使用者把通知導向他人的 Telegram。
+    function validUserFields() {
+      return request.resource.data.get('favorites', []) is list
+          && request.resource.data.get('favorites', []).size() <= 300
+          && request.resource.data.get('settings', {}) is map
+          && request.resource.data.get('targets', {}) is map
+          && request.resource.data.get('targets', {}).keys().size() <= 300;
+    }
+
     match /users/{uid} {
       allow read: if request.auth != null && (request.auth.uid == uid || isCrawler());
       allow create: if request.auth != null && request.auth.uid == uid
-                    && request.resource.data.keys().hasOnly(['favorites', 'linkCode'])
-                    && request.resource.data.get('favorites', []) is list
-                    && request.resource.data.get('favorites', []).size() <= 300;
+                    && request.resource.data.keys().hasOnly(['favorites', 'linkCode', 'settings', 'targets'])
+                    && validUserFields();
       allow update: if request.auth != null && request.auth.uid == uid
-                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['favorites', 'linkCode'])
-                    && request.resource.data.get('favorites', []) is list
-                    && request.resource.data.get('favorites', []).size() <= 300;
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['favorites', 'linkCode', 'settings', 'targets'])
+                    && validUserFields();
       allow delete: if false;
     }
   }
