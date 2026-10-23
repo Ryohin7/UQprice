@@ -514,6 +514,7 @@ export default function AdminPanel({
           initialNavigation={navigation}
           allUniqueCategories={allUniqueCategories}
           onSaveNavigation={onSaveNavigation}
+          products={products}
         />
       )}
     </div>

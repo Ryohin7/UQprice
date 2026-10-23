@@ -19,6 +19,7 @@ import { normalizeSettings } from './utils/userSettings';
 import { signInWithGoogle, signOutUser, isAdminUser, TELEGRAM_BOT_USERNAME } from './auth';
 import { loadViewCounts, incrementViewCount } from './utils/viewCounts';
 import { isMenProduct, isWomenProduct, isKidsProduct, isBabyProduct, isLimitedPrice } from './utils/productGroups';
+import { matchesSubCategory } from './utils/categoryMatch';
 
 // 與 firestore.rules 的 favorites 上限一致
 const MAX_FAVORITES = 300;
@@ -793,21 +794,19 @@ export default function App() {
         );
       } else {
         // 自定義次分類的資料庫分類關聯過濾
-        let targetSub = null;
+        // 各主分類 (男裝/女裝/童裝/嬰幼兒) 都可能有同代碼的次分類 (例如 tops)，全部納入比對；
+        // 分類代碼帶有性別前綴 (all_men-... / all_women-...)，不會互相混到
+        const targets = [];
         for (const mainCat of navigation) {
           const sub = mainCat.subCategories.find(s => s.code === selectedCategory);
-          if (sub) {
-            targetSub = sub;
-            break;
-          }
+          if (sub) targets.push({ sub, main: mainCat });
         }
+        const targetSub = targets.length > 0 ? targets[0].sub : null;
 
         if (targetSub) {
           if (targetSub.matchType === 'custom') {
-            const selectedCats = targetSub.selectedCategories || [];
-            result = result.filter(p =>
-              p.categoryNames && p.categoryNames.some(cName => selectedCats.includes(cName))
-            );
+            // 以官網穩定分類代碼為主，並相容舊版分類名稱比對
+            result = result.filter(p => targets.some(({ sub, main }) => matchesSubCategory(p, sub, main.sex)));
           } else {
             // 保留 built-in 預設向後相容
             if (selectedCategory === 'tops') {

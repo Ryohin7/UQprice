@@ -1,11 +1,24 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import CategoryCodePicker from './CategoryCodePicker';
 import { Plus, Trash2, Edit3, Save, X, Search, Check, Folder, FolderOpen, Tag, HelpCircle, CheckSquare, Square, GripVertical } from 'lucide-react';
 
 export default function CategoryManager({
   initialNavigation = [],
   allUniqueCategories = [],
-  onSaveNavigation
+  onSaveNavigation,
+  products = []
 }) {
+  // 官網分類代碼對照表 (爬蟲產生的 categories.json)，尚未產生時為 null
+  const [catalog, setCatalog] = useState(null);
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/categories.json')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => { if (!cancelled && data && typeof data === 'object') setCatalog(data); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+
   const [navigation, setNavigation] = useState(initialNavigation);
   const [activeMainId, setActiveMainId] = useState(initialNavigation[0]?.id || '');
   const [activeSubCode, setActiveSubCode] = useState('');
@@ -255,6 +268,21 @@ export default function CategoryManager({
         return { ...mCat, subCategories: updatedSubs };
       }
       return mCat;
+    }));
+  };
+
+  // 右側：設定次分類的官網分類代碼 (undefined 表示還原為系統預設對應)
+  const handleChangeCodes = (codes) => {
+    if (!selectedInfo) return;
+    const { mainCat, subCategory } = selectedInfo;
+    setNavigation(prev => prev.map(mCat => {
+      if (mCat.id !== mainCat.id) return mCat;
+      const updatedSubs = (mCat.subCategories || []).map(sub => {
+        if (sub.code !== subCategory.code) return sub;
+        const { selectedCodes, ...rest } = sub; // eslint-disable-line no-unused-vars
+        return codes === undefined ? rest : { ...rest, selectedCodes: codes };
+      });
+      return { ...mCat, subCategories: updatedSubs };
     }));
   };
 
@@ -673,6 +701,18 @@ export default function CategoryManager({
                 </div>
               ) : (
                 <div style={styles.associationEditor}>
+                  <CategoryCodePicker
+                    mainCat={selectedInfo.mainCat}
+                    subCategory={selectedInfo.subCategory}
+                    catalog={catalog}
+                    products={products}
+                    onChangeCodes={handleChangeCodes}
+                  />
+
+                  <details>
+                    <summary style={{ cursor: 'pointer', fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '12px' }}>
+                      進階：依分類名稱比對（舊版，名稱會隨季節改變，僅作相容）
+                    </summary>
                   <p style={styles.assocDesc}>
                     勾選下方現有的商品分類。當前台用戶選取此子分類時，系統將篩選出<strong>符合本主分類性別</strong>且<strong>包含任一已勾選分類名稱</strong>的商品。
                   </p>
@@ -758,6 +798,7 @@ export default function CategoryManager({
                       })
                     )}
                   </div>
+                  </details>
                 </div>
               )}
             </>
