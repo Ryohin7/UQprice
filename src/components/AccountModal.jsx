@@ -20,9 +20,11 @@ export default function AccountModal({ user, telegramLinked, onLinkTelegram, onS
         onClick={(e) => e.stopPropagation()}
       >
         <div className="sheet-grabber" aria-hidden="true" />
-        <button style={styles.closeBtn} onClick={onClose} aria-label="關閉">
-          <X size={18} />
-        </button>
+        <div className="sheet-close">
+          <button style={styles.closeBtn} onClick={onClose} aria-label="關閉">
+            <X size={18} />
+          </button>
+        </div>
 
         <div style={styles.profile}>
           {user.photoURL && <img src={user.photoURL} alt="" style={styles.avatar} referrerPolicy="no-referrer" />}
@@ -118,9 +120,6 @@ const styles = {
     boxShadow: 'var(--shadow-md)',
   },
   closeBtn: {
-    position: 'absolute',
-    top: '14px',
-    right: '14px',
     width: '32px',
     height: '32px',
     display: 'flex',

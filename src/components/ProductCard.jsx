@@ -6,6 +6,13 @@ export function formatPrice(price) {
   return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
+// 降價幅度以每 100 元為一個級距顯示 (例如降 285 元顯示「降 200 元以上」)，不足 100 元只顯示「降價」
+export function dropTierText(amount) {
+  if (!amount || amount <= 0) return '';
+  const tier = Math.floor(amount / 100) * 100;
+  return tier >= 100 ? `降 ${formatPrice(tier)} 元以上` : '降價';
+}
+
 const isHistoricalLowest = (product) => {
   return product.isHistoricalLowest === true;
 };
@@ -42,7 +49,7 @@ export default function ProductCard({ product, onClick }) {
       {isSale && (
         <div style={styles.saleBadgeOverlay}>
           <span style={styles.saleBadge}>
-            降 {formatPrice(discountAmount)}元
+            {dropTierText(discountAmount)}
           </span>
         </div>
       )}
@@ -226,7 +233,8 @@ const styles = {
   priceContainer: {
     display: 'flex',
     alignItems: 'baseline',
-    gap: '6px',
+    gap: '0 6px',
+    flexWrap: 'wrap',
     marginTop: 'auto',
     marginBottom: '0',
   },
@@ -237,6 +245,7 @@ const styles = {
     fontSize: '12px',
     textDecoration: 'line-through',
     color: 'var(--text-light)',
+    whiteSpace: 'nowrap',
   },
   colorContainer: {
     display: 'flex',

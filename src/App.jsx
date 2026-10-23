@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Header from './components/Header';
-import ProductCard, { formatPrice } from './components/ProductCard';
+import ProductCard, { formatPrice, dropTierText } from './components/ProductCard';
+import HorizontalScroller from './components/HorizontalScroller';
 import SkeletonCard from './components/SkeletonCard';
 import PriceChart from './components/PriceChart';
 
@@ -12,6 +13,7 @@ import AdminPanel from './components/AdminPanel';
 import VersionHistoryModal from './components/VersionHistoryModal';
 import NotFound from './components/NotFound';
 import AccountModal from './components/AccountModal';
+import PwaStatus from './components/PwaStatus';
 import TargetPrice from './components/TargetPrice';
 import { normalizeSettings } from './utils/userSettings';
 import { signInWithGoogle, signOutUser, isAdminUser, TELEGRAM_BOT_USERNAME } from './auth';
@@ -312,7 +314,10 @@ export default function App() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('ALL');
+  // PWA 捷徑 (/?view=favorites) 直接開啟「我的追蹤」
+  const [selectedCategory, setSelectedCategory] = useState(() =>
+    new URLSearchParams(window.location.search).get('view') === 'favorites' ? 'favorites' : 'ALL'
+  );
   const [sortBy, setSortBy] = useState('default'); // 'default', 'priceAsc', 'priceDesc', 'discountDesc'
   const [selectedSize, setSelectedSize] = useState('ALL');
   const [selectedSex, setSelectedSex] = useState('ALL'); // 'ALL', 'men', 'women'
@@ -938,6 +943,7 @@ export default function App() {
 
   return (
     <div style={styles.app}>
+      <PwaStatus />
       <Header
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
@@ -1010,13 +1016,13 @@ export default function App() {
                 {section.list.length === 0 ? (
                   <div style={styles.emptyFeatured}>{section.empty}</div>
                 ) : (
-                  <div className="horizontal-scroll-container">
+                  <HorizontalScroller>
                     {section.list.map(product => (
                       <div key={`${section.key}-${product.id}`} className="horizontal-scroll-item">
                         <ProductCard product={product} onClick={handleProductClick} />
                       </div>
                     ))}
-                  </div>
+                  </HorizontalScroller>
                 )}
               </div>
             ))}
@@ -1116,9 +1122,11 @@ export default function App() {
           <div className="sheet-card" role="dialog" aria-modal="true" aria-label={activeProduct.name} onClick={(e) => e.stopPropagation()}>
             <div className="sheet-grabber" aria-hidden="true" />
             {/* 關閉按鈕 */}
-            <button onClick={handleCloseModal} style={styles.closeBtn} aria-label="關閉">
-              <X size={24} />
-            </button>
+            <div className="sheet-close">
+              <button onClick={handleCloseModal} style={styles.closeBtn} aria-label="關閉">
+                <X size={24} />
+              </button>
+            </div>
 
             {/* 詳情佈局 */}
             <div className="detail-layout">
@@ -1197,7 +1205,7 @@ export default function App() {
                   )}
                   {activeProduct.originPrice && activeProduct.minPrice < activeProduct.originPrice && (
                     <div style={{ ...styles.discountBadge, display: 'inline-flex', alignItems: 'center', height: 'fit-content', marginLeft: '16px' }}>
-                      省 {formatPrice(activeProduct.originPrice - activeProduct.minPrice)}元
+                      {dropTierText(activeProduct.originPrice - activeProduct.minPrice)}
                     </div>
                   )}
                 </div>
@@ -1456,10 +1464,6 @@ const styles = {
     overflowY: 'auto',
   },
   closeBtn: {
-    position: 'absolute',
-    top: '16px',
-    right: '16px',
-    zIndex: 2,
     width: '32px',
     height: '32px',
     display: 'flex',
@@ -1513,8 +1517,9 @@ const styles = {
   },
   detailPriceRow: {
     display: 'flex',
+    flexWrap: 'wrap',
     alignItems: 'baseline',
-    gap: '24px',
+    gap: '8px 0',
   },
   priceColumn: {
     display: 'flex',
@@ -1540,6 +1545,7 @@ const styles = {
     fontSize: '13px',
     fontWeight: '600',
     borderRadius: '999px',
+    whiteSpace: 'nowrap',
   },
   metaBox: {
     display: 'flex',
