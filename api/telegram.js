@@ -1,14 +1,12 @@
 // Telegram webhook (Vercel Serverless Function)
 // 使用者在網站按「連結 Telegram」會帶著一次性綁定碼開啟 t.me/<bot>?start=<code>，
 // Telegram 把 `/start <code>` 推送到這裡，我們用 Admin SDK 找到對應使用者並寫入 chatId。
-import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import notify from '../notify_price_drops.cjs';
+import { initAdmin } from './_lib.js';
 
 function getDb() {
-  if (!getApps().length) {
-    initializeApp({ credential: cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)) });
-  }
+  initAdmin();
   return getFirestore();
 }
 

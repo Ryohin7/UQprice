@@ -93,6 +93,20 @@ async function sendCard(token, { chatId, image, caption, url }) {
   await sendTelegram(token, chatId, caption, 'HTML', { reply_markup: replyMarkup });
 }
 
+// 後台推播：純文字 (不解析 HTML)，可選商品圖與一顆連結按鈕；圖片失敗時退回純文字
+async function sendBroadcast(token, { chatId, text, image, buttonText, buttonUrl }) {
+  const replyMarkup = buttonText && buttonUrl ? { inline_keyboard: [[{ text: buttonText, url: buttonUrl }]] } : undefined;
+  if (image) {
+    try {
+      await callTelegram(token, 'sendPhoto', { chat_id: chatId, photo: image, caption: text, ...(replyMarkup ? { reply_markup: replyMarkup } : {}) });
+      return;
+    } catch (err) {
+      if (err.status !== 400) throw err;
+    }
+  }
+  await callTelegram(token, 'sendMessage', { chat_id: chatId, text, disable_web_page_preview: true, ...(replyMarkup ? { reply_markup: replyMarkup } : {}) });
+}
+
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 async function sendItem(token, item) {
@@ -100,19 +114,33 @@ async function sendItem(token, item) {
   else await sendTelegram(token, item.chatId, item.text, null);
 }
 
-async function notifyPriceDrops({ db, firestore, drops }) {
-  if (!drops.length) {
-    console.log('  本次沒有降價商品，略過通知');
-    return { sent: 0, failed: 0 };
-  }
+// 讀取所有使用者的追蹤清單與 Telegram 綁定 (供通知與「最多人收藏」統計共用，只讀一次)
+async function loadUsers({ db, firestore }) {
   const { collection, getDocs } = firestore;
-
   const snap = await getDocs(collection(db, 'users'));
   const users = [];
   snap.forEach((d) => {
     const data = d.data();
-    if (data.telegram?.chatId) users.push({ chatId: data.telegram.chatId, favorites: data.favorites || [] });
+    users.push({ chatId: data.telegram?.chatId || null, favorites: Array.isArray(data.favorites) ? data.favorites : [] });
   });
+  return users;
+}
+
+// { [productId]: 追蹤人數 }，只保留至少 1 人追蹤的商品
+function buildFavoriteCounts(users) {
+  const counts = {};
+  for (const u of users) {
+    for (const id of new Set(u.favorites)) counts[id] = (counts[id] || 0) + 1;
+  }
+  return counts;
+}
+
+async function notifyPriceDrops({ users: allUsers, drops }) {
+  if (!drops.length) {
+    console.log('  本次沒有降價商品，略過通知');
+    return { sent: 0, failed: 0 };
+  }
+  const users = allUsers.filter((u) => u.chatId);
 
   const items = buildCards(drops, users);
   console.log(`  降價商品 ${drops.length} 件，已綁定 Telegram 的使用者 ${users.length} 位，待發送 ${items.length} 則`);
@@ -148,4 +176,4 @@ async function notifyPriceDrops({ db, firestore, drops }) {
   return { sent, failed };
 }
 
-module.exports = { buildCards, buildCaption, notifyPriceDrops, sendTelegram, sendCard, productUrl, imageUrl };
+module.exports = { loadUsers, buildFavoriteCounts, buildCards, buildCaption, notifyPriceDrops, sendTelegram, sendCard, sendBroadcast, productUrl, imageUrl };

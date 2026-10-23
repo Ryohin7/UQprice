@@ -479,20 +479,23 @@ export default function App() {
     }
     const loadProductsAndViews = async () => {
       try {
-        const [productsRes, viewsRes] = await Promise.all([
+        const [productsRes, viewsRes, favSnap] = await Promise.all([
           fetch('/products.json').then(res => {
             if (!res.ok) throw new Error('Failed to load products.json');
             return res.json();
           }),
-          loadViewCounts(db)
+          loadViewCounts(db),
+          // 追蹤人數統計由爬蟲彙整 (system/favorite_stats)；讀取失敗不影響商品顯示
+          getDoc(doc(db, 'system', 'favorite_stats')).catch(() => null)
         ]);
+        const favCounts = favSnap && favSnap.exists() ? (favSnap.data().counts || {}) : {};
 
         // 瀏覽次數 = 舊版彙總文件 + 8 個分片文件，載入共 9 次讀取
         const viewsMap = viewsRes;
 
         if (productsRes && productsRes.length > 0) {
           console.log(`Successfully loaded ${productsRes.length} products from local JSON.`);
-          const merged = productsRes.map(p => ({ ...p, views: viewsMap[p.id] || 0 }));
+          const merged = productsRes.map(p => ({ ...p, views: viewsMap[p.id] || 0, favCount: favCounts[p.id] || 0 }));
           setProducts(merged);
         }
       } catch (error) {
@@ -851,10 +854,18 @@ export default function App() {
     return result;
   }, [products, searchTerm, selectedCategory, selectedSize, sortBy, selectedSex, favorites, navigation]);
 
-  // 首頁精選三大區塊資料篩選
-  const topViewsProducts = useMemo(() => {
-    return [...products].sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 10);
+  // 首頁區塊資料：最多人收藏 → 男/女裝限定價格 → 男/女裝最新商品
+  const isLimitedPrice = (p) =>
+    !!p.salesPromotionLabel && p.salesPromotionLabel.some(l => l.labelText && l.labelText.includes('限定價格'));
+
+  const topFavoriteProducts = useMemo(() => {
+    return products.filter(p => p.favCount > 0)
+      .sort((a, b) => b.favCount - a.favCount || (b.views || 0) - (a.views || 0))
+      .slice(0, 10);
   }, [products]);
+
+  const menLimited = useMemo(() => products.filter(p => isMenProduct(p) && isLimitedPrice(p)).slice(0, 10), [products]);
+  const womenLimited = useMemo(() => products.filter(p => isWomenProduct(p) && isLimitedPrice(p)).slice(0, 10), [products]);
 
   const menNewArrivals = useMemo(() => {
     return products.filter(p => isMenProduct(p) && p.isNewArrival).slice(0, 10);
@@ -862,14 +873,6 @@ export default function App() {
 
   const womenNewArrivals = useMemo(() => {
     return products.filter(p => isWomenProduct(p) && p.isNewArrival).slice(0, 10);
-  }, [products]);
-
-  const kidsNewArrivals = useMemo(() => {
-    return products.filter(p => isKidsProduct(p) && p.isNewArrival).slice(0, 10);
-  }, [products]);
-
-  const babyNewArrivals = useMemo(() => {
-    return products.filter(p => isBabyProduct(p) && p.isNewArrival).slice(0, 10);
   }, [products]);
 
   // 當搜尋條件改變時重置顯示數量
@@ -986,87 +989,31 @@ export default function App() {
             ))}
           </div>
         ) : isFeaturedHome ? (
-          // 精選首頁模式：三大精選區塊橫向滾動
+          // 精選首頁模式：區塊橫向滾動
           <div style={styles.featuredHome}>
-            {/* 區塊 1：熱門瀏覽 TOP 10 */}
-            <div style={{ marginBottom: 16 }}>
-              <h3 className="section-title">熱門瀏覽 TOP 10</h3>
-              {!topViewsProducts.some(product => product.views > 0) ? (
-                <div style={styles.emptyFeatured}>沒有資料</div>
-              ) : (
-                <div className="horizontal-scroll-container">
-                  {topViewsProducts.map(product => (
-                    <div key={`top-${product.id}`} className="horizontal-scroll-item">
-                      <ProductCard product={product} onClick={handleProductClick} />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* 區塊 2：男裝新品上市 TOP 10 */}
-            <div style={{ marginBottom: 16 }}>
-              <h3 className="section-title">男裝最新商品</h3>
-              {menNewArrivals.length === 0 ? (
-                <div style={styles.emptyFeatured}>暫無新品上市資料</div>
-              ) : (
-                <div className="horizontal-scroll-container">
-                  {menNewArrivals.map(product => (
-                    <div key={`men-new-${product.id}`} className="horizontal-scroll-item">
-                      <ProductCard product={product} onClick={handleProductClick} />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* 區塊 3：女裝新品上市 TOP 10 */}
-            <div style={{ marginBottom: 16 }}>
-              <h3 className="section-title">女裝最新商品</h3>
-              {womenNewArrivals.length === 0 ? (
-                <div style={styles.emptyFeatured}>暫無新品上市資料</div>
-              ) : (
-                <div className="horizontal-scroll-container">
-                  {womenNewArrivals.map(product => (
-                    <div key={`women-new-${product.id}`} className="horizontal-scroll-item">
-                      <ProductCard product={product} onClick={handleProductClick} />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* 區塊 4：童裝新品上市 TOP 10 */}
-            <div style={{ marginBottom: 16 }}>
-              <h3 className="section-title">童裝最新商品</h3>
-              {kidsNewArrivals.length === 0 ? (
-                <div style={styles.emptyFeatured}>暫無新品上市資料</div>
-              ) : (
-                <div className="horizontal-scroll-container">
-                  {kidsNewArrivals.map(product => (
-                    <div key={`kids-new-${product.id}`} className="horizontal-scroll-item">
-                      <ProductCard product={product} onClick={handleProductClick} />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* 區塊 5：嬰幼兒新品上市 TOP 10 */}
-            <div>
-              <h3 className="section-title">嬰幼兒最新商品</h3>
-              {babyNewArrivals.length === 0 ? (
-                <div style={styles.emptyFeatured}>暫無新品上市資料</div>
-              ) : (
-                <div className="horizontal-scroll-container">
-                  {babyNewArrivals.map(product => (
-                    <div key={`baby-new-${product.id}`} className="horizontal-scroll-item">
-                      <ProductCard product={product} onClick={handleProductClick} />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            {[
+              { key: 'fav', title: '最多人收藏（追蹤）', list: topFavoriteProducts, empty: '' },
+              { key: 'men-limited', title: '男裝限定價格', list: menLimited, empty: '目前沒有限定價格商品' },
+              { key: 'women-limited', title: '女裝限定價格', list: womenLimited, empty: '目前沒有限定價格商品' },
+              { key: 'men-new', title: '男裝最新商品', list: menNewArrivals, empty: '暫無新品上市資料' },
+              { key: 'women-new', title: '女裝最新商品', list: womenNewArrivals, empty: '暫無新品上市資料' },
+            ].filter(section => section.key !== 'fav' || section.list.length > 0) // 尚無人追蹤時不顯示收藏區塊
+              .map(section => (
+              <div key={section.key} style={{ marginBottom: 16 }}>
+                <h3 className="section-title">{section.title}</h3>
+                {section.list.length === 0 ? (
+                  <div style={styles.emptyFeatured}>{section.empty}</div>
+                ) : (
+                  <div className="horizontal-scroll-container">
+                    {section.list.map(product => (
+                      <div key={`${section.key}-${product.id}`} className="horizontal-scroll-item">
+                        <ProductCard product={product} onClick={handleProductClick} />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         ) : (
           // 商品列表模式

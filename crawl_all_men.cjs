@@ -624,13 +624,22 @@ async function syncToFirestore(products, triggerType = 'manual', startTime = Dat
     // 提交剩餘的所有變更
     await commitBatchIfNeeded(true);
 
-    // G. 降價通知 → 成功後才推進比對基準
+    // G. 追蹤統計 (首頁「最多人收藏」用) 與降價通知 → 通知成功後才推進比對基準
     let notifyOk = true;
     try {
-      await notifier.notifyPriceDrops({ db, firestore: firestoreMod, drops: priceDrops });
+      const users = await notifier.loadUsers({ db, firestore: firestoreMod });
+      try {
+        await setDoc(doc(db, 'system', 'favorite_stats'), {
+          updatedAt: Date.now(),
+          counts: notifier.buildFavoriteCounts(users)
+        });
+      } catch (e) {
+        console.warn('  追蹤統計寫入失敗 (不影響同步與通知):', e.message || e);
+      }
+      await notifier.notifyPriceDrops({ users, drops: priceDrops });
     } catch (e) {
       notifyOk = false;
-      console.warn('  ⚠️ 降價通知流程失敗，本次不更新比對基準，下次執行會重新偵測降價:', e.message || e);
+      console.warn('  降價通知流程失敗，本次不更新比對基準，下次執行會重新偵測降價:', e.message || e);
     }
     if (notifyOk) {
       await setDoc(baselineRef, { updatedAt: Date.now(), hashes: nextHashes, prices: nextPrices });

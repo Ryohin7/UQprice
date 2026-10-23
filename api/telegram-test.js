@@ -1,15 +1,8 @@
 // 後台「Telegram 測試」：以與真實降價通知相同的格式，發送一則範例訊息給管理員自己已綁定的 Telegram。
 // 呼叫者必須帶 Firebase ID Token，且信箱在 ADMIN_EMAILS 白名單內。
-import { initializeApp, getApps, cert } from 'firebase-admin/app';
-import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 import notify from '../notify_price_drops.cjs';
-
-function init() {
-  if (!getApps().length) {
-    initializeApp({ credential: cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)) });
-  }
-}
+import { requireAdmin } from './_lib.js';
 
 const isPrice = (n) => Number.isInteger(n) && n > 0 && n < 1000000;
 
@@ -17,20 +10,8 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
   try {
-    init();
-    const idToken = (req.headers.authorization || '').replace(/^Bearer /, '');
-    if (!idToken) return res.status(401).json({ error: '未登入' });
-
-    let decoded;
-    try {
-      decoded = await getAuth().verifyIdToken(idToken);
-    } catch {
-      return res.status(401).json({ error: '登入已過期，請重新登入' });
-    }
-    const admins = (process.env.ADMIN_EMAILS || '').split(',').map((e) => e.trim().toLowerCase()).filter(Boolean);
-    if (!decoded.email_verified || !admins.includes((decoded.email || '').toLowerCase())) {
-      return res.status(403).json({ error: '沒有權限' });
-    }
+    const decoded = await requireAdmin(req, res);
+    if (!decoded) return;
 
     const { name, productCode, image, oldPrice, newPrice, isLowest } = req.body || {};
     if (typeof name !== 'string' || !name || name.length > 100 ||

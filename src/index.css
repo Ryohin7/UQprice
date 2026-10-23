@@ -514,6 +514,10 @@ input {
   header {
     justify-content: center !important;
     padding: 12px !important;
+    /* backdrop-filter 會讓 header 變成 fixed 子元素的定位基準，導致底部搜尋列跑到頂部蓋住標題，手機版改用實色 */
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    background-color: var(--bg-white) !important;
   }
 
   .desktop-logo {
@@ -568,7 +572,7 @@ input {
   }
 
   /* 防止內容被底部固定欄位擋住 */
-  body, #root {
+  #root {
     padding-bottom: calc(60px + env(safe-area-inset-bottom));
   }
 

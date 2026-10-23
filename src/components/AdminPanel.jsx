@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, ShieldCheck, HelpCircle, ArrowRight, ClipboardList, Clock } from 'lucide-react';
 import CategoryManager from './CategoryManager';
-import TelegramTester from './TelegramTester';
+import TelegramManager from './TelegramManager';
 
 export default function AdminPanel({
   currentVersion = '1.0.0',
@@ -168,7 +168,7 @@ export default function AdminPanel({
             boxShadow: activeTab === 'telegram' ? '0 1px 3px rgba(0,0,0,0.12)' : 'none',
           }}
         >
-          Telegram 通知測試
+          Telegram 管理
         </button>
       </div>
 
@@ -508,7 +508,7 @@ export default function AdminPanel({
         </div>
         </div>
       ) : activeTab === 'telegram' ? (
-        <TelegramTester products={products} />
+        <TelegramManager products={products} />
       ) : (
         <CategoryManager
           initialNavigation={navigation}

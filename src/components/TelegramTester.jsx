@@ -52,7 +52,7 @@ export default function TelegramTester({ products = [] }) {
 
   return (
     <div style={styles.card}>
-      <h3 style={styles.title}>Telegram 通知測試</h3>
+      <h3 style={styles.title}>降價通知卡片測試</h3>
       <p style={styles.desc}>
         選一個商品並設定降價金額，系統會用與真實降價通知相同的格式，發送到你自己已連結的 Telegram。
         （需先在前台「我的帳號」連結你的 Telegram）

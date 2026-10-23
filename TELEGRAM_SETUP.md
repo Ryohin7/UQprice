@@ -30,5 +30,8 @@
 - Bot Token 只能放在 Vercel / GitHub Secrets，不可放進 `VITE_` 變數或提交到 git。
 - 前端無法寫入 `users/{uid}.telegram`（rules 限制），只有 Admin SDK 能綁定，防止把通知導向他人。
 
-## 後台「Telegram 測試」
+## 後台「Telegram 管理」
+- 已連結人數、降價通知卡片測試、以及「推播」：可對所有已連結使用者發送一則自訂訊息（純文字，可選圖片與一顆按鈕）。建議先按「發送給我自己」預覽；全員推播前會跳出確認視窗並核對人數，單次上限 1400 人，每筆推播會記錄在 Firestore `telegram_broadcasts`（僅後端可讀寫），已封鎖機器人的使用者會自動解除連結。
+
+### 測試說明
 管理員先在前台用 Google 登入並連結自己的 Telegram，再到後台 → Telegram 通知測試，選商品後按發送，訊息會用與真實降價通知完全相同的格式送到你自己的 Telegram。需設定 `ADMIN_EMAILS` 與 `FIREBASE_SERVICE_ACCOUNT`。
