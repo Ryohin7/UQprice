@@ -4,7 +4,7 @@
 1. 使用者用 Google 登入，「我的追蹤」同步到 Firestore `users/{uid}`。
 2. 使用者按「連結 Telegram」→ 前端寫入一次性 `linkCode` → 開啟 `t.me/UGpricebot?start=<linkCode>`。
 3. Telegram 把 `/start <linkCode>` 推送到 `api/telegram.js`（Vercel），以 Admin SDK 寫入 `telegram.chatId`。
-4. 爬蟲（GitHub Actions）偵測到降價 → `notify_price_drops.cjs` 比對追蹤清單 → 用 Bot 發送通知。
+4. 爬蟲（GitHub Actions）偵測到降價 → `notify_price_drops.cjs` 比對追蹤清單 → 用 Bot 發送通知：每件商品一張卡片（商品圖 + 價格 + 「前往官網購買」按鈕），訊息內不使用 emoji。
 
 ## 一次性設定
 1. **Firebase Console → Authentication → Sign-in method**：啟用 **Google**，並在 Settings → Authorized domains 加入正式網域。

@@ -2,6 +2,8 @@ import React, { useMemo, useState } from 'react';
 import { Send } from 'lucide-react';
 import { auth } from '../firebase';
 
+const toFullUrl = (pic) => (!pic ? null : pic.startsWith('http') ? pic : `https://www.uniqlo.com/tw${pic}`);
+
 export default function TelegramTester({ products = [] }) {
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState(null);
@@ -33,13 +35,14 @@ export default function TelegramTester({ products = [] }) {
         body: JSON.stringify({
           name: selected.shortName || selected.name,
           productCode: selected.productCode,
+          image: toFullUrl(selected.colors?.[0]?.largePicUrl || selected.mainPic),
           oldPrice,
           newPrice,
           isLowest,
         }),
       });
       const data = await res.json().catch(() => ({}));
-      setResult(res.ok ? { ok: true, html: data.html } : { ok: false, error: data.error || `發送失敗 (${res.status})` });
+      setResult(res.ok ? { ok: true, ...data } : { ok: false, error: data.error || `發送失敗 (${res.status})` });
     } catch (err) {
       setResult({ ok: false, error: err.message || '發送失敗' });
     } finally {
@@ -107,8 +110,12 @@ export default function TelegramTester({ products = [] }) {
       {result && !result.ok && <div style={styles.error}>{result.error}</div>}
       {result?.ok && (
         <div>
-          <p style={{ ...styles.label, color: 'var(--ok)' }}>已發送，以下是訊息內容：</p>
-          <div style={styles.bubble} dangerouslySetInnerHTML={{ __html: result.html.replace(/\n/g, '<br/>') }} />
+          <p style={{ ...styles.label, color: 'var(--ok)' }}>已發送，Telegram 內容如下：</p>
+          <div style={styles.bubble}>
+            {result.image && <img src={result.image} alt="" style={styles.photo} />}
+            <div dangerouslySetInnerHTML={{ __html: result.caption.replace(/\n/g, '<br/>') }} />
+          </div>
+          <a href={result.url} target="_blank" rel="noreferrer" style={styles.fakeButton}>前往官網購買</a>
         </div>
       )}
     </div>
@@ -143,6 +150,11 @@ const styles = {
     fontSize: '15px', fontWeight: '600', cursor: 'pointer', marginTop: '6px',
   },
   error: { padding: '12px', borderRadius: '10px', backgroundColor: 'var(--red-bg)', color: 'var(--uq-red)', fontSize: '13px' },
+  photo: { width: '100%', borderRadius: '10px', marginBottom: '10px', display: 'block' },
+  fakeButton: {
+    display: 'block', marginTop: '4px', padding: '10px', textAlign: 'center', borderRadius: '10px',
+    backgroundColor: 'var(--info-bg)', color: 'var(--info)', fontSize: '14px', fontWeight: '500', textDecoration: 'none',
+  },
   bubble: {
     backgroundColor: 'var(--bg-light)', borderRadius: '16px', padding: '14px 16px', fontSize: '14px',
     lineHeight: 1.6, color: 'var(--text-primary)', wordBreak: 'break-word',

@@ -32,9 +32,10 @@ export default async function handler(req, res) {
       return res.status(403).json({ error: '沒有權限' });
     }
 
-    const { name, productCode, oldPrice, newPrice, isLowest } = req.body || {};
+    const { name, productCode, image, oldPrice, newPrice, isLowest } = req.body || {};
     if (typeof name !== 'string' || !name || name.length > 100 ||
         typeof productCode !== 'string' || !/^[A-Za-z0-9_-]{1,40}$/.test(productCode) ||
+        (image != null && (typeof image !== 'string' || !image.startsWith('https://www.uniqlo.com/'))) ||
         !isPrice(oldPrice) || !isPrice(newPrice) || newPrice >= oldPrice) {
       return res.status(400).json({ error: '商品資料不正確（新價格必須低於舊價格）' });
     }
@@ -43,16 +44,20 @@ export default async function handler(req, res) {
     const chatId = userSnap.data()?.telegram?.chatId;
     if (!chatId) return res.status(409).json({ error: '尚未連結 Telegram：請先在前台「我的帳號」連結你自己的 Telegram' });
 
-    const drop = { id: 'test', name, productCode, oldPrice, newPrice, isLowest: !!isLowest };
-    const [message] = notify.buildMessages([drop], [{ chatId, favorites: ['test'] }]);
-    const text = `🧪 測試訊息（以下為使用者實際會收到的格式）\n\n${message.text}`;
+    const drop = { id: 'test', name, productCode, image: image || null, oldPrice, newPrice, isLowest: !!isLowest };
+    const card = {
+      chatId,
+      image: drop.image,
+      caption: notify.buildCaption(drop, { test: true }),
+      url: notify.productUrl(productCode),
+    };
 
     try {
-      await notify.sendTelegram(process.env.TELEGRAM_BOT_TOKEN, chatId, text);
+      await notify.sendCard(process.env.TELEGRAM_BOT_TOKEN, card);
     } catch (err) {
       return res.status(502).json({ error: `Telegram 發送失敗：${err.message}` });
     }
-    return res.status(200).json({ ok: true, html: text });
+    return res.status(200).json({ ok: true, image: card.image, caption: card.caption, url: card.url });
   } catch (err) {
     console.error('telegram-test error:', err);
     return res.status(500).json({ error: '伺服器錯誤' });

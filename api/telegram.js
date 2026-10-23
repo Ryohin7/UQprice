@@ -58,7 +58,7 @@ export default async function handler(req, res) {
         linkCode: FieldValue.delete(),
       });
       await batch.commit();
-      await reply(chatId, '✅ 已連結！你在「我的追蹤」中的商品降價時，我會在這裡通知你。\n輸入 /stop 可隨時取消通知。');
+      await reply(chatId, '已連結。你在「我的追蹤」中的商品降價時，我會在這裡通知你。\n輸入 /stop 可隨時取消通知。');
     } else if (command === '/stop') {
       const dup = await db.collection('users').where('telegram.chatId', '==', chatId).get();
       const batch = db.batch();

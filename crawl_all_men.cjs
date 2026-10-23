@@ -454,6 +454,7 @@ async function syncToFirestore(products, triggerType = 'manual', startTime = Dat
 
     // 儲存期間限定商品的快速索引清單
     const campaignProducts = [];
+    const notifier = require('./notify_price_drops.cjs');
     // 本次降價的商品 (供 Telegram 降價通知使用)
     const priceDrops = [];
 
@@ -533,7 +534,15 @@ async function syncToFirestore(products, triggerType = 'manual', startTime = Dat
       // 更新屬性
       const prevPrice = prevPriceMap.get(p.id);
       if (typeof prevPrice === 'number' && typeof p.minPrice === 'number' && p.minPrice < prevPrice) {
-        priceDrops.push({ id: p.id, name: p.shortName || p.name, productCode: p.productCode, oldPrice: prevPrice, newPrice: p.minPrice, isLowest });
+        priceDrops.push({
+          id: p.id,
+          name: p.shortName || p.name,
+          productCode: p.productCode,
+          image: notifier.imageUrl(p.colors?.[0]?.largePicUrl || p.mainPic),
+          oldPrice: prevPrice,
+          newPrice: p.minPrice,
+          isLowest
+        });
       }
       p.isHistoricalLowest = isLowest;
       p.hash = newHash;
@@ -618,7 +627,7 @@ async function syncToFirestore(products, triggerType = 'manual', startTime = Dat
     // G. 降價通知 → 成功後才推進比對基準
     let notifyOk = true;
     try {
-      await require('./notify_price_drops.cjs').notifyPriceDrops({ db, firestore: firestoreMod, drops: priceDrops });
+      await notifier.notifyPriceDrops({ db, firestore: firestoreMod, drops: priceDrops });
     } catch (e) {
       notifyOk = false;
       console.warn('  ⚠️ 降價通知流程失敗，本次不更新比對基準，下次執行會重新偵測降價:', e.message || e);
