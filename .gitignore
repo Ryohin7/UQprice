@@ -29,3 +29,6 @@ dist-ssr
 .env.development.local
 .env.test.local
 .env.production.local
+
+# 爬蟲在 GitHub Actions 產生的備份檔
+products_db.json
