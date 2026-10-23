@@ -80,7 +80,7 @@ export default function ProductCard({ product, onClick }) {
                 key={idx}
                 style={{
                   ...styles.promoBadge,
-                  backgroundColor: label === '歷史最低價' ? '#8b0000' : 'var(--uq-red)'
+                  backgroundColor: label === '歷史最低價' ? 'var(--uq-dark-red)' : 'var(--uq-red)'
                 }}
               >
                 {label}
@@ -98,12 +98,13 @@ export default function ProductCard({ product, onClick }) {
                 <button
                   key={idx}
                   title={c.name}
+                  aria-label={c.name}
                   onClick={() => setSelectedColor(c)}
                   style={{
                     ...styles.colorCircle,
                     backgroundImage: c.chipUrl ? `url(${c.chipUrl.startsWith('http') ? c.chipUrl : `https://www.uniqlo.com/tw${c.chipUrl}`})` : 'none',
-                    backgroundColor: '#eeeeee',
-                    border: isSelected ? '2px solid #e71f19' : '1px solid #dddddd',
+                    backgroundColor: 'var(--bg-light)',
+                    border: isSelected ? '2px solid var(--uq-red)' : '1px solid var(--border-color)',
                     transform: isSelected ? 'scale(1.15)' : 'scale(1)'
                   }}
                 />
@@ -136,8 +137,7 @@ export default function ProductCard({ product, onClick }) {
 const styles = {
   card: {
     backgroundColor: 'var(--bg-white)',
-    border: '1px solid var(--border-color)',
-    borderRadius: '4px',
+    borderRadius: 'var(--radius-md)',
     overflow: 'hidden',
     display: 'flex',
     flexDirection: 'column',
@@ -156,11 +156,10 @@ const styles = {
   saleBadge: {
     backgroundColor: 'var(--uq-red)',
     color: '#ffffff',
-    padding: '4px 8px',
-    fontSize: '10px',
-    fontWeight: 'bold',
-    borderRadius: '2px',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.15)',
+    padding: '3px 9px',
+    fontSize: '11px',
+    fontWeight: '600',
+    borderRadius: '999px',
   },
   promoLabelRow: {
     display: 'flex',
@@ -170,10 +169,10 @@ const styles = {
   },
   promoBadge: {
     color: '#ffffff',
-    padding: '3px 6px',
-    fontSize: '10px',
-    fontWeight: 'bold',
-    borderRadius: '2px',
+    padding: '2px 8px',
+    fontSize: '11px',
+    fontWeight: '600',
+    borderRadius: '999px',
   },
   imageContainer: {
     width: '100%',
@@ -200,7 +199,7 @@ const styles = {
   },
   gender: {
     fontSize: '11px',
-    color: 'var(--text-light)',
+    color: 'var(--text-secondary)',
     marginBottom: '4px',
     fontWeight: '500',
   },
@@ -242,15 +241,16 @@ const styles = {
   colorContainer: {
     display: 'flex',
     alignItems: 'center',
-    gap: '4px',
-    flexWrap: 'wrap',
+    gap: '6px',
+    flexWrap: 'nowrap',
     paddingTop: '6px',
     borderTop: 'none',
   },
   colorCircle: {
-    width: '18px',
-    height: '18px',
+    width: '20px',
+    height: '20px',
     borderRadius: '50%',
+    flexShrink: 0,
     backgroundSize: 'cover',
     backgroundPosition: 'center',
     cursor: 'pointer',
@@ -258,8 +258,9 @@ const styles = {
     transition: 'var(--transition-fast)',
   },
   moreColors: {
-    fontSize: '10px',
+    fontSize: '11px',
     color: 'var(--text-light)',
     marginLeft: '2px',
+    whiteSpace: 'nowrap',
   }
 };

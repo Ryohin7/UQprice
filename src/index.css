@@ -1,70 +1,135 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
-
+/* Apple 風格設計 token：系統字體、系統色、圓角與動態偏好皆跟隨裝置 */
 :root {
-  --uq-red: #e71f19;
-  --uq-dark-red: #b81510;
-  --text-primary: #111111;
-  --text-secondary: #555555;
-  --text-light: #888888;
+  color-scheme: light dark;
+  --uq-red: #d70015;
+  --uq-dark-red: #b0000f;
+  --text-primary: #1d1d1f;
+  --text-secondary: #6e6e73;
+  --text-light: #737378;
+  --bg-page: #f2f2f7;
   --bg-white: #ffffff;
-  --bg-light: #f6f6f6;
-  --border-color: #e5e5e5;
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.06);
-  --font-sans: 'Noto Sans TC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --bg-light: #f2f2f7;
+  --border-color: rgba(60, 60, 67, 0.16);
+  --glass-bg: rgba(255, 255, 255, 0.72);
+  --overlay-bg: rgba(0, 0, 0, 0.35);
+  --ok: #248a3d;
+  --info: #0071e3;
+  --ok-bg: rgba(36, 138, 61, 0.12);
+  --info-bg: rgba(0, 113, 227, 0.12);
+  --red-bg: rgba(215, 0, 21, 0.08);
+  --fill: rgba(118, 118, 128, 0.12);
+  --skeleton-a: #e9e9ee;
+  --skeleton-b: #f4f4f8;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04), 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 12px 40px rgba(0, 0, 0, 0.16);
+  --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'PingFang TC', 'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
   --transition-fast: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   --transition-smooth: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --uq-red: #ff453a;
+    --uq-dark-red: #ff6961;
+    --text-primary: #f5f5f7;
+    --text-secondary: #a1a1a6;
+    --text-light: #98989d;
+    --bg-page: #000000;
+    --bg-white: #1c1c1e;
+    --bg-light: #2c2c2e;
+    --border-color: rgba(84, 84, 88, 0.55);
+    --glass-bg: rgba(28, 28, 30, 0.72);
+    --overlay-bg: rgba(0, 0, 0, 0.6);
+    --ok: #30d158;
+    --info: #64a8ff;
+    --ok-bg: rgba(48, 209, 88, 0.16);
+    --info-bg: rgba(100, 168, 255, 0.16);
+    --red-bg: rgba(255, 69, 58, 0.16);
+    --skeleton-a: #2c2c2e;
+    --skeleton-b: #3a3a3c;
+    --shadow-sm: 0 0 0 rgba(0, 0, 0, 0);
+    --shadow-md: 0 12px 40px rgba(0, 0, 0, 0.6);
+  }
 }
 
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  font-family: 'Noto Sans TC', sans-serif !important;
 }
 
 body {
   font-family: var(--font-sans);
-  background-color: var(--bg-light);
+  background-color: var(--bg-page);
   color: var(--text-primary);
-  line-height: 1.6;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   touch-action: manipulation;
+}
+
+button,
+input {
+  font-family: inherit;
 }
 
 #root {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: var(--bg-white);
+  background-color: var(--bg-page);
   max-width: 1400px;
   margin: 0 auto;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.02);
+}
+
+/* 鍵盤焦點環 */
+:focus-visible {
+  outline: 2px solid var(--uq-red);
+  outline-offset: 2px;
+}
+
+/* 使用者偏好：減少動態與透明度 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --glass-bg: var(--bg-white);
+  }
 }
 
 /* 骨架屏動畫 */
 @keyframes skeleton-pulse {
   0% {
-    background-color: #ededed;
+    background-color: var(--skeleton-a);
   }
 
   50% {
-    background-color: #f7f7f7;
+    background-color: var(--skeleton-b);
   }
 
   100% {
-    background-color: #ededed;
+    background-color: var(--skeleton-a);
   }
 }
 
 .skeleton {
   animation: skeleton-pulse 1.5s infinite ease-in-out;
-  border-radius: 4px;
+  border-radius: 8px;
 }
 
 /* 千分位價格注目樣式 */
 .price-tag {
-  font-family: 'Noto Sans TC', sans-serif;
   font-weight: 700;
   color: var(--uq-red);
 }
@@ -90,14 +155,15 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 10px 20px;
+  padding: 11px 20px;
   border: 1px solid var(--border-color);
   background-color: var(--bg-white);
   color: var(--text-primary);
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  border-radius: 2px;
+  border-radius: 999px;
+  min-height: 44px;
   transition: var(--transition-fast);
   text-decoration: none;
 }
@@ -127,15 +193,15 @@ body {
   color: var(--text-primary);
   font-size: 16px;
   font-family: var(--font-sans);
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   outline: none;
   transition: var(--transition-fast);
 }
 
 .input-field:focus {
-  border-color: var(--text-primary);
+  border-color: var(--uq-red);
   background-color: var(--bg-white);
-  box-shadow: 0 0 0 2px rgba(17, 17, 17, 0.05);
+  box-shadow: 0 0 0 3px rgba(215, 0, 21, 0.15);
 }
 
 /* 詳情頁雙欄佈局 */
@@ -212,7 +278,7 @@ body {
 }
 
 .horizontal-scroll-container::-webkit-scrollbar-thumb {
-  background: #cccccc;
+  background: var(--border-color);
   border-radius: 3px;
 }
 
@@ -234,15 +300,14 @@ body {
 
 /* 首頁精選區塊標題 */
 .section-title {
-  font-size: 18px;
+  font-size: 22px;
   font-weight: 700;
+  letter-spacing: -0.01em;
   color: var(--text-primary);
   margin-bottom: 8px;
-  margin-top: 16px;
+  margin-top: 20px;
   display: flex;
   align-items: center;
-  border-left: 4px solid var(--uq-red);
-  padding-left: 12px;
 }
 
 /* 導航下拉選單樣式 */
@@ -283,6 +348,7 @@ body {
   width: 100%;
 }
 
+
 .dropdown-card {
   position: absolute;
   top: 100%;
@@ -290,13 +356,13 @@ body {
   background-color: var(--bg-white);
   border: 1px solid var(--border-color);
   box-shadow: var(--shadow-md);
-  padding: 12px;
+  padding: 8px;
   min-width: 200px;
   display: none;
   flex-direction: column;
   gap: 6px;
   z-index: 150;
-  border-radius: 4px;
+  border-radius: var(--radius-md);
   animation: fadeInSlide 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
@@ -310,7 +376,7 @@ body {
   color: var(--text-secondary);
   text-decoration: none;
   transition: var(--transition-fast);
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   display: block;
   font-weight: normal;
   text-align: left;
@@ -341,10 +407,10 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.4);
+  background-color: var(--overlay-bg);
   z-index: 990;
   animation: fadeIn 0.25s ease-out;
-  backdrop-filter: blur(2px);
+  backdrop-filter: blur(8px);
 }
 
 .mobile-drawer {
@@ -354,7 +420,7 @@ body {
   width: 280px;
   height: 100%;
   background-color: var(--bg-white);
-  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-md);
   z-index: 1000;
   padding: 24px 20px;
   display: flex;
@@ -416,7 +482,7 @@ body {
   gap: 2px;
   padding: 4px 8px 12px 16px;
   background-color: var(--bg-light);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   margin-top: 4px;
 }
 
@@ -468,10 +534,11 @@ body {
     left: 0;
     right: 0;
     width: 100%;
-    background-color: var(--bg-white);
+    background-color: var(--glass-bg);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    backdrop-filter: saturate(180%) blur(20px);
     border-top: 1px solid var(--border-color);
-    padding: 10px 16px;
-    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+    padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
     z-index: 990;
     display: flex !important;
     justify-content: space-between;
@@ -502,7 +569,7 @@ body {
 
   /* 防止內容被底部固定欄位擋住 */
   body, #root {
-    padding-bottom: 50px;
+    padding-bottom: calc(60px + env(safe-area-inset-bottom));
   }
 
   footer {
@@ -518,4 +585,107 @@ body {
 
 .search-bar-wrapper:focus-within {
   width: 200px;
+}
+
+/* 商品詳情：手機為底部 Sheet（含 grabber），桌面為置中卡片 */
+.sheet-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: var(--overlay-bg);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 20px;
+  animation: fadeIn 0.25s ease-out;
+}
+
+.sheet-card {
+  background-color: var(--bg-white);
+  width: 100%;
+  max-width: 900px;
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  position: relative;
+  box-shadow: var(--shadow-md);
+  max-height: 90vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.sheet-grabber {
+  display: none;
+}
+
+.sheet-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+@keyframes sheetUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@media (max-width: 768px) {
+  .sheet-overlay {
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  .sheet-card {
+    max-width: none;
+    max-height: 94vh;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    padding: 20px 16px calc(96px + env(safe-area-inset-bottom));
+    animation: sheetUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .sheet-grabber {
+    display: block;
+    width: 36px;
+    height: 5px;
+    border-radius: 3px;
+    background: var(--border-color);
+    margin: -8px auto 12px;
+  }
+
+  /* 購買與追蹤按鈕固定於 Sheet 底部，捲動時仍可操作 */
+  .sheet-actions {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1001;
+    margin: 0;
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+    background-color: var(--glass-bg);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    backdrop-filter: saturate(180%) blur(20px);
+    border-top: 1px solid var(--border-color);
+  }
+
+  /* 主圖在手機上降低高度，讓價格更早出現在首屏 */
+  .detail-left {
+    aspect-ratio: auto;
+    height: 38vh;
+    min-height: 240px;
+  }
+}
+
+/* 後台與版本日誌等一般 Modal：手機為底部 Sheet */
+.sheet-modal {
+  animation: fadeIn 0.25s ease-out;
+}
+
+@media (max-width: 768px) {
+  .sheet-modal {
+    max-width: none !important;
+    max-height: 92vh !important;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0 !important;
+    animation: sheetUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
 }

@@ -484,7 +484,7 @@ export default function CategoryManager({
                             }}
                             style={{
                               ...styles.subCatRow,
-                              backgroundColor: isSubActive ? 'rgba(231,31,25,0.05)' : 'transparent',
+                              backgroundColor: isSubActive ? 'var(--red-bg)' : 'transparent',
                               borderLeft: isSubActive ? '3px solid var(--uq-red)' : '3px solid transparent',
                               opacity: isSubDragged ? 0.4 : 1,
                               cursor: 'move'
@@ -634,8 +634,8 @@ export default function CategoryManager({
 
               {selectedInfo.subCategory.matchType === 'built-in' ? (
                 <div style={styles.builtInWarning}>
-                  <HelpCircle size={28} style={{ color: '#1565c0', marginBottom: 12 }} />
-                  <p style={{ fontWeight: '700', fontSize: '16px', color: '#0d47a1', marginBottom: 8 }}>系統內建分類</p>
+                  <HelpCircle size={28} style={{ color: 'var(--info)', marginBottom: 12 }} />
+                  <p style={{ fontWeight: '700', fontSize: '16px', color: 'var(--info)', marginBottom: 8 }}>系統內建分類</p>
                   <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: 16 }}>
                     此為系統保留次分類，該分類下的商品將由系統演算法自動動態篩選呈現，無須也無法手動設定關聯商品。
                   </p>
@@ -738,7 +738,7 @@ export default function CategoryManager({
                             style={{
                               ...styles.checkboxItem,
                               borderColor: isChecked ? 'var(--uq-red)' : 'var(--border-color)',
-                              backgroundColor: isChecked ? 'rgba(231,31,25,0.02)' : '#ffffff'
+                              backgroundColor: isChecked ? 'var(--red-bg)' : '#ffffff'
                             }}
                           >
                             {isChecked ? (
@@ -845,7 +845,7 @@ const styles = {
   mainCatBlock: {
     border: '1px solid var(--border-color)',
     borderRadius: '8px',
-    backgroundColor: '#fafafa',
+    backgroundColor: 'var(--bg-light)',
     overflow: 'hidden',
     flexShrink: 0,
   },
@@ -853,7 +853,7 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     padding: '8px 12px',
-    backgroundColor: '#ffffff',
+    backgroundColor: 'var(--bg-white)',
     borderBottom: '1px solid var(--border-color)',
     gap: '8px',
   },
@@ -898,29 +898,29 @@ const styles = {
     color: 'var(--text-light)',
     cursor: 'pointer',
     padding: '4px',
-    borderRadius: '4px',
+    borderRadius: '8px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     transition: 'all 0.2s',
     ':hover': {
       color: 'var(--text-primary)',
-      backgroundColor: 'rgba(0,0,0,0.04)',
+      backgroundColor: 'var(--fill)',
     }
   },
   deleteIconBtn: {
     background: 'none',
     border: 'none',
-    color: '#c62828',
+    color: 'var(--uq-red)',
     cursor: 'pointer',
     padding: '4px',
-    borderRadius: '4px',
+    borderRadius: '8px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     transition: 'all 0.2s',
     ':hover': {
-      backgroundColor: '#ffebee',
+      backgroundColor: 'var(--red-bg)',
     }
   },
   inlineEditForm: {
@@ -933,15 +933,15 @@ const styles = {
     flex: 1,
     padding: '4px 8px',
     border: '1px solid var(--uq-red)',
-    borderRadius: '4px',
+    borderRadius: '8px',
     fontSize: '13px',
     outline: 'none',
   },
   inlineSaveBtn: {
-    backgroundColor: '#2e7d32',
+    backgroundColor: 'var(--ok)',
     color: '#ffffff',
     border: 'none',
-    borderRadius: '4px',
+    borderRadius: '8px',
     width: '24px',
     height: '24px',
     display: 'flex',
@@ -953,7 +953,7 @@ const styles = {
     backgroundColor: 'var(--text-light)',
     color: '#ffffff',
     border: 'none',
-    borderRadius: '4px',
+    borderRadius: '8px',
     width: '24px',
     height: '24px',
     display: 'flex',
@@ -964,13 +964,13 @@ const styles = {
   subCatContainer: {
     display: 'flex',
     flexDirection: 'column',
-    backgroundColor: '#ffffff',
+    backgroundColor: 'var(--bg-white)',
   },
   subCatRow: {
     display: 'flex',
     alignItems: 'center',
     padding: '8px 12px 8px 28px',
-    borderBottom: '1px solid #f0f0f0',
+    borderBottom: '1px solid var(--border-color)',
     gap: '6px',
     cursor: 'pointer',
     transition: 'background-color 0.2s',
@@ -985,7 +985,7 @@ const styles = {
   customCountBadge: {
     fontSize: '10px',
     color: 'var(--uq-red)',
-    backgroundColor: 'rgba(231,31,25,0.06)',
+    backgroundColor: 'var(--red-bg)',
     padding: '1px 6px',
     borderRadius: '10px',
     fontWeight: 'bold',
@@ -994,13 +994,13 @@ const styles = {
     display: 'flex',
     padding: '8px 12px 8px 28px',
     gap: '6px',
-    backgroundColor: '#fafafa',
+    backgroundColor: 'var(--bg-light)',
   },
   addSubInput: {
     flex: 1,
     padding: '6px 8px',
     border: '1px solid var(--border-color)',
-    borderRadius: '4px',
+    borderRadius: '8px',
     fontSize: '12px',
     outline: 'none',
   },
@@ -1008,7 +1008,7 @@ const styles = {
     backgroundColor: 'var(--text-primary)',
     color: '#ffffff',
     border: 'none',
-    borderRadius: '4px',
+    borderRadius: '8px',
     padding: '4px 10px',
     fontSize: '11px',
     fontWeight: '700',
@@ -1021,7 +1021,7 @@ const styles = {
     border: '1px dashed var(--border-color)',
     borderRadius: '8px',
     padding: '12px',
-    backgroundColor: '#fafafa',
+    backgroundColor: 'var(--bg-light)',
     display: 'flex',
     flexDirection: 'column',
     gap: '8px',
@@ -1040,23 +1040,23 @@ const styles = {
     flex: 1,
     padding: '6px 10px',
     border: '1px solid var(--border-color)',
-    borderRadius: '4px',
+    borderRadius: '8px',
     fontSize: '12px',
     outline: 'none',
   },
   addMainSelect: {
     padding: '6px',
     border: '1px solid var(--border-color)',
-    borderRadius: '4px',
+    borderRadius: '8px',
     fontSize: '12px',
     outline: 'none',
-    backgroundColor: '#ffffff',
+    backgroundColor: 'var(--bg-white)',
   },
   addMainSubmitBtn: {
     backgroundColor: 'var(--uq-red)',
     color: '#ffffff',
     border: 'none',
-    borderRadius: '4px',
+    borderRadius: '8px',
     padding: '8px',
     fontSize: '12px',
     fontWeight: '700',
@@ -1080,19 +1080,19 @@ const styles = {
     justifyContent: 'center',
     textAlign: 'center',
     padding: '40px 20px',
-    backgroundColor: '#f1f8e9',
+    backgroundColor: 'var(--ok-bg)',
     borderRadius: '8px',
-    border: '1px solid #dcedc8',
+    border: '1px solid var(--border-color)',
   },
   logicCard: {
     marginTop: '20px',
     padding: '16px',
-    backgroundColor: '#ffffff',
-    border: '1px solid #e0e0e0',
+    backgroundColor: 'var(--bg-white)',
+    border: '1px solid var(--border-color)',
     borderRadius: '8px',
     textAlign: 'left',
     width: '100%',
-    boxShadow: '0 2px 5px rgba(0,0,0,0.05)',
+    boxShadow: 'var(--shadow-sm)',
   },
   logicCardTitle: {
     fontWeight: '700',
@@ -1141,7 +1141,7 @@ const styles = {
     padding: '8px 32px 8px 30px',
     fontSize: '13px',
     border: '1px solid var(--border-color)',
-    borderRadius: '4px',
+    borderRadius: '8px',
     outline: 'none',
   },
   searchClearBtn: {
@@ -1161,7 +1161,7 @@ const styles = {
     backgroundColor: 'var(--text-primary)',
     color: '#ffffff',
     border: 'none',
-    borderRadius: '4px',
+    borderRadius: '8px',
     fontSize: '12px',
     fontWeight: '700',
     cursor: 'pointer',
@@ -1171,9 +1171,9 @@ const styles = {
     alignItems: 'center',
     padding: '8px 12px',
     backgroundColor: 'transparent',
-    color: '#c62828',
-    border: '1px solid #c62828',
-    borderRadius: '4px',
+    color: 'var(--uq-red)',
+    border: '1px solid var(--uq-red)',
+    borderRadius: '8px',
     fontSize: '12px',
     fontWeight: '700',
     cursor: 'pointer',
@@ -1205,7 +1205,7 @@ const styles = {
     gap: '8px',
     padding: '10px 12px',
     border: '1px solid var(--border-color)',
-    borderRadius: '6px',
+    borderRadius: '10px',
     cursor: 'pointer',
     userSelect: 'none',
     transition: 'all 0.2s',
@@ -1248,7 +1248,7 @@ const styles = {
     fontSize: '15px',
     fontWeight: '700',
     cursor: 'pointer',
-    boxShadow: '0 4px 10px rgba(231,31,25,0.15)',
+    boxShadow: '0 4px 10px var(--red-bg)',
     transition: 'all 0.2s',
     ':hover': {
       backgroundColor: 'var(--uq-dark-red)',

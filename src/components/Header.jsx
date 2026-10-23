@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Download, Heart, Search, X, Menu, ChevronDown, User } from 'lucide-react';
+import { Download, Heart, Search, X, Menu, ChevronDown, User, LogIn } from 'lucide-react';
 
 export default function Header({
   searchTerm,
@@ -11,7 +11,10 @@ export default function Header({
   favorites,
   currentView = 'home',
   setCurrentView,
-  navigation = []
+  navigation = [],
+  user = null,
+  onOpenAccount,
+  onSignIn
 }) {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showInstallBtn, setShowInstallBtn] = useState(false);
@@ -166,6 +169,23 @@ export default function Header({
             )}
           </button>
 
+          {/* 登入 / 帳號 - 僅桌面版顯示 */}
+          <button
+            onClick={user ? onOpenAccount : onSignIn}
+            style={{ ...styles.favBtn, color: 'var(--text-primary)', backgroundColor: 'transparent' }}
+            className="desktop-fav-btn"
+            aria-label={user ? '我的帳號' : '使用 Google 登入'}
+          >
+            {user && user.photoURL ? (
+              <img src={user.photoURL} alt="" referrerPolicy="no-referrer" style={{ width: 22, height: 22, borderRadius: '50%' }} />
+            ) : user ? (
+              <User size={20} />
+            ) : (
+              <LogIn size={20} />
+            )}
+            <span style={styles.favText}>{user ? (user.displayName || '帳號') : '登入'}</span>
+          </button>
+
           {/* 下載 App 按鈕 - 僅桌面版顯示 */}
           {showInstallBtn && (
             <button onClick={handleInstallClick} style={styles.installBtn} className="desktop-install-btn">
@@ -277,6 +297,20 @@ export default function Header({
                   </span>
                 </div>
 
+                {/* 登入 / 帳號 (手機端整合) */}
+                <div
+                  className="accordion-title"
+                  onClick={() => {
+                    (user ? onOpenAccount : onSignIn)();
+                    setMobileDrawerOpen(false);
+                  }}
+                >
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {user ? <User size={16} /> : <LogIn size={16} />}
+                    {user ? `我的帳號（${user.displayName || user.email}）` : '使用 Google 登入'}
+                  </span>
+                </div>
+
                 {/* 安裝桌面 App (手機端整合) */}
                 {showInstallBtn && (
                   <div
@@ -324,7 +358,9 @@ const styles = {
     alignItems: 'center',
     padding: '6px 24px',
     borderBottom: '1px solid var(--border-color)',
-    backgroundColor: 'var(--bg-white)',
+    backgroundColor: 'var(--glass-bg)',
+    WebkitBackdropFilter: 'saturate(180%) blur(20px)',
+    backdropFilter: 'saturate(180%) blur(20px)',
     position: 'sticky',
     top: 0,
     zIndex: 100,
@@ -336,9 +372,9 @@ const styles = {
     cursor: 'pointer',
   },
   logoTextTitle: {
-    fontSize: '18px',
-    fontWeight: '800',
-    letterSpacing: '1px',
+    fontSize: '19px',
+    fontWeight: '700',
+    letterSpacing: '-0.01em',
     color: 'var(--text-primary)',
     fontFamily: 'var(--font-sans)',
   },
@@ -369,11 +405,12 @@ const styles = {
   },
   searchInput: {
     width: '100%',
-    padding: '8px 32px 8px 32px',
-    fontSize: '13px',
-    border: '1px solid var(--border-color)',
-    borderRadius: '16px',
-    backgroundColor: 'var(--bg-light)',
+    padding: '9px 32px 9px 34px',
+    fontSize: '16px',
+    border: 'none',
+    borderRadius: '10px',
+    backgroundColor: 'rgba(118, 118, 128, 0.12)',
+    color: 'var(--text-primary)',
     outline: 'none',
     transition: 'var(--transition-fast)',
   },
@@ -433,7 +470,7 @@ const styles = {
     padding: '6px 10px',
     borderRadius: '16px',
     backgroundColor: 'var(--text-primary)',
-    color: '#ffffff',
+    color: 'var(--bg-white)',
     border: 'none',
     cursor: 'pointer',
   },

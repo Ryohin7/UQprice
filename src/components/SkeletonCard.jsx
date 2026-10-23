@@ -27,8 +27,7 @@ export default function SkeletonCard() {
 const styles = {
   card: {
     backgroundColor: 'var(--bg-white)',
-    border: '1px solid var(--border-color)',
-    borderRadius: '4px',
+    borderRadius: 'var(--radius-md)',
     overflow: 'hidden',
     display: 'flex',
     flexDirection: 'column',
@@ -72,7 +71,7 @@ const styles = {
     gap: '6px',
     marginTop: '6px',
     paddingTop: '8px',
-    borderTop: '1px dashed var(--border-color)',
+    
   },
   colorCircle: {
     width: '18px',

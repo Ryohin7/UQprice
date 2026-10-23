@@ -11,36 +11,36 @@ export default function VersionHistoryModal({ versions, onClose }) {
         return {
           text: '重大改版',
           color: 'var(--uq-red)',
-          bgColor: 'rgba(231,31,25,0.08)',
+          bgColor: 'var(--red-bg)',
           icon: <Flame size={12} style={{ marginRight: 4 }} />
         };
       case 'minor':
         return {
           text: '新增功能',
-          color: '#2e7d32',
-          bgColor: 'rgba(46,125,50,0.08)',
+          color: 'var(--ok)',
+          bgColor: 'var(--ok-bg)',
           icon: <Stars size={12} style={{ marginRight: 4 }} />
         };
       case 'patch':
       default:
         return {
           text: '修復優化',
-          color: '#1565c0',
-          bgColor: 'rgba(21,101,192,0.08)',
+          color: 'var(--info)',
+          bgColor: 'var(--info-bg)',
           icon: <ShieldAlert size={12} style={{ marginRight: 4 }} />
         };
     }
   };
 
   return (
-    <div style={styles.overlay} onClick={onClose}>
-      <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
+    <div className="sheet-overlay" style={styles.overlay} onClick={onClose} role="presentation">
+      <div className="sheet-modal" role="dialog" aria-modal="true" aria-label="版本更新日誌" style={styles.modal} onClick={(e) => e.stopPropagation()}>
         {/* 標頭 */}
         <div style={styles.header}>
           <div>
             <h2 style={styles.title}>版本更新日誌</h2>
           </div>
-          <button style={styles.closeBtn} onClick={onClose}>
+          <button style={styles.closeBtn} onClick={onClose} aria-label="關閉">
             <X size={20} />
           </button>
         </div>
@@ -114,8 +114,6 @@ const styles = {
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
-    backdropFilter: 'blur(4px)',
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
@@ -124,16 +122,15 @@ const styles = {
   },
   modal: {
     backgroundColor: 'var(--bg-white)',
-    borderRadius: '16px',
+    borderRadius: '20px',
     width: '100%',
     maxWidth: '560px',
     maxHeight: '80vh',
     display: 'flex',
     flexDirection: 'column',
-    boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)',
+    boxShadow: 'var(--shadow-md)',
     overflow: 'hidden',
-    animation: 'modalSlideUp 0.3s ease-out',
-  },
+      },
   header: {
     padding: '20px 24px',
     borderBottom: '1px solid var(--border-color)',
@@ -145,9 +142,9 @@ const styles = {
   title: {
     margin: 0,
     fontSize: '20px',
-    fontWeight: '800',
+    fontWeight: '700',
+    letterSpacing: '-0.01em',
     color: 'var(--text-primary)',
-    fontFamily: 'var(--font-sans)',
   },
   subtitle: {
     margin: '4px 0 0 0',
@@ -159,16 +156,15 @@ const styles = {
     background: 'none',
     cursor: 'pointer',
     color: 'var(--text-secondary)',
-    padding: '6px',
+    width: '32px',
+    height: '32px',
+    padding: 0,
     borderRadius: '50%',
+    backgroundColor: 'var(--fill)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     transition: 'background-color 0.2s, color 0.2s',
-    ':hover': {
-      backgroundColor: 'var(--bg-light)',
-      color: 'var(--text-primary)',
-    }
   },
   content: {
     padding: '24px',
@@ -227,13 +223,13 @@ const styles = {
     fontSize: '18px',
     fontWeight: '700',
     color: 'var(--text-primary)',
-    fontFamily: 'monospace',
+    fontVariantNumeric: 'tabular-nums',
   },
   typeBadge: {
-    fontSize: '11px',
-    fontWeight: '700',
-    padding: '2px 8px',
-    borderRadius: '20px',
+    fontSize: '12px',
+    fontWeight: '600',
+    padding: '2px 10px',
+    borderRadius: '999px',
     display: 'inline-flex',
     alignItems: 'center',
   },

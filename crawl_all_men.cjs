@@ -339,10 +339,14 @@ async function crawl(triggerType = 'manual') {
 
   // 以覆寫前的 public/products.json 作為上次同步的比對基準 (不再讀取 Firestore products)
   const prevHashMap = new Map();
+  const prevPriceMap = new Map();
   try {
     if (fs.existsSync(CONFIG.localJsonPath)) {
       const prev = JSON.parse(fs.readFileSync(CONFIG.localJsonPath, 'utf8'));
-      prev.forEach(old => prevHashMap.set(old.id, getProductHash(old)));
+      prev.forEach(old => {
+        prevHashMap.set(old.id, getProductHash(old));
+        prevPriceMap.set(old.id, old.minPrice);
+      });
     }
   } catch (err) {
     console.warn('⚠️ 無法讀取舊版 products.json，將視為全部為新商品:', err.message);
@@ -361,7 +365,7 @@ async function crawl(triggerType = 'manual') {
   }
 
   // ===== Step 3: 同步到 Firestore =====
-  await syncToFirestore(allProducts, triggerType, startTime, prevHashMap);
+  await syncToFirestore(allProducts, triggerType, startTime, prevHashMap, prevPriceMap);
 
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
   console.log(`\n🏁 全部完成！耗時 ${elapsed}s`);
@@ -369,7 +373,7 @@ async function crawl(triggerType = 'manual') {
 
 // ========== Firestore 同步 ==========
 
-async function syncToFirestore(products, triggerType = 'manual', startTime = Date.now(), prevHashMap = new Map()) {
+async function syncToFirestore(products, triggerType = 'manual', startTime = Date.now(), prevHashMap = new Map(), prevPriceMap = new Map()) {
   console.log('\n===== Step 3: 增量同步至 Firestore =====');
   // 載入環境變數
   if (fs.existsSync(CONFIG.envPath)) {
@@ -383,7 +387,8 @@ async function syncToFirestore(products, triggerType = 'manual', startTime = Dat
   }
 
   const { initializeApp } = await import('firebase/app');
-  const { getFirestore, doc, setDoc, getDoc, getDocs, collection, writeBatch } = await import('firebase/firestore');
+  const firestoreMod = await import('firebase/firestore');
+  const { getFirestore, doc, setDoc, getDoc, getDocs, collection, writeBatch } = firestoreMod;
   const { getAuth, signInWithEmailAndPassword } = await import('firebase/auth');
 
   const firebaseConfig = {
@@ -438,6 +443,8 @@ async function syncToFirestore(products, triggerType = 'manual', startTime = Dat
 
     // 儲存期間限定商品的快速索引清單
     const campaignProducts = [];
+    // 本次降價的商品 (供 Telegram 降價通知使用)
+    const priceDrops = [];
 
     for (const p of products) {
       const priceDocRef = doc(db, 'product_prices', p.id);
@@ -511,6 +518,10 @@ async function syncToFirestore(products, triggerType = 'manual', startTime = Dat
       }
       
       // 更新屬性
+      const prevPrice = prevPriceMap.get(p.id);
+      if (typeof prevPrice === 'number' && typeof p.minPrice === 'number' && p.minPrice < prevPrice) {
+        priceDrops.push({ id: p.id, name: p.shortName || p.name, productCode: p.productCode, oldPrice: prevPrice, newPrice: p.minPrice, isLowest });
+      }
       p.isHistoricalLowest = isLowest;
       p.hash = newHash;
       p.updatedAt = Date.now();
@@ -590,6 +601,13 @@ async function syncToFirestore(products, triggerType = 'manual', startTime = Dat
 
     // 提交剩餘的所有變更
     await commitBatchIfNeeded(true);
+
+    // G. 降價通知：失敗不影響同步結果
+    try {
+      await require('./notify_price_drops.cjs').notifyPriceDrops({ db, firestore: firestoreMod, drops: priceDrops });
+    } catch (e) {
+      console.warn('  ⚠️ 降價通知流程失敗:', e.message || e);
+    }
 
     console.log('╔══════════════════════════════════════╗');
     console.log('║   Firestore 同步報告                  ║');

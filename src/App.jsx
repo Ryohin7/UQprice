@@ -6,88 +6,57 @@ import PriceChart from './components/PriceChart';
 
 import { Search, SlidersHorizontal, ArrowUpDown, X, Heart, ExternalLink, TrendingDown, Menu, User, Lock } from 'lucide-react';
 import { db, auth } from './firebase';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { onAuthStateChanged } from 'firebase/auth';
 import { collection, getDocs, doc, setDoc, deleteDoc, onSnapshot, getDoc, updateDoc, increment } from 'firebase/firestore';
 import AdminPanel from './components/AdminPanel';
 import VersionHistoryModal from './components/VersionHistoryModal';
 import NotFound from './components/NotFound';
+import AccountModal from './components/AccountModal';
+import { signInWithGoogle, signOutUser, isAdminUser, TELEGRAM_BOT_USERNAME } from './auth';
 import { logPageView, logSearch, logViewProduct, logAddToFavorites, logRemoveFromFavorites, logClickExternalLink } from './utils/analytics';
 
 
-// 計算密碼的 SHA-256 雜湊值 (防範明文密碼外洩)
-async function sha256(message) {
-  const msgBuffer = new TextEncoder().encode(message);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-function AdminLoginForm({ onLogin }) {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+function AdminLoginForm({ user, onSignIn, onSignOut }) {
   const [error, setError] = useState('');
+  const signedInButNotAdmin = !!user && !isAdminUser(user);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSignIn = async () => {
+    setError('');
     try {
-      const inputHash = await sha256(password);
-      // 從環境變數讀取預期的密碼雜湊，若無則預設為 admin@88348599 的雜湊
-      const expectedHash = import.meta.env.VITE_ADMIN_PASSWORD_HASH || '84a08f015876f8bed8932442e645a8c06af4fa6b278d6b301fc208cd5deb8668';
-
-      if (username === 'admin' && inputHash === expectedHash) {
-        // 本地密碼驗證通過後，嘗試使用 Firebase Auth 登入管理員帳號以獲得 Firestore 寫入權限
-        if (auth) {
-          setError('正在驗證管理員安全憑證...');
-          await signInWithEmailAndPassword(auth, 'admin@uqprice.com', password);
-        }
-        onLogin();
-      } else {
-        setError('帳號或密碼錯誤！');
-      }
+      await onSignIn();
     } catch (err) {
-      console.error('密碼安全性比對失敗或 Firebase 認證失敗:', err);
-      setError('登入失敗，請確認已在 Firebase 註冊 admin@uqprice.com 帳號且密碼正確！');
+      if (err?.code !== 'auth/popup-closed-by-user' && err?.code !== 'auth/cancelled-popup-request') {
+        console.error('Google 登入失敗:', err);
+        setError('登入失敗，請稍後再試。');
+      }
     }
   };
 
   return (
     <div style={loginStyles.container}>
-      <form onSubmit={handleSubmit} style={loginStyles.card}>
+      <div style={loginStyles.card}>
         <div style={loginStyles.iconWrapper}>
           <Lock size={32} style={{ color: 'var(--uq-red)' }} />
         </div>
         <h2 style={loginStyles.title}>管理員登入</h2>
-        <p style={loginStyles.subtitle}>請輸入管理員帳密以進行系統版本發布</p>
+        <p style={loginStyles.subtitle}>請使用已授權的 Google 帳號登入後台</p>
 
         {error && <div style={loginStyles.error}>{error}</div>}
+        {signedInButNotAdmin && (
+          <div style={loginStyles.error}>
+            {user.email} 沒有後台權限，請改用管理員帳號。
+          </div>
+        )}
 
-        <div style={loginStyles.formGroup}>
-          <label style={loginStyles.label}>管理員帳號</label>
-          <input
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            style={loginStyles.input}
-            placeholder="請輸入帳號"
-            required
-          />
-        </div>
-
-        <div style={loginStyles.formGroup}>
-          <label style={loginStyles.label}>管理員密碼</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            style={loginStyles.input}
-            placeholder="請輸入密碼"
-            required
-          />
-        </div>
-
-        <button type="submit" style={loginStyles.button}>
-          登入系統
-        </button>
+        {signedInButNotAdmin ? (
+          <button type="button" onClick={onSignOut} style={loginStyles.button}>
+            切換 Google 帳號
+          </button>
+        ) : (
+          <button type="button" onClick={handleSignIn} style={loginStyles.button}>
+            使用 Google 登入
+          </button>
+        )}
 
         <button
           type="button"
@@ -96,7 +65,7 @@ function AdminLoginForm({ onLogin }) {
         >
           返回首頁
         </button>
-      </form>
+      </div>
     </div>
   );
 }
@@ -449,9 +418,12 @@ export default function App() {
     if (path === '/' || path === '') return 'home';
     return '404';
   });
-  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(() => {
-    return sessionStorage.getItem('isAdminLoggedIn') === 'true';
-  });
+  // Google 登入使用者與帳號面板
+  const [user, setUser] = useState(null);
+  const [authReady, setAuthReady] = useState(!auth);
+  const [showAccount, setShowAccount] = useState(false);
+  const [telegramLinked, setTelegramLinked] = useState(false);
+  const isAdminLoggedIn = isAdminUser(user);
   const [versions, setVersions] = useState([]);
   const [crawlerReports, setCrawlerReports] = useState([]);
   const [showVersionModal, setShowVersionModal] = useState(false);
@@ -634,6 +606,65 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('uq_favorites', JSON.stringify(favorites));
   }, [favorites]);
+
+  // 監聽登入狀態
+  useEffect(() => {
+    if (!auth) return undefined;
+    return onAuthStateChanged(auth, (u) => {
+      setUser(u && !u.isAnonymous ? u : null);
+      setAuthReady(true);
+    });
+  }, []);
+
+  // 登入後：合併本機與雲端追蹤清單，並即時監聽 Telegram 綁定狀態
+  const cloudSyncedRef = React.useRef(false);
+  const hadUserRef = React.useRef(false);
+  useEffect(() => {
+    cloudSyncedRef.current = false;
+    setTelegramLinked(false);
+    // 登出後清掉本機追蹤清單，避免下一位登入者被合併到上一位的資料
+    if (!user && hadUserRef.current) setFavorites([]);
+    hadUserRef.current = !!user;
+    if (!db || !user) return undefined;
+    const userRef = doc(db, 'users', user.uid);
+    let first = true;
+    return onSnapshot(userRef, (snap) => {
+      const data = snap.exists() ? snap.data() : {};
+      setTelegramLinked(!!data.telegram?.chatId);
+      if (first) {
+        first = false;
+        const cloud = Array.isArray(data.favorites) ? data.favorites : [];
+        setFavorites((local) => Array.from(new Set([...cloud, ...local])));
+        cloudSyncedRef.current = true;
+      }
+    }, (err) => console.warn('讀取使用者資料失敗:', err));
+  }, [user]);
+
+  // 追蹤清單變動時寫回雲端 (僅限已登入且已完成首次合併)
+  useEffect(() => {
+    if (!db || !user || !cloudSyncedRef.current) return;
+    setDoc(doc(db, 'users', user.uid), { favorites }, { merge: true })
+      .catch((err) => console.warn('同步追蹤清單失敗:', err));
+  }, [favorites, user]);
+
+  const handleSignIn = () => signInWithGoogle();
+  const handleSignOut = async () => {
+    setShowAccount(false);
+    await signOutUser();
+  };
+
+  // 產生一次性綁定碼，帶使用者到 Telegram 機器人完成連結
+  const handleLinkTelegram = async () => {
+    if (!db || !user) return;
+    const code = crypto.randomUUID().replace(/-/g, '');
+    try {
+      await setDoc(doc(db, 'users', user.uid), { linkCode: code }, { merge: true });
+      window.open(`https://t.me/${TELEGRAM_BOT_USERNAME}?start=${code}`, '_blank', 'noopener');
+    } catch (err) {
+      console.error('建立 Telegram 綁定碼失敗:', err);
+      alert('無法建立綁定連結，請稍後再試。');
+    }
+  };
 
   const toggleFavorite = (productId, e) => {
     e.stopPropagation();
@@ -893,16 +924,26 @@ export default function App() {
         currentView={currentView}
         setCurrentView={setCurrentView}
         navigation={navigation}
+        user={user}
+        onOpenAccount={() => setShowAccount(true)}
+        onSignIn={() => handleSignIn().catch(() => {})}
       />
+
+      {showAccount && user && (
+        <AccountModal
+          user={user}
+          telegramLinked={telegramLinked}
+          onLinkTelegram={handleLinkTelegram}
+          onSignOut={handleSignOut}
+          onClose={() => setShowAccount(false)}
+        />
+      )}
 
       {/* 主體內容 */}
       <main style={styles.main}>
         {currentView === 'admin' ? (
-          !isAdminLoggedIn ? (
-            <AdminLoginForm onLogin={() => {
-              sessionStorage.setItem('isAdminLoggedIn', 'true');
-              setIsAdminLoggedIn(true);
-            }} />
+          !authReady ? null : !isAdminLoggedIn ? (
+            <AdminLoginForm user={user} onSignIn={handleSignIn} onSignOut={handleSignOut} />
           ) : (
             <AdminPanel
               currentVersion={versions.length > 0 ? [...versions].sort((a, b) => b.timestamp - a.timestamp)[0].version : '1.0.0'}
@@ -914,6 +955,7 @@ export default function App() {
               navigation={navigation}
               allUniqueCategories={allUniqueCategories}
               onSaveNavigation={handleSaveNavigation}
+              products={products}
             />
           )
         ) : currentView === '404' ? (
@@ -1099,10 +1141,11 @@ export default function App() {
 
       {/* 商品詳情 Modal */}
       {activeProduct && (
-        <div style={styles.modalOverlay} onClick={handleCloseModal}>
-          <div style={styles.modalCard} onClick={(e) => e.stopPropagation()}>
+        <div className="sheet-overlay" onClick={handleCloseModal} role="presentation">
+          <div className="sheet-card" role="dialog" aria-modal="true" aria-label={activeProduct.name} onClick={(e) => e.stopPropagation()}>
+            <div className="sheet-grabber" aria-hidden="true" />
             {/* 關閉按鈕 */}
-            <button onClick={handleCloseModal} style={styles.closeBtn}>
+            <button onClick={handleCloseModal} style={styles.closeBtn} aria-label="關閉">
               <X size={24} />
             </button>
 
@@ -1144,13 +1187,12 @@ export default function App() {
                         <span
                           key={idx}
                           style={{
-                            backgroundColor: label === '歷史最低價' ? '#8b0000' : 'var(--uq-red)',
+                            backgroundColor: label === '歷史最低價' ? 'var(--uq-dark-red)' : 'var(--uq-red)',
                             color: '#ffffff',
-                            padding: '4px 8px',
-                            fontSize: '11px',
-                            fontWeight: 'bold',
-                            borderRadius: '2px',
-                            boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+                            padding: '3px 10px',
+                            fontSize: '12px',
+                            fontWeight: '600',
+                            borderRadius: '999px'
                           }}
                         >
                           {label}
@@ -1161,8 +1203,7 @@ export default function App() {
                 })()}
 
                 <div style={styles.detailCodeRow}>
-                  <span>商品編號: <code>{activeProduct.code}</code></span>
-                  <span>官網貨號: <code>{activeProduct.productCode}</code></span>
+                  <span>商品編號 {activeProduct.code}</span>
                 </div>
 
                 <hr style={styles.divider} />
@@ -1211,24 +1252,25 @@ export default function App() {
 
                   <div style={styles.metaRow}>
                     <strong style={styles.metaLabel}>顏色：</strong>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', flex: 1 }}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', flex: 1, alignItems: 'center' }}>
                       {activeProduct.colors.map(c => {
                         const isSelected = selectedModalColor && selectedModalColor.code === c.code;
                         return (
                           <button
                             key={c.code}
                             title={c.name}
+                            aria-label={c.name}
+                            aria-pressed={isSelected}
                             onClick={() => setSelectedModalColor(c)}
                             style={{
-                              width: '24px',
-                              height: '24px',
+                              width: '28px',
+                              height: '28px',
                               borderRadius: '50%',
                               backgroundImage: c.chipUrl ? `url(${c.chipUrl.startsWith('http') ? c.chipUrl : `https://www.uniqlo.com/tw${c.chipUrl}`})` : 'none',
-                              backgroundColor: '#eeeeee',
+                              backgroundColor: 'var(--bg-light)',
                               backgroundSize: 'cover',
                               backgroundPosition: 'center',
                               cursor: 'pointer',
-                              outline: 'none',
                               border: isSelected ? '2px solid var(--uq-red)' : '1px solid var(--border-color)',
                               transform: isSelected ? 'scale(1.15)' : 'scale(1)',
                               transition: 'all 0.2s',
@@ -1237,11 +1279,16 @@ export default function App() {
                           />
                         );
                       })}
+                      {selectedModalColor && (
+                        <span style={{ fontSize: '13px', color: 'var(--text-secondary)', marginLeft: '4px' }}>
+                          {selectedModalColor.name}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
 
-                <div style={styles.actionRow}>
+                <div className="sheet-actions">
                   <button
                     onClick={(e) => toggleFavorite(activeProduct.id, e)}
                     style={{
@@ -1325,7 +1372,7 @@ const styles = {
   main: {
     flex: 1,
     padding: '24px',
-    backgroundColor: '#fafafa',
+    backgroundColor: 'var(--bg-page)',
   },
   featuredHome: {
     display: 'flex',
@@ -1430,11 +1477,18 @@ const styles = {
   },
   closeBtn: {
     position: 'absolute',
-    top: '20px',
-    right: '20px',
-    background: 'none',
+    top: '16px',
+    right: '16px',
+    zIndex: 2,
+    width: '32px',
+    height: '32px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: '50%',
+    background: 'rgba(118, 118, 128, 0.16)',
     border: 'none',
-    color: 'var(--text-light)',
+    color: 'var(--text-secondary)',
     cursor: 'pointer',
     transition: 'var(--transition-fast)',
   },
@@ -1444,8 +1498,7 @@ const styles = {
     minHeight: '300px',
     position: 'relative',
     backgroundColor: 'var(--bg-light)',
-    border: '1px solid var(--border-color)',
-    borderRadius: '4px',
+    borderRadius: 'var(--radius-md)',
     overflow: 'hidden',
   },
   detailPic: {
@@ -1457,15 +1510,15 @@ const styles = {
     objectFit: 'contain',
   },
   detailGender: {
-    fontSize: '12px',
-    color: 'var(--text-light)',
-    textTransform: 'uppercase',
+    fontSize: '13px',
+    color: 'var(--text-secondary)',
   },
   detailName: {
-    fontSize: '20px',
-    fontWeight: '500',
+    fontSize: '24px',
+    fontWeight: '700',
+    letterSpacing: '-0.01em',
     color: 'var(--text-primary)',
-    lineHeight: 1.3,
+    lineHeight: 1.25,
   },
   detailCodeRow: {
     display: 'flex',
@@ -1501,12 +1554,12 @@ const styles = {
     color: 'var(--text-light)',
   },
   discountBadge: {
-    backgroundColor: 'rgba(231,31,25,0.08)',
+    backgroundColor: 'rgba(215,0,21,0.10)',
     color: 'var(--uq-red)',
-    padding: '6px 12px',
+    padding: '5px 12px',
     fontSize: '13px',
-    fontWeight: 'bold',
-    borderRadius: '2px',
+    fontWeight: '600',
+    borderRadius: '999px',
   },
   metaBox: {
     display: 'flex',
@@ -1514,8 +1567,7 @@ const styles = {
     gap: '16px',
     backgroundColor: 'var(--bg-light)',
     padding: '16px',
-    borderRadius: '4px',
-    border: '1px solid var(--border-color)',
+    borderRadius: 'var(--radius-md)',
   },
   metaRow: {
     display: 'flex',
@@ -1535,16 +1587,14 @@ const styles = {
   },
   sizeTag: {
     fontSize: '12px',
-    padding: '4px 10px',
+    padding: '5px 12px',
     backgroundColor: 'var(--bg-white)',
-    border: '1px solid var(--border-color)',
-    borderRadius: '2px',
+    borderRadius: '8px',
     fontWeight: '500',
   },
   sizeTagUnavailable: {
     color: 'var(--text-light)',
-    backgroundColor: '#f6f6f6',
-    borderColor: '#e8e8e8',
+    backgroundColor: 'transparent',
     textDecoration: 'line-through',
     opacity: 0.5,
     cursor: 'not-allowed',
@@ -1574,7 +1624,7 @@ const styles = {
   },
   actionRow: {
     display: 'flex',
-    gap: '16px',
+    gap: '12px',
     marginTop: '8px',
   },
   favBtn: {
@@ -1582,9 +1632,10 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
+    minHeight: '48px',
     padding: '12px 16px',
     border: '1px solid var(--border-color)',
-    borderRadius: '4px',
+    borderRadius: '14px',
     cursor: 'pointer',
     fontSize: '14px',
     fontWeight: '500',
@@ -1595,11 +1646,12 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
+    minHeight: '48px',
     padding: '12px 16px',
-    backgroundColor: '#111111',
+    backgroundColor: 'var(--uq-red)',
     color: '#ffffff',
-    border: '1px solid #111111',
-    borderRadius: '4px',
+    border: '1px solid var(--uq-red)',
+    borderRadius: '14px',
     cursor: 'pointer',
     fontSize: '14px',
     fontWeight: '500',

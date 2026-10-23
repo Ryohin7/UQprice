@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, ShieldCheck, HelpCircle, ArrowRight, ClipboardList, Clock } from 'lucide-react';
 import CategoryManager from './CategoryManager';
+import TelegramTester from './TelegramTester';
 
 export default function AdminPanel({
   currentVersion = '1.0.0',
@@ -11,14 +12,15 @@ export default function AdminPanel({
   onTriggerCrawler,
   navigation = [],
   allUniqueCategories = [],
-  onSaveNavigation
+  onSaveNavigation,
+  products = []
 }) {
   const [upgradeType, setUpgradeType] = useState('patch'); // 'major' | 'minor' | 'patch'
   const [nextVersion, setNextVersion] = useState('');
   const [descriptionList, setDescriptionList] = useState(['']);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [activeTab, setActiveTab] = useState('versions'); // 'versions' | 'reports' | 'categories'
+  const [activeTab, setActiveTab] = useState('versions'); // 'versions' | 'reports' | 'categories' | 'telegram'
   const [isTriggering, setIsTriggering] = useState(false);
 
   const handleTriggerCrawler = async () => {
@@ -128,9 +130,9 @@ export default function AdminPanel({
           onClick={() => setActiveTab('versions')}
           style={{
             ...styles.tabButton,
-            backgroundColor: activeTab === 'versions' ? 'var(--uq-red)' : 'transparent',
-            color: activeTab === 'versions' ? '#ffffff' : 'var(--text-secondary)',
-            border: activeTab === 'versions' ? '1px solid var(--uq-red)' : '1px solid transparent',
+            backgroundColor: activeTab === 'versions' ? 'var(--bg-white)' : 'transparent',
+            color: activeTab === 'versions' ? 'var(--text-primary)' : 'var(--text-secondary)',
+            boxShadow: activeTab === 'versions' ? '0 1px 3px rgba(0,0,0,0.12)' : 'none',
           }}
         >
           版本更新日誌
@@ -139,9 +141,9 @@ export default function AdminPanel({
           onClick={() => setActiveTab('reports')}
           style={{
             ...styles.tabButton,
-            backgroundColor: activeTab === 'reports' ? 'var(--uq-red)' : 'transparent',
-            color: activeTab === 'reports' ? '#ffffff' : 'var(--text-secondary)',
-            border: activeTab === 'reports' ? '1px solid var(--uq-red)' : '1px solid transparent',
+            backgroundColor: activeTab === 'reports' ? 'var(--bg-white)' : 'transparent',
+            color: activeTab === 'reports' ? 'var(--text-primary)' : 'var(--text-secondary)',
+            boxShadow: activeTab === 'reports' ? '0 1px 3px rgba(0,0,0,0.12)' : 'none',
           }}
         >
           資料更新報表
@@ -150,12 +152,23 @@ export default function AdminPanel({
           onClick={() => setActiveTab('categories')}
           style={{
             ...styles.tabButton,
-            backgroundColor: activeTab === 'categories' ? 'var(--uq-red)' : 'transparent',
-            color: activeTab === 'categories' ? '#ffffff' : 'var(--text-secondary)',
-            border: activeTab === 'categories' ? '1px solid var(--uq-red)' : '1px solid transparent',
+            backgroundColor: activeTab === 'categories' ? 'var(--bg-white)' : 'transparent',
+            color: activeTab === 'categories' ? 'var(--text-primary)' : 'var(--text-secondary)',
+            boxShadow: activeTab === 'categories' ? '0 1px 3px rgba(0,0,0,0.12)' : 'none',
           }}
         >
           Header 分類管理
+        </button>
+        <button
+          onClick={() => setActiveTab('telegram')}
+          style={{
+            ...styles.tabButton,
+            backgroundColor: activeTab === 'telegram' ? 'var(--bg-white)' : 'transparent',
+            color: activeTab === 'telegram' ? 'var(--text-primary)' : 'var(--text-secondary)',
+            boxShadow: activeTab === 'telegram' ? '0 1px 3px rgba(0,0,0,0.12)' : 'none',
+          }}
+        >
+          Telegram 通知測試
         </button>
       </div>
 
@@ -172,7 +185,7 @@ export default function AdminPanel({
                 <span style={styles.versionNum}>v{currentVersion}</span>
               </div>
               <ArrowRight size={20} style={styles.arrowIcon} />
-              <div style={{ ...styles.versionBlock, backgroundColor: 'rgba(231,31,25,0.02)' }}>
+              <div style={{ ...styles.versionBlock, backgroundColor: 'var(--red-bg)' }}>
                 <span style={{ ...styles.versionLabel, color: 'var(--uq-red)' }}>預計升級為</span>
                 <span style={{ ...styles.versionNum, color: 'var(--uq-red)' }}>v{nextVersion}</span>
               </div>
@@ -186,8 +199,8 @@ export default function AdminPanel({
                 <label
                   style={{
                     ...styles.radioLabel,
-                    borderColor: upgradeType === 'patch' ? '#1565c0' : 'var(--border-color)',
-                    backgroundColor: upgradeType === 'patch' ? 'rgba(21,101,192,0.04)' : 'transparent',
+                    borderColor: upgradeType === 'patch' ? 'var(--info)' : 'var(--border-color)',
+                    backgroundColor: upgradeType === 'patch' ? 'var(--info-bg)' : 'transparent',
                   }}
                 >
                   <input
@@ -199,7 +212,7 @@ export default function AdminPanel({
                     style={styles.radioInput}
                   />
                   <div>
-                    <div style={{ ...styles.radioTitle, color: upgradeType === 'patch' ? '#1565c0' : 'var(--text-primary)' }}>修復優化</div>
+                    <div style={{ ...styles.radioTitle, color: upgradeType === 'patch' ? 'var(--info)' : 'var(--text-primary)' }}>修復優化</div>
                     <div style={styles.radioDesc}>Z 軸升級 (如 {currentVersion} ➡️ Z+1)</div>
                   </div>
                 </label>
@@ -208,8 +221,8 @@ export default function AdminPanel({
                 <label
                   style={{
                     ...styles.radioLabel,
-                    borderColor: upgradeType === 'minor' ? '#2e7d32' : 'var(--border-color)',
-                    backgroundColor: upgradeType === 'minor' ? 'rgba(46,125,50,0.04)' : 'transparent',
+                    borderColor: upgradeType === 'minor' ? 'var(--ok)' : 'var(--border-color)',
+                    backgroundColor: upgradeType === 'minor' ? 'var(--ok-bg)' : 'transparent',
                   }}
                 >
                   <input
@@ -221,7 +234,7 @@ export default function AdminPanel({
                     style={styles.radioInput}
                   />
                   <div>
-                    <div style={{ ...styles.radioTitle, color: upgradeType === 'minor' ? '#2e7d32' : 'var(--text-primary)' }}>新增功能</div>
+                    <div style={{ ...styles.radioTitle, color: upgradeType === 'minor' ? 'var(--ok)' : 'var(--text-primary)' }}>新增功能</div>
                     <div style={styles.radioDesc}>Y 軸升級 (如 {currentVersion} ➡️ Y+1)</div>
                   </div>
                 </label>
@@ -231,7 +244,7 @@ export default function AdminPanel({
                   style={{
                     ...styles.radioLabel,
                     borderColor: upgradeType === 'major' ? 'var(--uq-red)' : 'var(--border-color)',
-                    backgroundColor: upgradeType === 'major' ? 'rgba(231,31,25,0.04)' : 'transparent',
+                    backgroundColor: upgradeType === 'major' ? 'var(--red-bg)' : 'transparent',
                   }}
                 >
                   <input
@@ -318,9 +331,9 @@ export default function AdminPanel({
               ) : (
                 sortedVersions.map(v => {
                   const getLabelInfo = () => {
-                    if (v.type === 'major') return { text: '重大改版', color: 'var(--uq-red)', bg: 'rgba(231,31,25,0.06)' };
-                    if (v.type === 'minor') return { text: '新增功能', color: '#2e7d32', bg: 'rgba(46,125,50,0.06)' };
-                    return { text: '修復優化', color: '#1565c0', bg: 'rgba(21,101,192,0.06)' };
+                    if (v.type === 'major') return { text: '重大改版', color: 'var(--uq-red)', bg: 'var(--red-bg)' };
+                    if (v.type === 'minor') return { text: '新增功能', color: 'var(--ok)', bg: 'var(--ok-bg)' };
+                    return { text: '修復優化', color: 'var(--info)', bg: 'var(--info-bg)' };
                   };
                   const label = getLabelInfo();
 
@@ -346,10 +359,10 @@ export default function AdminPanel({
                               display: 'inline-flex',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              borderRadius: '4px',
+                              borderRadius: '8px',
                               transition: 'background-color 0.2s',
                             }}
-                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(231,31,25,0.06)'}
+                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--red-bg)'}
                             onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                             title="刪除此版本"
                           >
@@ -434,8 +447,8 @@ export default function AdminPanel({
                             <span
                               style={{
                                 ...styles.typeBadge,
-                                backgroundColor: report.type === 'auto' ? '#e3f2fd' : '#efebe9',
-                                color: report.type === 'auto' ? '#0d47a1' : '#4e342e',
+                                backgroundColor: report.type === 'auto' ? 'var(--info-bg)' : 'var(--fill)',
+                                color: report.type === 'auto' ? 'var(--info)' : 'var(--text-secondary)',
                               }}
                             >
                               {report.type === 'auto' ? '自動' : '手動'}
@@ -447,12 +460,12 @@ export default function AdminPanel({
                             </strong>
                           </td>
                           <td style={styles.td}>
-                            <strong style={{ color: '#2e7d32', fontSize: '14px' }}>
+                            <strong style={{ color: 'var(--ok)', fontSize: '14px' }}>
                               {report.newArrivalsCount !== undefined ? report.newArrivalsCount : '-'}
                             </strong>
                           </td>
                           <td style={styles.td}>
-                            <strong style={{ color: '#1565c0', fontSize: '14px' }}>
+                            <strong style={{ color: 'var(--info)', fontSize: '14px' }}>
                               {report.saleCount !== undefined ? report.saleCount : '-'}
                             </strong>
                           </td>
@@ -475,8 +488,8 @@ export default function AdminPanel({
                             <span
                               style={{
                                 ...styles.statusBadge,
-                                backgroundColor: isSuccess ? 'rgba(46,125,50,0.1)' : 'rgba(231,31,25,0.1)',
-                                color: isSuccess ? '#2e7d32' : 'var(--uq-red)',
+                                backgroundColor: isSuccess ? 'var(--ok-bg)' : 'var(--red-bg)',
+                                color: isSuccess ? 'var(--ok)' : 'var(--uq-red)',
                               }}
                             >
                               {isSuccess ? '成功' : '失敗'}
@@ -494,6 +507,8 @@ export default function AdminPanel({
             </div>
         </div>
         </div>
+      ) : activeTab === 'telegram' ? (
+        <TelegramTester products={products} />
       ) : (
         <CategoryManager
           initialNavigation={navigation}
@@ -522,9 +537,9 @@ const styles = {
   title: {
     margin: 0,
     fontSize: '22px',
-    fontWeight: '800',
+    fontWeight: '700',
+    letterSpacing: '-0.01em',
     color: 'var(--text-primary)',
-    fontFamily: 'var(--font-sans)',
   },
   subtitle: {
     margin: '4px 0 0 0',
@@ -538,22 +553,19 @@ const styles = {
   },
   card: {
     backgroundColor: 'var(--bg-white)',
-    borderRadius: '16px',
+    borderRadius: '20px',
     padding: '24px',
-    boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03)',
-    border: '1px solid var(--border-color)',
+    boxShadow: 'var(--shadow-sm)',
     display: 'flex',
     flexDirection: 'column',
     height: 'fit-content',
   },
   cardTitle: {
     margin: '0 0 20px 0',
-    fontSize: '16px',
+    fontSize: '19px',
     fontWeight: '700',
+    letterSpacing: '-0.01em',
     color: 'var(--text-primary)',
-    paddingBottom: '10px',
-    borderBottom: '2px solid var(--uq-red)',
-    width: 'fit-content',
   },
   versionDisplayRow: {
     display: 'flex',
@@ -582,8 +594,8 @@ const styles = {
   },
   versionNum: {
     fontSize: '20px',
-    fontWeight: '800',
-    fontFamily: 'monospace',
+    fontWeight: '700',
+    fontVariantNumeric: 'tabular-nums',
     color: 'var(--text-primary)',
   },
   arrowIcon: {
@@ -638,17 +650,17 @@ const styles = {
   addBtn: {
     background: 'none',
     border: 'none',
-    color: '#2e7d32',
+    color: 'var(--ok)',
     fontSize: '12px',
     fontWeight: '700',
     cursor: 'pointer',
     display: 'inline-flex',
     alignItems: 'center',
     padding: '4px 8px',
-    borderRadius: '4px',
+    borderRadius: '8px',
     transition: 'background-color 0.2s',
     ':hover': {
-      backgroundColor: 'rgba(46,125,50,0.06)'
+      backgroundColor: 'var(--ok-bg)'
     }
   },
   descInputList: {
@@ -686,14 +698,14 @@ const styles = {
     border: 'none',
     color: 'var(--text-secondary)',
     padding: '6px',
-    borderRadius: '4px',
+    borderRadius: '8px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     transition: 'color 0.2s, background-color 0.2s',
     ':hover': {
       color: 'var(--uq-red)',
-      backgroundColor: 'rgba(231,31,25,0.04)'
+      backgroundColor: 'var(--red-bg)'
     }
   },
   submitBtn: {
@@ -769,17 +781,22 @@ const styles = {
   },
   tabContainer: {
     display: 'flex',
-    gap: '12px',
+    gap: '4px',
     marginBottom: '24px',
-    borderBottom: '1px solid var(--border-color)',
-    paddingBottom: '8px',
+    padding: '4px',
+    backgroundColor: 'var(--fill)',
+    borderRadius: '12px',
+    width: 'fit-content',
+    maxWidth: '100%',
+    overflowX: 'auto',
   },
   tabButton: {
     padding: '8px 16px',
     fontSize: '14px',
-    fontWeight: '700',
+    fontWeight: '600',
+    whiteSpace: 'nowrap',
     border: 'none',
-    borderRadius: '6px',
+    borderRadius: '9px',
     cursor: 'pointer',
     transition: 'all 0.2s',
   },
@@ -818,7 +835,7 @@ const styles = {
     backgroundColor: 'var(--uq-red)',
     color: '#ffffff',
     border: 'none',
-    borderRadius: '6px',
+    borderRadius: '10px',
     fontWeight: '700',
     fontSize: '14px',
     cursor: 'pointer',
@@ -828,7 +845,7 @@ const styles = {
     backgroundColor: 'var(--bg-white)',
     borderRadius: '16px',
     padding: '24px',
-    boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)',
+    boxShadow: 'var(--shadow-sm)',
     border: '1px solid var(--border-color)',
   },
   table: {
@@ -851,14 +868,14 @@ const styles = {
   statusBadge: {
     display: 'inline-block',
     padding: '4px 8px',
-    borderRadius: '4px',
+    borderRadius: '8px',
     fontSize: '11px',
     fontWeight: '700',
   },
   typeBadge: {
     display: 'inline-block',
     padding: '4px 8px',
-    borderRadius: '4px',
+    borderRadius: '8px',
     fontSize: '11px',
     fontWeight: '700',
   },
@@ -867,7 +884,7 @@ const styles = {
     alignItems: 'center',
     gap: '4px',
     padding: '2px 6px',
-    borderRadius: '4px',
+    borderRadius: '8px',
     fontSize: '11px',
     fontWeight: '500',
     backgroundColor: 'var(--bg-light)',

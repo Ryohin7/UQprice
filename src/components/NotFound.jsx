@@ -101,7 +101,7 @@ const styles = {
     alignItems: 'center',
     minHeight: '70vh',
     padding: '40px 24px',
-    backgroundColor: '#fafafa',
+    backgroundColor: 'var(--bg-page)',
   },
   content: {
     maxWidth: '480px',

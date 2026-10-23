@@ -3,12 +3,24 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // 驗證是否為爬蟲或管理員帳號
+    // 爬蟲機器人帳號 (Email/Password，供 GitHub Actions 使用)
     function isCrawler() {
-      return request.auth != null && (
-        request.auth.token.email == 'crawler-bot@uqprice.com' ||
-        request.auth.token.email == 'admin@uqprice.com'
-      );
+      return request.auth != null
+        && request.auth.token.email == 'crawler-bot@uqprice.com';
+    }
+
+    // 後台管理員：僅限白名單內、已驗證的 Google 帳號 (新增管理員請在此加入信箱)
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.token.firebase.sign_in_provider == 'google.com'
+        && request.auth.token.email_verified == true
+        && request.auth.token.email in [
+          'jacky4976@gmail.com'
+        ];
+    }
+
+    function isStaff() {
+      return isCrawler() || isAdmin();
     }
 
     // ==========================================
@@ -19,12 +31,12 @@ service cloud.firestore {
       // 任何造訪網站的使用者都可以讀取商品資料
       allow read: if true;
       // 僅允許爬蟲帳號進行新增、修改或刪除
-      allow write: if isCrawler();
+      allow write: if isStaff();
     }
     
     match /product_prices/{productId} {
       allow read: if true;
-      allow write: if isCrawler();
+      allow write: if isStaff();
     }
 
     // ==========================================
@@ -44,7 +56,7 @@ service cloud.firestore {
     // 舊版逐商品文件 (遷移後可刪除)：僅供讀取
     match /product_views/{productId} {
       allow read: if true;
-      allow write: if isCrawler();
+      allow write: if isStaff();
     }
     
     // ==========================================
@@ -52,7 +64,7 @@ service cloud.firestore {
     // ==========================================
     match /versions/{versionId} {
       allow read: if true;
-      allow write: if isCrawler();
+      allow write: if isStaff();
     }
 
     // ==========================================
@@ -60,7 +72,7 @@ service cloud.firestore {
     // ==========================================
     match /navigation/{navigationId} {
       allow read: if true;
-      allow write: if isCrawler();
+      allow write: if isStaff();
     }
 
     // ==========================================
@@ -68,12 +80,12 @@ service cloud.firestore {
     // ==========================================
     match /system/{systemId} {
       allow read: if true;
-      allow write: if isCrawler();
+      allow write: if isStaff();
     }
 
     match /crawler_reports/{reportId} {
       allow read: if true;
-      allow write: if isCrawler();
+      allow write: if isStaff();
     }
 
     // ==========================================
@@ -81,7 +93,25 @@ service cloud.firestore {
     // ==========================================
     match /campaign_products/{campaignId} {
       allow read: if true;
-      allow write: if isCrawler();
+      allow write: if isStaff();
+    }
+
+    // ==========================================
+    // 7. 使用者資料 (users)：追蹤清單與 Telegram 綁定
+    // ==========================================
+    // telegram 欄位只允許後端 (Admin SDK) 寫入，前端僅能改 favorites 與 linkCode，
+    // 避免使用者把通知導向他人的 Telegram。
+    match /users/{uid} {
+      allow read: if request.auth != null && (request.auth.uid == uid || isCrawler());
+      allow create: if request.auth != null && request.auth.uid == uid
+                    && request.resource.data.keys().hasOnly(['favorites', 'linkCode'])
+                    && request.resource.data.get('favorites', []) is list
+                    && request.resource.data.get('favorites', []).size() <= 300;
+      allow update: if request.auth != null && request.auth.uid == uid
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['favorites', 'linkCode'])
+                    && request.resource.data.get('favorites', []) is list
+                    && request.resource.data.get('favorites', []).size() <= 300;
+      allow delete: if false;
     }
   }
 }
