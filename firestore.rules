@@ -14,6 +14,7 @@ service cloud.firestore {
     // ==========================================
     // 1. 商品資料庫 (products) 與 歷史價格 (product_prices)
     // ==========================================
+    // 註：商品主資料已改由 public/products.json 提供，此集合不再由爬蟲寫入
     match /products/{productId} {
       // 任何造訪網站的使用者都可以讀取商品資料
       allow read: if true;
@@ -29,15 +30,23 @@ service cloud.firestore {
     // ==========================================
     // 2. 商品瀏覽量統計 (product_views)
     // ==========================================
-    match /product_views/{productId} {
+    // 瀏覽次數集中在單一文件 product_views/all，結構為 { counts: { [productId]: n } }
+    match /product_views/all {
       allow read: if true;
-      // 允許前端使用者增加瀏覽量計數 (即 update 動作，但限制只能累加 views 欄位)
-      allow create, update: if request.resource.data.keys().hasOnly(['views']) 
-                            || request.resource.data.views == resource.data.views + 1;
-      // 拒絕前端使用者隨意刪除瀏覽量記錄
+      // 前端每次只能新增或累加一個商品的計數，不可刪除欄位
+      allow create: if request.resource.data.keys().hasOnly(['counts'])
+                    && request.resource.data.counts.keys().size() <= 1;
+      allow update: if request.resource.data.keys().hasOnly(['counts'])
+                    && request.resource.data.counts.diff(resource.data.counts).affectedKeys().size() <= 1
+                    && request.resource.data.counts.diff(resource.data.counts).removedKeys().size() == 0;
       allow delete: if false;
     }
-
+    // 舊版逐商品文件 (遷移後可刪除)：僅供讀取
+    match /product_views/{productId} {
+      allow read: if true;
+      allow write: if isCrawler();
+    }
+    
     // ==========================================
     // 3. 系統版本歷史 (versions)
     // ==========================================

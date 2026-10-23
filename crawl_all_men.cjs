@@ -337,6 +337,17 @@ async function crawl(triggerType = 'manual') {
     console.warn('⚠️ 無法寫入本地備份 JSON，已跳過備份步驟:', err.message);
   }
 
+  // 以覆寫前的 public/products.json 作為上次同步的比對基準 (不再讀取 Firestore products)
+  const prevHashMap = new Map();
+  try {
+    if (fs.existsSync(CONFIG.localJsonPath)) {
+      const prev = JSON.parse(fs.readFileSync(CONFIG.localJsonPath, 'utf8'));
+      prev.forEach(old => prevHashMap.set(old.id, getProductHash(old)));
+    }
+  } catch (err) {
+    console.warn('⚠️ 無法讀取舊版 products.json，將視為全部為新商品:', err.message);
+  }
+
   // 儲存本地 JSON (供前端靜態搜尋使用)
   try {
     const dir = path.dirname(CONFIG.localJsonPath);
@@ -350,7 +361,7 @@ async function crawl(triggerType = 'manual') {
   }
 
   // ===== Step 3: 同步到 Firestore =====
-  await syncToFirestore(allProducts, triggerType, startTime);
+  await syncToFirestore(allProducts, triggerType, startTime, prevHashMap);
 
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
   console.log(`\n🏁 全部完成！耗時 ${elapsed}s`);
@@ -358,7 +369,7 @@ async function crawl(triggerType = 'manual') {
 
 // ========== Firestore 同步 ==========
 
-async function syncToFirestore(products, triggerType = 'manual', startTime = Date.now()) {
+async function syncToFirestore(products, triggerType = 'manual', startTime = Date.now(), prevHashMap = new Map()) {
   console.log('\n===== Step 3: 增量同步至 Firestore =====');
   // 載入環境變數
   if (fs.existsSync(CONFIG.envPath)) {
@@ -402,22 +413,10 @@ async function syncToFirestore(products, triggerType = 'manual', startTime = Dat
 
     const today = new Date().toISOString().split('T')[0];
     
-    // A. 抓取資料庫中目前所有 active 商品 ID 集合，做下架比對
-    console.log('  🔍 讀取資料庫現有商品列表...');
-    const dbActiveIds = new Set();
-    const dbHashMap = new Map(); // id -> hash
-    
-    const productsSnapshot = await getDocs(collection(db, 'products'));
-    productsSnapshot.forEach(docSnap => {
-      const data = docSnap.data();
-      if (data.status === 'active' || data.active === true) {
-        dbActiveIds.add(docSnap.id);
-      }
-      if (data.hash) {
-        dbHashMap.set(docSnap.id, data.hash);
-      }
-    });
-    console.log(`  🔍 目前線上 active 商品數: ${dbActiveIds.size}`);
+    // A. 以上次的 products.json 作為比對基準 (商品主資料只存在靜態 JSON，Firestore 僅保留歷史價格)
+    const dbActiveIds = new Set(prevHashMap.keys());
+    const dbHashMap = prevHashMap;
+    console.log(`  🔍 上次同步商品數: ${dbActiveIds.size}`);
 
     let createdCount = 0;
     let updatedCount = 0;
@@ -441,7 +440,6 @@ async function syncToFirestore(products, triggerType = 'manual', startTime = Dat
     const campaignProducts = [];
 
     for (const p of products) {
-      const docRef = doc(db, 'products', p.id);
       const priceDocRef = doc(db, 'product_prices', p.id);
       
       const newHash = getProductHash(p);
@@ -521,20 +519,6 @@ async function syncToFirestore(products, triggerType = 'manual', startTime = Dat
       batch.set(priceDocRef, { id: p.id, historyPrices });
       batchOpCount++;
 
-      // 2. 移除商品 doc 中的 historyPrices，避免主商品臃腫
-      delete p.historyPrices;
-
-      // 3. 過濾掉所有 null 與 undefined 值，避免儲存無效鍵名佔用空間
-      Object.keys(p).forEach(key => {
-        if (p[key] === null || p[key] === undefined) {
-          delete p[key];
-        }
-      });
-
-      // 4. 同步寫入主商品集合
-      batch.set(docRef, p);
-      batchOpCount++;
-
       if (oldHash) {
         updatedCount++;
       } else {
@@ -544,20 +528,10 @@ async function syncToFirestore(products, triggerType = 'manual', startTime = Dat
       await commitBatchIfNeeded();
     }
 
-    // D. 處理下架商品 (在資料庫中為 active 但本次沒爬到的商品)
-    if (dbActiveIds.size > 0) {
-      console.log(`  🍂 偵測到 ${dbActiveIds.size} 件商品下架，正在將狀態更新為 expired...`);
-      for (const expiredId of dbActiveIds) {
-        const expiredRef = doc(db, 'products', expiredId);
-        batch.update(expiredRef, { 
-          active: false, 
-          status: 'expired',
-          updatedAt: Date.now() 
-        });
-        batchOpCount++;
-        expiredCount++;
-        await commitBatchIfNeeded();
-      }
+    // D. 下架商品：上次有、這次沒爬到 (僅統計，商品主資料已不存於 Firestore)
+    expiredCount = dbActiveIds.size;
+    if (expiredCount > 0) {
+      console.log(`  🍂 偵測到 ${expiredCount} 件商品下架`);
     }
 
     // E. 建立/更新期間限定商品的獨立快速索引

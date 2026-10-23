@@ -508,13 +508,11 @@ export default function App() {
             if (!res.ok) throw new Error('Failed to load products.json');
             return res.json();
           }),
-          getDocs(collection(db, "product_views"))
+          getDoc(doc(db, "product_views", "all"))
         ]);
 
-        const viewsMap = {};
-        viewsSnap.forEach((d) => {
-          viewsMap[d.id] = d.data().views || 0;
-        });
+        // 瀏覽次數集中存放在單一文件 (counts: { [productId]: n })，載入只需 1 次讀取
+        const viewsMap = viewsSnap.exists() ? (viewsSnap.data().counts || {}) : {};
 
         if (productsRes && productsRes.length > 0) {
           console.log(`Successfully loaded ${productsRes.length} products from local JSON.`);
@@ -846,8 +844,8 @@ export default function App() {
     // 非同步寫入 Firestore
     if (db) {
       try {
-        const viewRef = doc(db, 'product_views', product.id);
-        await setDoc(viewRef, { views: increment(1) }, { merge: true });
+        const viewRef = doc(db, 'product_views', 'all');
+        await setDoc(viewRef, { counts: { [product.id]: increment(1) } }, { merge: true });
       } catch (e) {
         console.warn('Failed to increment product view:', e);
       }
