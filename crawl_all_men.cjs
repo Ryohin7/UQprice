@@ -62,6 +62,9 @@ function mapSizes(sizeList) {
 // 台灣日期 (UTC+8)：排程在台灣早上執行，但手動在台灣 00:00-08:00 執行時 UTC 日期會是前一天
 const twToday = () => new Date(Date.now() + 8 * 3600 * 1000).toISOString().split('T')[0];
 
+// Firestore 不接受 undefined 欄位值 (整個寫入會被拒絕)，寫入前統一清掉
+const stripUndefined = (obj) => JSON.parse(JSON.stringify(obj));
+
 // 官網的 sex 欄位含有零寬空白、不換行空白等隱藏字元 (同一個值有多種寫法)，統一清理
 const normalizeSex = (s) => (s ? String(s).replace(/[\u200b-\u200d\ufeff\u00a0]/g, '').trim() : s);
 
@@ -394,7 +397,11 @@ async function crawl(triggerType = 'manual') {
   }
 
   // ===== Step 3: 同步到 Firestore (會補上 isHistoricalLowest 等欄位) =====
-  await syncToFirestore(allProducts, triggerType, startTime, { hashes: prevHashMap, prices: prevPriceMap });
+  const syncStatus = await syncToFirestore(allProducts, triggerType, startTime, { hashes: prevHashMap, prices: prevPriceMap });
+  if (syncStatus === 'failed') {
+    // 同步失敗時不發布前端 JSON：舊的 products.json 仍是下次比對降價/補貨的基準，下次執行才不會漏掉通知
+    throw new Error('Firestore 同步失敗，已中止且未發布新的 products.json (詳見上方錯誤與後台報表)');
+  }
 
   // ===== Step 4: 輸出前端靜態檔 (壓縮格式，同步後才輸出以包含歷史新低標記) =====
   try {
@@ -476,14 +483,17 @@ async function reportFailure(message, triggerType, startTime) {
   }
 }
 
+// 測試時可替換為記憶體版 Firestore
+const deps = { openFirestore: (...a) => openFirestore(...a) };
+
 async function syncToFirestore(products, triggerType = 'manual', startTime = Date.now(), legacyBaseline = { hashes: new Map(), prices: new Map() }) {
   console.log('\n===== Step 3: 增量同步至 Firestore =====');
   let db, firestoreMod;
   try {
-    ({ db, firestoreMod } = await openFirestore());
+    ({ db, firestoreMod } = await deps.openFirestore());
   } catch (e) {
     console.error('❌ Firebase 登入失敗，略過 Firestore 同步:', e.message || e);
-    return;
+    return 'skipped';
   }
   const { doc, setDoc, getDoc, getDocs, collection, writeBatch } = firestoreMod;
 
@@ -546,9 +556,8 @@ async function syncToFirestore(products, triggerType = 'manual', startTime = Dat
         (p.salesPromotionLabel && p.salesPromotionLabel.some(l => l.labelText && l.labelText.includes('限定價格')));
       
       if (isCampaign) {
-        campaignProducts.push({
+        campaignProducts.push(stripUndefined({
           id: p.id,
-          ProductId: p.ProductId,
           productCode: p.productCode,
           code: p.code,
           name: p.name,
@@ -563,7 +572,7 @@ async function syncToFirestore(products, triggerType = 'manual', startTime = Dat
           isTimeDoptimal: p.isTimeDoptimal,
           timeLimitedBegin: p.timeLimitedBegin,
           timeLimitedEnd: p.timeLimitedEnd
-        });
+        }));
       }
 
       // 從 active 集合中標記為已處理
@@ -745,6 +754,7 @@ async function syncToFirestore(products, triggerType = 'manual', startTime = Dat
     console.log(`║   - 未變: ${unchangedCount} 件 (已略過寫入)`);
     console.log(`║   - 下架: ${expiredCount} 件`);
     console.log('╚══════════════════════════════════════╝\n');
+    return 'ok';
 
   } catch (e) {
     console.error('❌ Firestore 增量同步失敗:', e);
@@ -771,6 +781,7 @@ async function syncToFirestore(products, triggerType = 'manual', startTime = Dat
     } catch (writeErr) {
       console.error('❌ 寫入失敗日誌失敗:', writeErr);
     }
+    return 'failed';
   }
 }
 
@@ -783,7 +794,7 @@ if (args.includes('--auto') || args.includes('--type=auto') || process.env.GITHU
 
 if (require.main !== module) {
   // 被 require 時 (測試用) 只匯出函式，不執行爬蟲
-  module.exports = { parseProduct, normalizeSex, getProductHash, twToday, crawlCategory };
+  module.exports = { parseProduct, normalizeSex, getProductHash, twToday, crawlCategory, syncToFirestore, deps };
 } else crawl(triggerType)
   .then(() => {
     process.exit(0);
