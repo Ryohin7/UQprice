@@ -82,7 +82,7 @@ export default function Header({
         <div className="header-inner" style={styles.headerInner}>
         {/* 極簡純文字 Logo */}
         <div className="desktop-logo" style={styles.logoContainer} onClick={handleLogoClick}>
-          <span style={styles.logoTextTitle}>UG快速查價</span>
+          <span style={styles.logoTextTitle}>UQ 快速查價</span>
         </div>
 
         {/* 桌面端導航選單 */}
