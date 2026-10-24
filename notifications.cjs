@@ -1,5 +1,5 @@
-// Telegram 通知：降價、補貨、限定價格、新品上市。
-// 降價/補貨/限定價格以「商品卡片」發送 (商品圖 + 說明 + 官網按鈕 + 取消追蹤按鈕)，新品上市以文字彙整發送。
+// Telegram 通知：降價、限定價格、新品上市。
+// 降價/限定價格以「商品卡片」發送 (商品圖 + 說明 + 官網按鈕 + 取消追蹤按鈕)，新品上市以文字彙整發送。
 // 由 crawl_all_men.cjs 在同步完成後呼叫；缺少 TELEGRAM_BOT_TOKEN 時只印出預覽、不發送。
 // 注意：Telegram 訊息內一律不放 emoji。
 
@@ -11,10 +11,9 @@ const UNIQLO_BASE = 'https://www.uniqlo.com/tw';
 
 const DEFAULT_SETTINGS = {
   drop: true,          // 降價通知
-  restock: true,       // 尺寸補貨通知
   limited: true,       // 限定價格開始/即將結束
   onlyLowest: false,   // 降價時只在歷史新低才通知
-  minDropPct: 0,       // 降幅至少 N% 才通知 (0 = 不限)
+  minDropAmount: 0,    // 降幅至少 N 元才通知 (0 = 不限；100 ~ 1000，每 100 一級)
   newArrival: [],      // 訂閱新品的分組：men / women / kids / baby
 };
 
@@ -22,10 +21,9 @@ function normalizeSettings(raw) {
   const s = { ...DEFAULT_SETTINGS, ...(raw && typeof raw === 'object' ? raw : {}) };
   return {
     drop: s.drop !== false,
-    restock: s.restock !== false,
     limited: s.limited !== false,
     onlyLowest: s.onlyLowest === true,
-    minDropPct: Number.isFinite(s.minDropPct) ? Math.max(0, Math.min(90, s.minDropPct)) : 0,
+    minDropAmount: Number.isFinite(s.minDropAmount) ? Math.max(0, Math.min(1000, Math.round(s.minDropAmount / 100) * 100)) : 0,
     newArrival: Array.isArray(s.newArrival) ? s.newArrival.filter((g) => ['men', 'women', 'kids', 'baby'].includes(g)) : [],
   };
 }
@@ -48,7 +46,6 @@ const imageUrl = (pic) => (!pic ? null : pic.startsWith('http') ? pic : `${UNIQL
 
 const HEADLINES = {
   drop: '你追蹤的商品降價了',
-  restock: '你追蹤的商品補貨了',
   limited_start: '你追蹤的商品進入限定價格',
   limited_end: '你追蹤的商品限定價格即將結束',
 };
@@ -64,9 +61,6 @@ function buildCaption(e, { test = false, targetPrice = null } = {}) {
     lines.push(`<s>${formatPrice(e.oldPrice)}</s> → <b>${formatPrice(e.newPrice)}</b> 元（降 ${formatPrice(e.oldPrice - e.newPrice)} 元）`);
     if (e.isLowest) lines.push('目前為歷史新低價');
     if (targetPrice != null) lines.push(`已達到你設定的目標價 ${formatPrice(targetPrice)} 元`);
-  } else if (type === 'restock') {
-    lines.push(`補貨尺寸：${escapeHtml(e.sizes.join('、'))}`);
-    lines.push(`目前售價 <b>${formatPrice(e.price)}</b> 元`);
   } else if (type === 'limited_start') {
     lines.push(`限定價格 <b>${formatPrice(e.price)}</b> 元`);
     if (e.endTs) lines.push(`優惠期間至 ${formatMD(e.endTs)}`);
@@ -94,12 +88,12 @@ function passesDrop(e, user, settings) {
   }
   if (!settings.drop) return null;
   if (settings.onlyLowest && !e.isLowest) return null;
-  if (settings.minDropPct > 0 && ((e.oldPrice - e.newPrice) / e.oldPrice) * 100 < settings.minDropPct) return null;
+  if (settings.minDropAmount > 0 && e.oldPrice - e.newPrice < settings.minDropAmount) return null;
   return {};
 }
 
 // users: [{ chatId, favorites, settings, targets }]
-// events: drop / restock / limited_start / limited_end；newArrivals: [{ id, name, productCode, price, groups }]
+// events: drop / limited_start / limited_end；newArrivals: [{ id, name, productCode, price, groups }]
 function buildItems(events, newArrivals, users) {
   const items = [];
 
@@ -114,8 +108,6 @@ function buildItems(events, newArrivals, users) {
       if (e.type === 'drop') {
         const pass = passesDrop(e, u, settings);
         if (pass) cards.push(toCard(e, u, pass));
-      } else if (e.type === 'restock') {
-        if (settings.restock) cards.push(toCard(e, u));
       } else if (settings.limited) {
         cards.push(toCard(e, u));
       }
@@ -248,7 +240,7 @@ async function notifyAll({ users: allUsers, events = [], newArrivals = [] }) {
   const users = allUsers.filter((u) => u.chatId);
   const items = buildItems(events, newArrivals, users);
   const count = (t) => events.filter((e) => e.type === t).length;
-  console.log(`  事件：降價 ${count('drop')}、補貨 ${count('restock')}、限定價格開始 ${count('limited_start')}、即將結束 ${count('limited_end')}、新品 ${newArrivals.length}；已綁定 Telegram 的使用者 ${users.length} 位，待發送 ${items.length} 則`);
+  console.log(`  事件：降價 ${count('drop')}、限定價格開始 ${count('limited_start')}、即將結束 ${count('limited_end')}、新品 ${newArrivals.length}；已綁定 Telegram 的使用者 ${users.length} 位，待發送 ${items.length} 則`);
 
   const token = process.env.TELEGRAM_BOT_TOKEN;
   if (!token) {

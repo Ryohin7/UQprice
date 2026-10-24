@@ -85,10 +85,14 @@ export default function ProductCard({ product, onClick }) {
             {promoLabels.map((label, idx) => (
               <span
                 key={idx}
-                style={{
-                  ...styles.promoBadge,
-                  backgroundColor: label === '歷史最低價' ? 'var(--uq-dark-red)' : 'var(--uq-red)'
-                }}
+                style={
+                  label.includes('限定價格')
+                    ? styles.limitedText
+                    : {
+                        ...styles.promoBadge,
+                        backgroundColor: label === '歷史最低價' ? 'var(--uq-dark-red)' : 'var(--uq-red)'
+                      }
+                }
               >
                 {label}
               </span>
@@ -173,6 +177,11 @@ const styles = {
     flexWrap: 'wrap',
     gap: '4px',
     marginBottom: '6px',
+  },
+  limitedText: {
+    color: 'var(--uq-red)',
+    fontSize: '12px',
+    fontWeight: '600',
   },
   promoBadge: {
     color: '#ffffff',

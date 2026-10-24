@@ -8,7 +8,7 @@ export const deps = { getDb: () => getFirestore(), FV: FieldValue };
 
 const MAX_FAVORITES = 300;
 const MAX_LIST = 30;
-const PCT_STEPS = [0, 5, 10, 20, 30];
+const DROP_AMOUNT_STEPS = [0, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000];
 const GROUPS = [['men', '男裝'], ['women', '女裝'], ['kids', '童裝'], ['baby', '嬰幼兒']];
 
 const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -28,7 +28,7 @@ const HELP = [
   '/add 關鍵字  搜尋商品並加入追蹤',
   '/remove 編號  依 /list 的編號取消追蹤',
   '/target 編號 價格  設定目標價，降到該價格以下才通知（/target 編號 off 取消）',
-  '/settings  通知設定（降價、補貨、限定價格、新品、降幅門檻）',
+  '/settings  通知設定（降價、限定價格、新品、降幅門檻）',
   '/stop  取消 Telegram 通知',
 ].join('\n');
 
@@ -81,10 +81,9 @@ function settingsView(raw) {
     '<b>通知設定</b>',
     '',
     `降價通知：${onOff(s.drop)}`,
-    `補貨通知：${onOff(s.restock)}`,
     `限定價格通知：${onOff(s.limited)}`,
     `只通知歷史新低：${onOff(s.onlyLowest)}`,
-    `降幅門檻：${s.minDropPct ? `至少 ${s.minDropPct}%` : '不限'}`,
+    `降幅門檻：${s.minDropAmount ? `至少 ${s.minDropAmount} 元` : '不限'}`,
     `新品訂閱：${s.newArrival.length ? GROUPS.filter(([k]) => s.newArrival.includes(k)).map(([, n]) => n).join('、') : '無'}`,
     '',
     '設有目標價的商品不受上述降價條件限制，降到目標價以下就會通知。',
@@ -92,9 +91,9 @@ function settingsView(raw) {
   const btn = (label, key) => ({ text: label, callback_data: `set:${key}` });
   const markup = {
     inline_keyboard: [
-      [btn(`降價通知 ${onOff(s.drop)}`, 'drop'), btn(`補貨通知 ${onOff(s.restock)}`, 'restock')],
-      [btn(`限定價格 ${onOff(s.limited)}`, 'limited'), btn(`只通知新低 ${onOff(s.onlyLowest)}`, 'onlyLowest')],
-      [btn(`降幅門檻 ${s.minDropPct ? s.minDropPct + '%' : '不限'}（點擊切換）`, 'pct')],
+      [btn(`降價通知 ${onOff(s.drop)}`, 'drop'), btn(`限定價格 ${onOff(s.limited)}`, 'limited')],
+      [btn(`只通知新低 ${onOff(s.onlyLowest)}`, 'onlyLowest')],
+      [btn(`降幅門檻 ${s.minDropAmount ? s.minDropAmount + ' 元' : '不限'}（點擊切換）`, 'pct')],
       GROUPS.map(([k, n]) => btn(`${n} ${onOff(s.newArrival.includes(k))}`, `ng:${k}`)),
     ],
   };
@@ -103,11 +102,11 @@ function settingsView(raw) {
 
 function applyToggle(raw, key) {
   const s = notify.normalizeSettings(raw);
-  if (key === 'pct') s.minDropPct = PCT_STEPS[(PCT_STEPS.indexOf(s.minDropPct) + 1) % PCT_STEPS.length];
+  if (key === 'pct') s.minDropAmount = DROP_AMOUNT_STEPS[(DROP_AMOUNT_STEPS.indexOf(s.minDropAmount) + 1) % DROP_AMOUNT_STEPS.length];
   else if (key.startsWith('ng:')) {
     const g = key.slice(3);
     s.newArrival = s.newArrival.includes(g) ? s.newArrival.filter((x) => x !== g) : [...s.newArrival, g];
-  } else if (['drop', 'restock', 'limited', 'onlyLowest'].includes(key)) s[key] = !s[key];
+  } else if (['drop', 'limited', 'onlyLowest'].includes(key)) s[key] = !s[key];
   return s;
 }
 

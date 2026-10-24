@@ -1196,14 +1196,18 @@ export default function App() {
                       {promoLabels.map((label, idx) => (
                         <span
                           key={idx}
-                          style={{
-                            backgroundColor: label === '歷史最低價' ? 'var(--uq-dark-red)' : 'var(--uq-red)',
-                            color: '#ffffff',
-                            padding: '3px 10px',
-                            fontSize: '12px',
-                            fontWeight: '600',
-                            borderRadius: '999px'
-                          }}
+                          style={
+                            label.includes('限定價格')
+                              ? { color: 'var(--uq-red)', fontSize: '13px', fontWeight: '600' }
+                              : {
+                                  backgroundColor: label === '歷史最低價' ? 'var(--uq-dark-red)' : 'var(--uq-red)',
+                                  color: '#ffffff',
+                                  padding: '3px 10px',
+                                  fontSize: '12px',
+                                  fontWeight: '600',
+                                  borderRadius: '999px'
+                                }
+                          }
                         >
                           {label}
                         </span>

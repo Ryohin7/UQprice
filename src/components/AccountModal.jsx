@@ -1,6 +1,6 @@
 import React from 'react';
 import { X, Send, LogOut, CheckCircle2 } from 'lucide-react';
-import { DROP_PCT_OPTIONS } from '../utils/userSettings';
+import { DROP_AMOUNT_OPTIONS } from '../utils/userSettings';
 
 const GROUPS = [['men', '男裝'], ['women', '女裝'], ['kids', '童裝'], ['baby', '嬰幼兒']];
 
@@ -62,17 +62,16 @@ export default function AccountModal({ user, telegramLinked, onLinkTelegram, onS
         <div style={{ ...styles.card, marginTop: '12px' }}>
           <div style={styles.cardTitle}>通知設定</div>
           <Check label="降價通知" checked={settings.drop} onChange={(v) => set({ drop: v })} />
-          <Check label="尺寸補貨通知" checked={settings.restock} onChange={(v) => set({ restock: v })} />
           <Check label="限定價格開始與即將結束" checked={settings.limited} onChange={(v) => set({ limited: v })} />
           <Check label="降價時只通知歷史新低" checked={settings.onlyLowest} onChange={(v) => set({ onlyLowest: v })} />
           <label style={styles.selectRow}>
             降幅至少
             <select
-              value={settings.minDropPct}
-              onChange={(e) => set({ minDropPct: Number(e.target.value) })}
+              value={settings.minDropAmount}
+              onChange={(e) => set({ minDropAmount: Number(e.target.value) })}
               style={styles.select}
             >
-              {DROP_PCT_OPTIONS.map((n) => <option key={n} value={n}>{n === 0 ? '不限' : `${n}%`}</option>)}
+              {DROP_AMOUNT_OPTIONS.map((n) => <option key={n} value={n}>{n === 0 ? '不限' : `${n} 元`}</option>)}
             </select>
             才通知
           </label>
