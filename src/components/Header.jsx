@@ -79,6 +79,7 @@ export default function Header({
   return (
     <>
       <header style={styles.header}>
+        <div className="header-inner" style={styles.headerInner}>
         {/* 極簡純文字 Logo */}
         <div className="desktop-logo" style={styles.logoContainer} onClick={handleLogoClick}>
           <span style={styles.logoTextTitle}>UG快速查價</span>
@@ -221,6 +222,7 @@ export default function Header({
             <Menu size={22} />
           </button>
         </div>
+        </div>
       </header >
 
       {/* 行動端 Drawer 側滑菜單 */}
@@ -353,10 +355,7 @@ export default function Header({
 
 const styles = {
   header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '6px 24px',
+    width: '100%',
     borderBottom: '1px solid var(--border-color)',
     backgroundColor: 'var(--glass-bg)',
     WebkitBackdropFilter: 'saturate(180%) blur(20px)',
@@ -364,6 +363,14 @@ const styles = {
     position: 'sticky',
     top: 0,
     zIndex: 100,
+  },
+  headerInner: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: '6px 24px',
+    maxWidth: '1400px',
+    margin: '0 auto',
   },
   logoContainer: {
     display: 'flex',

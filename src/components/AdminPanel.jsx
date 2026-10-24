@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, ShieldCheck, HelpCircle, ArrowRight, ClipboardList, Clock } from 'lucide-react';
 import CategoryManager from './CategoryManager';
 import TelegramManager from './TelegramManager';
+import AnnouncementManager from './AnnouncementManager';
 
 export default function AdminPanel({
   currentVersion = '1.0.0',
@@ -13,14 +14,17 @@ export default function AdminPanel({
   navigation = [],
   allUniqueCategories = [],
   onSaveNavigation,
-  products = []
+  products = [],
+  announcements = [],
+  onSaveAnnouncement,
+  onDeleteAnnouncement
 }) {
   const [upgradeType, setUpgradeType] = useState('patch'); // 'major' | 'minor' | 'patch'
   const [nextVersion, setNextVersion] = useState('');
   const [descriptionList, setDescriptionList] = useState(['']);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [activeTab, setActiveTab] = useState('versions'); // 'versions' | 'reports' | 'categories' | 'telegram'
+  const [activeTab, setActiveTab] = useState('versions'); // 'versions' | 'reports' | 'categories' | 'telegram' | 'announcements'
   const [isTriggering, setIsTriggering] = useState(false);
 
   const handleTriggerCrawler = async () => {
@@ -169,6 +173,17 @@ export default function AdminPanel({
           }}
         >
           Telegram 管理
+        </button>
+        <button
+          onClick={() => setActiveTab('announcements')}
+          style={{
+            ...styles.tabButton,
+            backgroundColor: activeTab === 'announcements' ? 'var(--bg-white)' : 'transparent',
+            color: activeTab === 'announcements' ? 'var(--text-primary)' : 'var(--text-secondary)',
+            boxShadow: activeTab === 'announcements' ? '0 1px 3px rgba(0,0,0,0.12)' : 'none',
+          }}
+        >
+          公告管理
         </button>
       </div>
 
@@ -509,6 +524,8 @@ export default function AdminPanel({
         </div>
       ) : activeTab === 'telegram' ? (
         <TelegramManager products={products} />
+      ) : activeTab === 'announcements' ? (
+        <AnnouncementManager announcements={announcements} onSave={onSaveAnnouncement} onDelete={onDeleteAnnouncement} />
       ) : (
         <CategoryManager
           initialNavigation={navigation}

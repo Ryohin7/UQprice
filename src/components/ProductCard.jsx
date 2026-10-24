@@ -127,7 +127,7 @@ export default function ProductCard({ product, onClick }) {
         <div style={styles.priceContainer}>
           <span style={{ display: 'inline-flex', alignItems: 'baseline', whiteSpace: 'nowrap' }}>
             <span style={{ fontSize: '12px', color: 'var(--text-secondary)', marginRight: '2px' }}>售價</span>
-            <span style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--uq-red)' }}>{formatPrice(product.minPrice)}</span>
+            <span style={{ fontFamily: 'var(--font-price)', fontSize: '20px', fontWeight: 'bold', color: 'var(--uq-red)' }}>{formatPrice(product.minPrice)}</span>
             <span style={{ fontSize: '12px', color: 'var(--text-secondary)', marginLeft: '2px' }}>元</span>
           </span>
           {isSale && (
@@ -242,6 +242,7 @@ const styles = {
     fontSize: '16px',
   },
   originPrice: {
+    fontFamily: 'var(--font-price)',
     fontSize: '12px',
     textDecoration: 'line-through',
     color: 'var(--text-light)',

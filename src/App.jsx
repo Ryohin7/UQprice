@@ -12,6 +12,7 @@ import { collection, getDocs, doc, setDoc, deleteDoc, onSnapshot, getDoc, update
 import AdminPanel from './components/AdminPanel';
 import VersionHistoryModal from './components/VersionHistoryModal';
 import NotFound from './components/NotFound';
+import AnnouncementBar from './components/AnnouncementBar';
 import AccountModal from './components/AccountModal';
 import PwaStatus from './components/PwaStatus';
 import TargetPrice from './components/TargetPrice';
@@ -323,6 +324,30 @@ export default function App() {
   const [selectedSize, setSelectedSize] = useState('ALL');
   const [selectedSex, setSelectedSex] = useState('ALL'); // 'ALL', 'men', 'women'
   const [navigation, setNavigation] = useState([]);
+
+  // 公告 (首頁 Header 下方黑色區塊)：即時監聽，後台異動後前台立即更新
+  const [announcements, setAnnouncements] = useState([]);
+  useEffect(() => {
+    if (!db) return;
+    return onSnapshot(
+      collection(db, 'announcements'),
+      (snap) => {
+        const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        list.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+        setAnnouncements(list);
+      },
+      (err) => console.warn('Failed to load announcements:', err.message)
+    );
+  }, []);
+  const handleSaveAnnouncement = async (item) => {
+    if (!db) throw new Error('Firestore 未連接');
+    const { id, ...data } = item;
+    await setDoc(doc(db, 'announcements', id), data);
+  };
+  const handleDeleteAnnouncement = async (id) => {
+    if (!db) throw new Error('Firestore 未連接');
+    await deleteDoc(doc(db, 'announcements', id));
+  };
 
   // 從 Firestore 載入導航分類 (一次性獲取)
   useEffect(() => {
@@ -959,6 +984,10 @@ export default function App() {
         onSignIn={() => handleSignIn().catch(() => {})}
       />
 
+      {currentView === 'home' && (
+        <AnnouncementBar announcements={announcements.filter((a) => a.active !== false && a.text)} />
+      )}
+
       {showAccount && user && (
         <AccountModal
           user={user}
@@ -988,6 +1017,9 @@ export default function App() {
               allUniqueCategories={allUniqueCategories}
               onSaveNavigation={handleSaveNavigation}
               products={products}
+              announcements={announcements}
+              onSaveAnnouncement={handleSaveAnnouncement}
+              onDeleteAnnouncement={handleDeleteAnnouncement}
             />
           )
         ) : currentView === '404' ? (
@@ -1190,13 +1222,13 @@ export default function App() {
                 <div style={styles.detailPriceRow}>
                   <div style={{ display: 'inline-flex', alignItems: 'baseline', whiteSpace: 'nowrap' }}>
                     <span style={{ fontSize: '14px', color: 'var(--text-secondary)', marginRight: '4px' }}>售價</span>
-                    <span style={{ fontSize: '32px', fontWeight: 'bold', color: 'var(--uq-red)' }}>{formatPrice(activeProduct.minPrice)}</span>
+                    <span style={{ fontFamily: 'var(--font-price)', fontSize: '32px', fontWeight: 'bold', color: 'var(--uq-red)' }}>{formatPrice(activeProduct.minPrice)}</span>
                     <span style={{ fontSize: '14px', color: 'var(--text-secondary)', marginLeft: '4px' }}>元</span>
                   </div>
                   {activeProduct.originPrice && activeProduct.minPrice < activeProduct.originPrice && (
                     <div style={{ display: 'inline-flex', alignItems: 'baseline', whiteSpace: 'nowrap', marginLeft: '16px' }}>
                       <span style={{ fontSize: '14px', color: 'var(--text-light)', marginRight: '2px' }}>原價</span>
-                      <span style={{ fontSize: '14px', textDecoration: 'line-through', color: 'var(--text-light)' }}>
+                      <span style={{ fontFamily: 'var(--font-price)', fontSize: '14px', textDecoration: 'line-through', color: 'var(--text-light)' }}>
                         {formatPrice(activeProduct.originPrice)}
                       </span>
                       <span style={{ fontSize: '14px', color: 'var(--text-light)', marginLeft: '2px' }}>元</span>
@@ -1358,6 +1390,9 @@ const styles = {
   },
   main: {
     flex: 1,
+    width: '100%',
+    maxWidth: '1400px',
+    margin: '0 auto',
     padding: '24px',
     backgroundColor: 'var(--bg-page)',
   },
