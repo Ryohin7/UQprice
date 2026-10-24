@@ -103,7 +103,7 @@ export default function ProductCard({ product, onClick }) {
         {/* 顏色選擇晶片 */}
         {product.colors && product.colors.length > 0 && (
           <div style={styles.colorContainer} onClick={(e) => e.stopPropagation()}>
-            {product.colors.slice(0, 6).map((c, idx) => {
+            {product.colors.slice(0, MAX_COLORS).map((c, idx) => {
               const isSelected = selectedColor && selectedColor.code === c.code;
               return (
                 <button
@@ -121,8 +121,8 @@ export default function ProductCard({ product, onClick }) {
                 />
               );
             })}
-            {product.colors.length > 6 && (
-              <span style={styles.moreColors}>+{product.colors.length - 6}</span>
+            {product.colors.length > MAX_COLORS && (
+              <span style={styles.moreColors}>+{product.colors.length - MAX_COLORS}</span>
             )}
           </div>
         )}
@@ -144,6 +144,9 @@ export default function ProductCard({ product, onClick }) {
     </div>
   );
 }
+
+// 色塊最多顯示 4 個，其餘以 +N 表示，避免撐寬固定寬度的卡片
+const MAX_COLORS = 4;
 
 const styles = {
   card: {
