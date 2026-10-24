@@ -20,6 +20,10 @@
   --bg-light: #f2f2f7;
   --border-color: rgba(60, 60, 67, 0.16);
   --glass-bg: rgba(255, 255, 255, 0.72);
+  /* Liquid Glass（手機底部浮動控制項） */
+  --lg-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.18));
+  --lg-border: rgba(255, 255, 255, 0.65);
+  --lg-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.9), inset 0 -1px 0 rgba(255, 255, 255, 0.25), inset 0 0 14px rgba(255, 255, 255, 0.35);
   --overlay-bg: rgba(0, 0, 0, 0.35);
   --ok: #248a3d;
   --info: #0071e3;
@@ -52,6 +56,9 @@
     --bg-light: #2c2c2e;
     --border-color: rgba(84, 84, 88, 0.55);
     --glass-bg: rgba(28, 28, 30, 0.72);
+    --lg-bg: linear-gradient(135deg, rgba(120, 120, 128, 0.32), rgba(60, 60, 67, 0.12));
+    --lg-border: rgba(255, 255, 255, 0.22);
+    --lg-shadow: 0 8px 24px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.28), inset 0 -1px 0 rgba(255, 255, 255, 0.08), inset 0 0 14px rgba(255, 255, 255, 0.06);
     --overlay-bg: rgba(0, 0, 0, 0.6);
     --ok: #30d158;
     --info: #64a8ff;
@@ -116,6 +123,7 @@ input {
 @media (prefers-reduced-transparency: reduce) {
   :root {
     --glass-bg: var(--bg-white);
+    --lg-bg: var(--bg-white);
   }
 }
 
@@ -602,11 +610,12 @@ input {
     min-width: 0;
     height: 48px;
     border-radius: 24px;
-    background-color: var(--glass-bg);
-    -webkit-backdrop-filter: saturate(180%) blur(20px);
-    backdrop-filter: saturate(180%) blur(20px);
-    border: 1px solid var(--border-color);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.14);
+    /* Liquid Glass：高透明底 + 強模糊飽和 + 內緣高光，讓背後商品色彩透出 */
+    background: var(--lg-bg);
+    -webkit-backdrop-filter: blur(24px) saturate(200%) brightness(1.05);
+    backdrop-filter: blur(24px) saturate(200%) brightness(1.05);
+    border: 1px solid var(--lg-border);
+    box-shadow: var(--lg-shadow);
   }
 
   .search-bar-wrapper:focus-within {
@@ -634,11 +643,11 @@ input {
     width: 48px;
     height: 48px;
     border-radius: 50%;
-    background-color: var(--glass-bg) !important;
-    -webkit-backdrop-filter: saturate(180%) blur(20px);
-    backdrop-filter: saturate(180%) blur(20px);
-    border: 1px solid var(--border-color) !important;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.14);
+    background: var(--lg-bg) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(200%) brightness(1.05);
+    backdrop-filter: blur(24px) saturate(200%) brightness(1.05);
+    border: 1px solid var(--lg-border) !important;
+    box-shadow: var(--lg-shadow);
     cursor: pointer;
     color: var(--text-primary);
   }
