@@ -10,7 +10,7 @@ export function formatPrice(price) {
 export function dropTierText(amount) {
   if (!amount || amount <= 0) return '';
   const tier = Math.floor(amount / 100) * 100;
-  return tier >= 100 ? `降 ${formatPrice(tier)} 元以上` : '降價';
+  return tier >= 100 ? `降 ${formatPrice(tier)} 元` : '降價';
 }
 
 const isHistoricalLowest = (product) => {
@@ -192,7 +192,7 @@ const styles = {
   },
   imageContainer: {
     width: '100%',
-    paddingTop: '100%', // 1:1 Aspect Ratio
+    paddingTop: '133.333%', // 3:4 (商品圖 480×640)
     position: 'relative',
     backgroundColor: 'var(--bg-light)',
     overflow: 'hidden',

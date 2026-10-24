@@ -36,7 +36,7 @@ const styles = {
   },
   imageContainer: {
     width: '100%',
-    paddingTop: '100%',
+    paddingTop: '133.333%',
     position: 'relative',
   },
   infoContainer: {

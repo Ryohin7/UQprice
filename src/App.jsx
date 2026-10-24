@@ -1516,8 +1516,7 @@ const styles = {
   },
   detailPicWrapper: {
     width: '100%',
-    flex: 1,
-    minHeight: '300px',
+    aspectRatio: '3 / 4', // 商品圖 480×640
     position: 'relative',
     backgroundColor: 'var(--bg-light)',
     borderRadius: 'var(--radius-md)',
@@ -1529,7 +1528,7 @@ const styles = {
     left: 0,
     width: '100%',
     height: '100%',
-    objectFit: 'contain',
+    objectFit: 'cover',
   },
   detailGender: {
     fontSize: '13px',
