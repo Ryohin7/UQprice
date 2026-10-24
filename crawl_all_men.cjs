@@ -399,7 +399,7 @@ async function crawl(triggerType = 'manual') {
   // ===== Step 3: 同步到 Firestore (會補上 isHistoricalLowest 等欄位) =====
   const syncStatus = await syncToFirestore(allProducts, triggerType, startTime, { hashes: prevHashMap, prices: prevPriceMap });
   if (syncStatus === 'failed') {
-    // 同步失敗時不發布前端 JSON：舊的 products.json 仍是下次比對降價/補貨的基準，下次執行才不會漏掉通知
+    // 同步失敗時不發布前端 JSON：舊的 products.json 仍是下次比對降價的基準，下次執行才不會漏掉通知
     throw new Error('Firestore 同步失敗，已中止且未發布新的 products.json (詳見上方錯誤與後台報表)');
   }
 
@@ -716,7 +716,7 @@ async function syncToFirestore(products, triggerType = 'manual', startTime = Dat
     // 提交剩餘的所有變更
     await commitBatchIfNeeded(true);
 
-    // G. 偵測補貨 / 限定價格 / 新品事件 (與上次基準比對)
+    // G. 偵測限定價格 / 新品事件 (與上次基準比對)
     const { productGroups, isLimitedPrice } = await import('./src/utils/productGroups.js');
     const detected = require('./events.cjs').detectEvents({
       products,

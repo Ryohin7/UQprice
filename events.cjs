@@ -1,4 +1,4 @@
-// 偵測「補貨 / 限定價格開始與即將結束 / 新品上市」事件 (降價事件由爬蟲在價格比對時產生)。
+// 偵測「限定價格開始與即將結束 / 新品上市」事件 (降價事件由爬蟲在價格比對時產生)。
 // 以 system/sync_baseline 保存的上次狀態為基準；某個功能的基準欄位尚不存在時 (首次部署)，
 // 只記錄當前狀態、不發事件，避免第一次執行就把所有商品通知出去。
 const { imageUrl } = require('./notifications.cjs');
@@ -10,9 +10,8 @@ const ENDING_SOON_MS = 48 * 3600 * 1000;
 function detectEvents({ products, baseline, now, groupsOf, isLimited }) {
   const events = [];
   const newArrivals = [];
-  const next = { sizes: {}, limited: {}, endNotified: {}, newArrival: {} };
+  const next = { limited: {}, endNotified: {}, newArrival: {} };
   const seeded = {
-    sizes: !!(baseline && baseline.sizes),
     limited: !!(baseline && baseline.limited),
     newArrival: !!(baseline && baseline.newArrival),
   };
@@ -25,15 +24,6 @@ function detectEvents({ products, baseline, now, groupsOf, isLimited }) {
       image: imageUrl(p.colors?.[0]?.largePicUrl || p.mainPic),
       price: p.minPrice,
     };
-
-    // 補貨：這次有、上次沒有的尺寸 (size 陣列只含目前有貨的尺寸)
-    const sizesNow = Array.isArray(p.size) ? p.size : [];
-    next.sizes[p.id] = sizesNow.join(',');
-    if (seeded.sizes && typeof baseline.sizes[p.id] === 'string') {
-      const prev = new Set(baseline.sizes[p.id] ? baseline.sizes[p.id].split(',') : []);
-      const added = sizesNow.filter((s) => !prev.has(s));
-      if (added.length) events.push({ type: 'restock', ...base, sizes: added });
-    }
 
     // 限定價格：開始，以及結束前 48 小時 (同一個結束時間只通知一次)
     if (isLimited(p)) {
