@@ -807,14 +807,19 @@ input {
 
 .pwa-toast {
   position: fixed;
-  left: 50%;
+  /* 不用 left:50% + translateX：Safari 會以「剩餘寬度」做 shrink-to-fit，文字被擠成窄欄而跑版 */
+  left: 0;
+  right: 0;
   bottom: 24px;
-  transform: translateX(-50%);
+  margin: 0 auto;
+  width: -webkit-max-content;
+  width: max-content;
   z-index: 1500;
   display: flex;
   align-items: center;
   gap: 12px;
   max-width: min(92vw, 460px);
+  box-sizing: border-box;
   padding: 12px 14px 12px 18px;
   border-radius: 16px;
   font-size: 14px;
@@ -826,6 +831,11 @@ input {
   box-shadow: var(--shadow-md);
   color: var(--text-primary);
   animation: fadeIn 0.25s ease-out;
+}
+
+.pwa-toast > span {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .pwa-toast-action {
