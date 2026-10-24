@@ -74,6 +74,12 @@ service cloud.firestore {
       allow write: if isStaff();
     }
 
+    // 前台公告 (announcements)：首頁 Header 下方黑色區塊，僅管理員可寫
+    match /announcements/{announcementId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     // ==========================================
     // 5. 系統與爬蟲狀態 (system / crawler_reports)
     // ==========================================

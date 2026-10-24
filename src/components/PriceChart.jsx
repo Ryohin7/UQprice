@@ -144,6 +144,7 @@ const styles = {
     color: 'var(--text-secondary)',
   },
   statValue: {
+    fontFamily: 'var(--font-price)',
     fontSize: '22px',
     fontWeight: '700',
     letterSpacing: '-0.01em',
@@ -178,6 +179,7 @@ const styles = {
     marginBottom: '2px',
   },
   tooltipPrice: {
+    fontFamily: 'var(--font-price)',
     fontSize: '14px',
     fontWeight: '600',
     color: 'var(--text-primary)',

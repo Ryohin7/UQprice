@@ -1,98 +1,79 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowRight } from 'lucide-react';
 
+const COUNTDOWN_SECONDS = 8;
+
+// Apple 風格 404：大標題排版、留白、膠囊按鈕，圓環倒數取代閃爍文字；
+// 全部使用系統字體與語意色 (自動深色模式)，動畫遵循「減少動態效果」設定
 export default function NotFound({ onReturnHome }) {
-  const [countdown, setCountdown] = useState(5);
-
-  useEffect(() => {
-    // 注入 keyframes 動畫到網頁中
-    const id = 'uq-notfound-animations';
-    if (typeof document !== 'undefined' && !document.getElementById(id)) {
-      const style = document.createElement('style');
-      style.id = id;
-      style.innerHTML = `
-        @keyframes uqFloat {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-12px); }
-        }
-        @keyframes uqPulse {
-          0%, 100% { transform: scale(1); opacity: 0.9; }
-          50% { transform: scale(1.05); opacity: 1; }
-        }
-        @keyframes uqFadeIn {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .uq-float-bag {
-          animation: uqFloat 4s ease-in-out infinite;
-        }
-        .uq-pulse-text {
-          animation: uqPulse 2s ease-in-out infinite;
-        }
-        .uq-fade-container {
-          animation: uqFadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-        .uq-home-btn-hover {
-          transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .uq-home-btn-hover:hover {
-          background-color: var(--text-primary) !important;
-          color: var(--bg-white) !important;
-          transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-      `;
-      document.head.appendChild(style);
-    }
-  }, []);
+  const [countdown, setCountdown] = useState(COUNTDOWN_SECONDS);
 
   useEffect(() => {
     if (countdown <= 0) {
       onReturnHome();
       return;
     }
-    const timer = setTimeout(() => {
-      setCountdown(prev => prev - 1);
-    }, 1000);
+    const timer = setTimeout(() => setCountdown((prev) => prev - 1), 1000);
     return () => clearTimeout(timer);
   }, [countdown, onReturnHome]);
 
-  return (
-    <div style={styles.container} className="uq-fade-container" id="not-found-page">
-      <div style={styles.content}>
-        {/* 動態 404 圖示區 */}
-        <div style={styles.visualWrapper}>
-          <span style={styles.number}>4</span>
-          <span style={{ ...styles.number, color: 'var(--uq-red)' }}>0</span>
-          <span style={styles.number}>4</span>
-        </div>
+  const radius = 9;
+  const circumference = 2 * Math.PI * radius;
+  const progress = countdown / COUNTDOWN_SECONDS;
 
-        {/* 錯誤說明 */}
-        <h1 style={styles.title} id="not-found-title">您尋找的網頁已下架或不存在</h1>
+  return (
+    <div style={styles.container} id="not-found-page">
+      <style>{css}</style>
+      <div style={styles.content} className="uq-nf-enter">
+        <p style={styles.eyebrow}>404</p>
+        <h1 style={styles.title} id="not-found-title">找不到這個頁面</h1>
         <p style={styles.desc}>
-          很抱歉，此商品可能已售罄、連結失效，或目前正在進行系統更新。
+          商品可能已下架、連結已失效，或網站正在更新。
+          <br />
+          請回到首頁，重新搜尋你要找的商品。
         </p>
 
-        {/* 倒數計時與返回首頁 */}
-        <div style={styles.actionArea}>
-          <button
-            id="not-found-return-btn"
-            onClick={onReturnHome}
-            style={styles.button}
-            className="uq-home-btn-hover"
-          >
-            <span>立即返回首頁</span>
-            <ArrowRight size={16} />
-          </button>
+        <button
+          id="not-found-return-btn"
+          onClick={onReturnHome}
+          style={styles.button}
+          className="uq-nf-btn"
+        >
+          回到首頁
+        </button>
 
-          <p style={styles.timerText} className="uq-pulse-text">
-            將在 <span style={styles.timerHighlight}>{countdown}</span> 秒後自動為您返回首頁...
-          </p>
-        </div>
+        <p style={styles.timer} role="timer" aria-live="off">
+          <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true" style={{ transform: 'rotate(-90deg)' }}>
+            <circle cx="11" cy="11" r={radius} fill="none" stroke="var(--fill)" strokeWidth="2" />
+            <circle
+              cx="11"
+              cy="11"
+              r={radius}
+              fill="none"
+              stroke="var(--text-secondary)"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeDasharray={circumference}
+              strokeDashoffset={circumference * (1 - progress)}
+              style={{ transition: 'stroke-dashoffset 1s linear' }}
+            />
+          </svg>
+          <span>{countdown} 秒後自動返回</span>
+        </p>
       </div>
     </div>
   );
 }
+
+const css = `
+  @keyframes uqNfEnter {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .uq-nf-enter { animation: uqNfEnter 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+  .uq-nf-btn { transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.2s; }
+  .uq-nf-btn:hover { background-color: var(--uq-dark-red) !important; }
+  .uq-nf-btn:active { transform: scale(0.97); }
+`;
 
 const styles = {
   container: {
@@ -100,99 +81,56 @@ const styles = {
     justifyContent: 'center',
     alignItems: 'center',
     minHeight: '70vh',
-    padding: '40px 24px',
-    backgroundColor: 'var(--bg-page)',
+    padding: '48px 24px',
   },
   content: {
-    maxWidth: '480px',
+    maxWidth: '520px',
     width: '100%',
     textAlign: 'center',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
   },
-  visualWrapper: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '8px',
-    marginBottom: '24px',
-    userSelect: 'none',
-  },
-  number: {
-    fontSize: '120px',
-    fontWeight: '900',
-    color: '#e5e5e5',
-    lineHeight: 1,
-    letterSpacing: '-2px',
-  },
-  bagWrapper: {
-    position: 'relative',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: '120px',
-    height: '120px',
-  },
-  bagIcon: {
+  eyebrow: {
+    fontSize: '17px',
+    fontWeight: 600,
     color: 'var(--uq-red)',
-  },
-  questionMark: {
-    position: 'absolute',
-    top: '58%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-    fontSize: '24px',
-    fontWeight: '800',
-    color: 'var(--uq-red)',
+    letterSpacing: '0.02em',
+    marginBottom: '8px',
+    fontVariantNumeric: 'tabular-nums',
   },
   title: {
-    fontSize: '22px',
-    fontWeight: '700',
+    fontSize: 'clamp(32px, 7vw, 48px)',
+    fontWeight: 700,
+    lineHeight: 1.1,
+    letterSpacing: '-0.02em',
     color: 'var(--text-primary)',
-    marginBottom: '12px',
-    letterSpacing: '0.5px',
+    marginBottom: '16px',
   },
   desc: {
-    fontSize: '14px',
+    fontSize: '17px',
+    lineHeight: 1.47,
     color: 'var(--text-secondary)',
-    lineHeight: '1.6',
     marginBottom: '32px',
-    padding: '0 16px',
-  },
-  actionArea: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: '16px',
-    width: '100%',
   },
   button: {
+    minHeight: '44px',
+    padding: '0 28px',
+    border: 'none',
+    borderRadius: '980px',
+    backgroundColor: 'var(--uq-red)',
+    color: '#fff',
+    fontSize: '17px',
+    fontWeight: 500,
+    cursor: 'pointer',
+  },
+  timer: {
     display: 'inline-flex',
     alignItems: 'center',
-    justifyContent: 'center',
     gap: '8px',
-    backgroundColor: 'var(--uq-red)',
-    color: 'var(--bg-white)',
-    border: 'none',
-    padding: '14px 28px',
-    fontSize: '15px',
-    fontWeight: '700',
-    cursor: 'pointer',
-    borderRadius: '2px',
-    width: '100%',
-    maxWidth: '240px',
-    outline: 'none',
-  },
-  timerText: {
+    marginTop: '24px',
     fontSize: '13px',
-    color: 'var(--text-light)',
-    marginTop: '8px',
+    color: 'var(--text-secondary)',
+    fontVariantNumeric: 'tabular-nums',
   },
-  timerHighlight: {
-    color: 'var(--uq-red)',
-    fontWeight: '700',
-    fontSize: '15px',
-    margin: '0 2px',
-  }
 };

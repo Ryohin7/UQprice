@@ -1,3 +1,12 @@
+/* 價格數字專用字體 */
+@font-face {
+  font-family: 'HelveticaNeueBold';
+  src: url('/font/HelveticaNeueBold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* Apple 風格設計 token：系統字體、系統色、圓角與動態偏好皆跟隨裝置 */
 :root {
   color-scheme: light dark;
@@ -25,6 +34,7 @@
   --radius-lg: 20px;
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04), 0 2px 8px rgba(0, 0, 0, 0.04);
   --shadow-md: 0 12px 40px rgba(0, 0, 0, 0.16);
+  --font-price: 'HelveticaNeueBold', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'PingFang TC', 'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
   --transition-fast: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   --transition-smooth: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
@@ -83,8 +93,6 @@ input {
   display: flex;
   flex-direction: column;
   background-color: var(--bg-page);
-  max-width: 1400px;
-  margin: 0 auto;
 }
 
 /* 鍵盤焦點環 */
@@ -133,6 +141,7 @@ input {
 
 /* 千分位價格注目樣式 */
 .price-tag {
+  font-family: var(--font-price);
   font-weight: 700;
   color: var(--uq-red);
 }
@@ -514,9 +523,12 @@ input {
 
 /* 手機版 Header 優化：Header 僅留網站名，搜尋欄與漢堡移至最下方 */
 @media (max-width: 768px) {
-  header {
+  .header-inner {
     justify-content: center !important;
     padding: 12px !important;
+  }
+
+  header {
     /* backdrop-filter 會讓 header 變成 fixed 子元素的定位基準，導致底部搜尋列跑到頂部蓋住標題，手機版改用實色 */
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
