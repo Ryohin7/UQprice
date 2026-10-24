@@ -13,6 +13,7 @@ import AdminPanel from './components/AdminPanel';
 import VersionHistoryModal from './components/VersionHistoryModal';
 import NotFound from './components/NotFound';
 import AnnouncementBar from './components/AnnouncementBar';
+import AdCard from './components/AdCard';
 import AccountModal from './components/AccountModal';
 import PwaStatus from './components/PwaStatus';
 import TargetPrice from './components/TargetPrice';
@@ -24,6 +25,9 @@ import { matchesSubCategory } from './utils/categoryMatch';
 
 // 與 firestore.rules 的 favorites 上限一致
 const MAX_FAVORITES = 300;
+
+// 商品網格每隔幾張商品插入一張廣告卡
+const AD_EVERY = 8;
 import { logPageView, logSearch, logViewProduct, logAddToFavorites, logRemoveFromFavorites, logClickExternalLink } from './utils/analytics';
 
 
@@ -1116,12 +1120,12 @@ export default function App() {
             ) : (
               <>
                 <div className="product-grid">
-                  {filteredProducts.slice(0, visibleCount).map(product => (
-                    <ProductCard
-                      key={product.id}
-                      product={product}
-                      onClick={handleProductClick}
-                    />
+                  {filteredProducts.slice(0, visibleCount).map((product, i) => (
+                    <React.Fragment key={product.id}>
+                      <ProductCard product={product} onClick={handleProductClick} />
+                      {/* 每 AD_EVERY 張商品插入一張 Google 資訊流廣告卡 */}
+                      {(i + 1) % AD_EVERY === 0 && <AdCard key={`ad-${i}`} />}
+                    </React.Fragment>
                   ))}
                 </div>
 

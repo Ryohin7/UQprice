@@ -146,6 +146,33 @@ input {
   color: var(--uq-red);
 }
 
+/* AdSense 資訊流廣告卡：有填入廣告時才顯示外框與「廣告」標示，未填入 (被擋/無廣告) 時完全收合 */
+.uq-ad-card {
+  background-color: var(--bg-white);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  min-width: 0;
+}
+
+.uq-ad-label {
+  display: none;
+  padding: 6px 12px 0;
+  font-size: 11px;
+  color: var(--text-light);
+}
+
+.uq-ad-card:has(ins.adsbygoogle[data-ad-status="filled"]) {
+  box-shadow: var(--shadow-sm);
+}
+
+.uq-ad-card:has(ins.adsbygoogle[data-ad-status="filled"]) .uq-ad-label {
+  display: block;
+}
+
+.uq-ad-card:has(ins.adsbygoogle[data-ad-status="unfilled"]) {
+  display: none;
+}
+
 /* RWD Grid 佈局 */
 .product-grid {
   display: grid;
